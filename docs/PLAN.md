@@ -132,7 +132,7 @@ Fuse/
 | 1 | Don't sleep or publish while holding the mutex: copy state, unlock, then publish | `server/net_server.c` | Synchronisation | `perf lock contention`, `perf sched timehist` |
 | 2 | Replace busy loops with DDS waitsets and `pthread_cond` | `net_*.c`, `server/main.c` | Synchronisation / CPU | `perf stat` "CPUs utilized" |
 | 3 | SPSC ring for inputs, double-buffered snapshots | `common/spsc_ring.h`, `net_*.c` | TLP, lock-free | 99th-percentile frame time, `perf trace -s` (futex count) |
-| 4 | Fix the data race on `int_player_id` | `client/main.c` | Correctness | ThreadSanitizer (`make debug`) before/after |
+| 4 | Fix the data race on `int_player_id` | `client/main.c` | Correctness | Code review (TSan does not catch it at runtime: main locks the same mutex every frame, so the single write is ordered). Use TSan on the new lock-free code instead |
 | 5 | Worker pool for particles and embers | `client/particles.c`, `server/collision.c` | **TLP** | Speedup vs thread count; N where threads start paying off |
 | 6 | Particles as struct-of-arrays; dead particles removed by swapping with the last | `client/particles.c` | **Cache**, removes branches | `L1-dcache-load-misses`, AoS vs SoA |
 | 7 | SIMD auto-vectorisation (`restrict`, `-O3 -march=native`) | `client/particles.c` | **DLP** | `-fopt-info-vec`, `perf annotate` (`vmulps`), instruction count |
