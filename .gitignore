@@ -1,0 +1,6 @@
+build/
+generated/*
+!generated/.gitkeep
+security/certs/
+*.o
+perf.data*
