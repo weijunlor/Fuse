@@ -4,3 +4,4 @@ generated/*
 security/certs/
 *.o
 perf.data*
+screenshot.png

@@ -13,6 +13,7 @@ Threads: the main thread owns the window, reads the keyboard and draws;
 a DDS worker thread does all network I/O (net_client.c). */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 
@@ -46,6 +47,11 @@ int main(void)
     glfwMakeContextCurrent(window);
     render_init();
 
+    // Screenshots: F12 saves screenshot.png; FUSE_SCREENSHOT=<file> saves one
+    // automatically after 2 s (for tests and slides)
+    const char *str_auto_shot = getenv("FUSE_SCREENSHOT");
+    int int_f12_prev = GLFW_RELEASE;
+
     // Render loop: no frame cap; swap interval left at the driver default (as in the baseline)
     while (!glfwWindowShouldClose(window))
     {
@@ -53,6 +59,17 @@ int main(void)
         glfwPollEvents();
         input_poll(window);
         render_frame();
+
+        int int_f12 = glfwGetKey(window, GLFW_KEY_F12);
+        if (int_f12 == GLFW_PRESS && int_f12_prev == GLFW_RELEASE)
+            render_save_screenshot("screenshot.png");
+        int_f12_prev = int_f12;
+        if (str_auto_shot != NULL && glfwGetTime() > 2.0)
+        {
+            render_save_screenshot(str_auto_shot);
+            str_auto_shot = NULL;
+        }
+
         glfwSwapBuffers(window);
     }
 

@@ -31,7 +31,9 @@ Done:
 - Module split (behaviour unchanged, baseline bugs kept for the optimisation steps): server → `collision.c` (AABB), `game.c` (player table, `mutex`, `game_apply_input`), `lobby.c` (join handshake flags, `lobby_poll`), `net_server.c` (DDS worker); client → `net_client.c` (DDS worker, `int_player_id`, mirrored `arr_Players`, `mutex`), `input.c` (`ch_dir`), `render.c`, `ui.c` (`ui_draw_text`); shared → `common/config.h`, `types.h` (`Player`), `net.c` (`net_create_topics`). Still stubs: `auth`, `bot`, `interp`, `particles`, `crypto`, `timing`, `log.h`, `spsc_ring.h`. IDL is still the baseline IDL.
   Tested: a DDS test driver (join, 30 × right, 1000 × up) gives the same results on baseline and split servers; split server works with both new and baseline clients; profiled as `bench/results/split-modules/`.
 - Verified in WSL: `make` and `make baseline` build cleanly; baseline runs.
-- Git: `baseline-measured` tag on d537567 (baseline profiles); module split committed as 2f36af2, tagged `split-modules` (the "before" for the first optimisation). The user runs git commit/tag themselves.
+- IDL v1 decided: `idl/fuse.idl` (not yet built; replaces `idl/messages.idl` when the server switches to snapshots), constants in `common/types.h`, rationale in PLAN.md section 2.
+- Client draws sprites from `assets/atlas.png` (64x64 pixel-art tiles, layout in `client/atlas.h`; regenerate placeholders with `python3 assets/make_placeholder_atlas.py`). Simple immediate-mode version (one glBegin/glEnd per sprite) = the "before" for #16. F12 or `FUSE_SCREENSHOT=<file>` saves a screenshot. Needs `libstb-dev` (stb_image, stb_image_write via `pkg-config stb`). Client must start from the repo root (atlas path is relative).
+- Git: `baseline-measured` tag on d537567 (baseline profiles); module split committed as 2f36af2, tagged `split-modules` (the "before" for the first optimisation). Pushed to github.com/weijunlor/Fuse (gh logged in as weijunlor). The user runs git commit/tag/push themselves.
 - `bench/profile.sh <label> <bin_dir>`: every profiling run writes `bench/results/<label>/` with `setup.txt`, `report.txt` and `raw/` (see `bench/README.md`). Profile every optimisation step with it, one label per step, so the final report can use all the data.
 - Baseline profiled at -O0 and -O2 (`make baseline-O0 baseline-O2`, -g and frame pointers): `bench/results/baseline-O0/`, `bench/results/baseline-O2/`. At -O2: server ~1.1 CPUs, client ~1.0 CPU, ~50% of samples in `pthread_mutex_lock`/`unlock`, server ~600k futex calls/s.
 
@@ -39,12 +41,11 @@ Not done yet:
 - No flame graph SVGs: needs FlameGraph scripts on PATH, then `STEPS=record bench/profile.sh <label> <bin_dir>` (raw/record_*.script.gz can also be fed to stackcollapse-perf.pl later).
 
 Next (see PLAN.md section 8 for the full timeline):
-1. weijun: push commits and tags so the team can start from `split-modules`.
-2. All, ~1 h meeting led by zhikai: agree the new IDL (draft in PLAN.md section 2), including security fields (nonce, token, mac, proof).
-3. sheeyang (can start now, independent of IDL): `security/scripts/make_ca.sh`, `make_certs.sh`, governance/permissions XML; get the unmodified baseline running encrypted.
-4. zhikai (after IDL): fixed tick, snapshots, join nonce, leave.
-5. weijun: client texture-atlas render path with placeholder sprites (add `third_party/stb_image.h`); final art swapped in 3-4 Nov.
-6. Measurement rule: if features merged since the last profile, profile right before and right after each optimisation, so the change is measured on its own.
+1. All: review the decided IDL (`idl/fuse.idl`, PLAN.md section 2) and raise objections before zhikai builds on it.
+2. sheeyang (can start now, independent of IDL): `security/scripts/make_ca.sh`, `make_certs.sh`, governance/permissions XML; get the unmodified baseline running encrypted.
+3. zhikai: fixed tick, snapshots, join nonce, leave (switch Makefile to `idl/fuse.idl`), in measurable steps (#12, then #13, #14).
+4. weijun: bomb/explosion/ember rendering once snapshots exist; final art swapped into `assets/atlas.png` 3-4 Nov (same layout).
+5. Measurement rule: if features merged since the last profile, profile right before and right after each optimisation, so the change is measured on its own.
 
 ## Team
 

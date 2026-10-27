@@ -9,9 +9,9 @@
 
 CC      := gcc
 CFLAGS  := -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party \
-           $(shell pkg-config --cflags CycloneDDS glfw3)
+           $(shell pkg-config --cflags CycloneDDS glfw3 stb)
 LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
-LDGL    := $(shell pkg-config --libs glfw3) -lGL -lm
+LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
 # Add -lcrypto (OpenSSL) or -lsodium here once common/crypto.c uses it
 
 GEN     := generated/messages.c

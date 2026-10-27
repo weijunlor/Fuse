@@ -39,23 +39,30 @@ Bomb pulses faster as the fuse burns down, explosion particle bursts, spark trai
 | Input safety | `arr_Players[id-1]` written without a bounds check (out-of-bounds write) | Player ID validated and tied to the session token |
 | Game flow | None | Lobby, rounds, win screen |
 
-### Message definitions (draft)
+### Message definitions (decided v1, 2026-10-27)
 
-```idl
-struct JoinRequest  { unsigned long long nonce; string<16> name; sequence<octet,64> proof; };
-struct JoinResponse { unsigned long long nonce; long player_id; unsigned long long token; };
-struct Input        { @key long player_id; unsigned long seq; octet keys; /* bitmask */ sequence<octet,32> mac; };
-struct PlayerState  { octet id; octet flags; short x, y, vx, vy; octet lives; };
-struct GameSnapshot { unsigned long tick; octet bomb_holder; unsigned short fuse_ms; PlayerState players[5]; };
-struct Leave        { long player_id; unsigned long long token; };
-```
+The full IDL with field comments is `idl/fuse.idl`; field constants are in `common/types.h`.
+It replaces `idl/messages.idl` when the server switches to the fixed tick and snapshots.
 
-### QoS per topic
+| Topic | Direction | Content | QoS |
+|---|---|---|---|
+| `JoinRequest` | client → server | nonce, name, proof = HMAC(PBKDF2(password, name), nonce) | Reliable, keep-all |
+| `JoinResponse` | server → clients | nonce echo, status, player ID, session key (XOR-protected so only the joiner can read it) | Reliable, keep-all |
+| `Input` | client → server | **keyed by player ID**; seq, held-keys bitmask, MAC | Best-effort, keep-last 1 per player |
+| `GameSnapshot` | server → clients | tick, phase, bomb holder, timer, 5 players, 4 pickups, 4 recent explosions (132 bytes) | Best-effort, keep-last 1 |
+| `Roster` | server → clients | **keyed by player ID**; name, wins | Reliable, transient-local, keep-last 1 |
+| `Leave` | client → server | player ID, seq, MAC | Reliable, keep-all |
 
-| Topic | QoS | Reason |
-|---|---|---|
-| `JoinRequest`, `JoinResponse`, `Leave` | Reliable | Must arrive |
-| `Input`, `GameSnapshot` | Best-effort, keep-last 1 | Old state is useless; never resend it |
+Decisions:
+
+- **Fixed-size arrays and bounded strings only:** samples need no heap allocation (`string<15>` becomes `char[16]`).
+- **Input is keyed by player ID:** with keep-last 1 on an unkeyed topic, one player's input would overwrite another's before the server reads it.
+- **Input carries held keys, sent on change and repeated every 100 ms:** a lost best-effort sample is corrected within 100 ms.
+- **Embers are not sent:** server and clients spawn them from each `Explosion` (position + seed) with the same PRNG, so the server can simulate thousands of embers while each snapshot stays 132 bytes.
+- **Password never sent:** the client proves it knows it with an HMAC over its nonce; the server stores only PBKDF2(password, name). Each nonce is accepted once (replay protection).
+- **Session key per join:** used for the `Input`/`Leave` MAC. Every client sees every `JoinResponse`, so the key is XORed with a value only the joining client can compute.
+- **Snapshots start at 60 Hz:** optimisation #15 (interpolation) lowers the rate, so the change can be measured.
+- **Rollout in measurable steps:** #12 (`GameSnapshot` instead of N `Position`), #13 (input bitmask on change) and #14 (QoS) are separate optimisations, so switch over one at a time and profile each step.
 
 ---
 
@@ -91,7 +98,8 @@ Fuse/
 │   ├── interp.c/.h       #   snapshot buffer + interpolation
 │   ├── ui.c/.h           #   lobby, login, win screen, cached text
 │   └── net_client.c/.h   #   DDS worker: send input, receive snapshots
-├── third_party/          # stb_easy_font.h
+├── assets/               # atlas.png (64x64 pixel-art tiles, 8x8 grid), make_placeholder_atlas.py
+├── third_party/          # stb_easy_font.h (stb_image comes from libstb-dev)
 ├── security/
 │   ├── config/           #   cyclonedds.xml, governance.xml, permissions_*.xml
 │   ├── scripts/          #   make_ca.sh, make_certs.sh, run_secure.sh

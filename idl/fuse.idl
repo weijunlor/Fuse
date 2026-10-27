@@ -1,0 +1,122 @@
+// idl/fuse.idl
+// FUSE message set, v1 (decided 2026-10-27; see docs/PLAN.md section 2).
+// Replaces idl/messages.idl (the baseline messages) when the server switches
+// to the fixed tick and snapshots. The constants used in the fields below
+// (KEY_*, PF_*, PHASE_*, JOIN_*, PICKUP_*) are in common/types.h.
+//
+// Design rules:
+// - Fixed-size arrays and bounded strings only (string<15> becomes char[16]
+//   in C), so samples need no heap allocation.
+// - Arrays of players have MAX_PLAYERS (common/config.h) = 5 entries;
+//   index = player_id - 1. Player ID 0 means "none".
+// - Coordinates are pixels, top-left corner of the sprite, origin top-left.
+//
+// Build: idlc -l c fuse.idl
+
+// ---------------------------------------------------------------------------
+// Joining and leaving (QoS: reliable, keep-all)
+// ---------------------------------------------------------------------------
+
+// Client -> server. Sent every 1 s until a JoinResponse with the same nonce
+// arrives.
+struct JoinRequest
+{
+    unsigned long long nonce;   // random per client; only the matching response is accepted
+    string<15> name;            // login name
+    octet proof[32];            // HMAC-SHA256(key = PBKDF2(password, salt = name), msg = nonce);
+                                // the password itself is never sent
+};
+
+// Server -> clients. Every client receives every response and ignores those
+// whose nonce is not its own.
+struct JoinResponse
+{
+    unsigned long long nonce;   // copied from the JoinRequest being answered
+    octet status;               // JOIN_OK, JOIN_FULL, JOIN_BAD_LOGIN, JOIN_IN_GAME
+    octet player_id;            // 1..5 if JOIN_OK, else 0
+    octet session_key[16];      // random per session, XORed with
+                                // HMAC-SHA256(login key, "session" || nonce) so that
+                                // only the joining client can recover it
+};
+
+// Client -> server when the player quits. Crashed clients are detected by DDS
+// liveliness instead.
+struct Leave
+{
+    octet player_id;
+    unsigned long seq;          // continues the Input sequence numbers
+    octet mac[16];              // HMAC-SHA256(session_key, player_id | seq), first 16 bytes
+};
+
+// ---------------------------------------------------------------------------
+// Input (QoS: best-effort, keep-last 1 per player)
+// ---------------------------------------------------------------------------
+
+// Client -> server. Carries the keys held right now (not single steps), sent
+// when they change and repeated every 100 ms in case one is lost.
+struct Input
+{
+    @key octet player_id;       // keyed: keep-last 1 keeps the newest input of EACH player
+    unsigned long seq;          // +1 per message; server drops seq <= last accepted (replay)
+    octet keys;                 // KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KEY_DASH
+    octet mac[16];              // HMAC-SHA256(session_key, player_id | seq | keys), first 16 bytes
+};
+
+// ---------------------------------------------------------------------------
+// Game state (QoS: best-effort, keep-last 1)
+// ---------------------------------------------------------------------------
+
+struct PlayerState
+{
+    octet flags;                // PF_ACTIVE | PF_ALIVE | PF_SHIELD | PF_DASHING | PF_SPEED
+    octet lives;
+    short x;                    // position in pixels
+    short y;
+    short vx;                   // velocity in pixels per second (for interpolation)
+    short vy;
+};
+
+struct Pickup
+{
+    octet type;                 // PICKUP_NONE (empty slot), PICKUP_SPEED, PICKUP_SHIELD, PICKUP_FUSE_RESET
+    short x;
+    short y;
+};
+
+// Embers are not sent one by one: server and clients both spawn them from
+// each explosion with the same PRNG (common/), so thousands of embers cost
+// only these few bytes per snapshot.
+struct Explosion
+{
+    unsigned long tick;         // server tick of the explosion (0 = empty slot)
+    short x;                    // centre in pixels
+    short y;
+    unsigned short seed;        // PRNG seed for this explosion's embers
+};
+
+// Server -> clients, once per published tick. Starts at 60 Hz; optimisation
+// #15 (client interpolation) lowers the rate.
+struct GameSnapshot
+{
+    unsigned long tick;         // server tick number (60 Hz)
+    octet phase;                // PHASE_LOBBY, PHASE_COUNTDOWN, PHASE_PLAYING, PHASE_ROUND_OVER, PHASE_GAME_OVER
+    octet bomb_holder;          // player ID holding the bomb, 0 = none
+    unsigned short timer_ms;    // fuse left while playing; countdown left in COUNTDOWN / ROUND_OVER
+    PlayerState players[5];     // index = player_id - 1
+    Pickup pickups[4];
+    Explosion explosions[4];    // newest first; repeated in later snapshots so a lost one is not missed
+};
+
+// ---------------------------------------------------------------------------
+// Roster (QoS: reliable, transient-local, keep-last 1 per player)
+// ---------------------------------------------------------------------------
+
+// Server -> clients: names for the HUD and win screen. Transient-local, so a
+// client that joins late still receives everyone's entry. The server disposes
+// the instance when the player leaves.
+struct Roster
+{
+    @key octet player_id;
+    string<15> name;
+    octet wins;                 // rounds won this game
+};
