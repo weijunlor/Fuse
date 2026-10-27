@@ -1,0 +1,31 @@
+# 2026-10-27T14:40:02+00:00  STEPS="stat lock trace record" RUNS=10 DURATION=30 CLIENTS=4
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 113617 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 113615 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 115584 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 115581 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 117534 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 117532 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 119528 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 119525 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 121616 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 121613 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 123607 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 123605 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 125560 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 125557 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 127546 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 127544 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 129540 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 129537 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 131580 -- sleep 30
+perf stat -x, --append -o bench/results/split-modules/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 131577 -- sleep 30
+sudo perf lock record -o bench/results/split-modules/raw/lock_server.data -p 133615 -- sleep 30
+perf lock contention -i bench/results/split-modules/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/split-modules/raw/trace_server.txt -p 135574 -- sleep 30
+sudo perf trace -s -o bench/results/split-modules/raw/trace_client.txt -p 135577 -- sleep 30
+perf record -q -F 499 --call-graph fp -o bench/results/split-modules/raw/record_server.data -p 137565 -- sleep 10
+perf record -q -F 499 --call-graph fp -o bench/results/split-modules/raw/record_client.data -p 137568 -- sleep 10
+perf script -i bench/results/split-modules/raw/record_server.data
+perf report -i bench/results/split-modules/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/split-modules/raw/record_client.data
+perf report -i bench/results/split-modules/raw/record_client.data --stdio --no-children --percent-limit 0.5
