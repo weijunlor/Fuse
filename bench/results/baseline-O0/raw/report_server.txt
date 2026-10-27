@@ -3,103 +3,43 @@
 #
 # Total Lost Samples: 0
 #
-# Samples: 5K of event 'cpu_core/cycles/P'
-# Event count (approx.): 52673765118
+# Samples: 6K of event 'cpu_core/cycles/'
+# Event count (approx.): 49830067728
 #
 # Overhead  Command  Shared Object         Symbol                                   
 # ........  .......  ....................  .........................................
 #
-    23.43%  server   libc.so.6             [.] pthread_mutex_lock@@GLIBC_2.2.5
+    22.05%  server   libc.so.6             [.] pthread_mutex_lock@@GLIBC_2.2.5
             |          
-            |--14.08%--lll_mutex_lock_optimized (inlined)
+            |--12.59%--lll_mutex_lock_optimized (inlined)
             |          ___pthread_mutex_lock (inlined)
             |          |          
-            |          |--10.31%--main
+            |          |--9.01%--main
             |          |          __libc_start_call_main
             |          |          call_init (inlined)
             |          |          __libc_start_main_impl (inlined)
             |          |          _start
             |          |          
-            |          |--2.65%--ddsrt_mutex_lock
+            |          |--2.32%--ddsrt_mutex_lock
             |          |          |          
-            |          |          |--1.03%--0x70182a2d4258
-            |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x70182a2e1fc5
+            |          |          |--0.82%--0x7d39963adaf0
+            |          |          |          0x7d39963adb88
+            |          |          |          0x7d39963b809c
             |          |          |          dds_take
             |          |          |          worker
             |          |          |          start_thread
             |          |          |          __clone3 (inlined)
             |          |          |          
-            |          |          |--0.97%--dds_handle_unpin
-            |          |          |          0x70182a2e2108
+            |          |          |--0.77%--dds_handle_unpin
+            |          |          |          0x7d39963b8108
             |          |          |          dds_take
             |          |          |          worker
             |          |          |          start_thread
             |          |          |          __clone3 (inlined)
             |          |          |          
-            |          |           --0.65%--0x70182a2d7af0
-            |          |                     0x70182a2d7b88
-            |          |                     0x70182a2e209c
-            |          |                     dds_take
-            |          |                     worker
-            |          |                     start_thread
-            |          |                     __clone3 (inlined)
-            |          |          
-            |           --1.12%--worker
-            |                     start_thread
-            |                     __clone3 (inlined)
-            |          
-             --8.63%--___pthread_mutex_lock (inlined)
-                       |          
-                       |--4.58%--__libc_start_call_main
-                       |          call_init (inlined)
-                       |          __libc_start_main_impl (inlined)
-                       |          _start
-                       |          
-                       |--1.82%--main
-                       |          __libc_start_call_main
-                       |          call_init (inlined)
-                       |          __libc_start_main_impl (inlined)
-                       |          _start
-                       |          
-                       |--0.93%--start_thread
-                       |          __clone3 (inlined)
-                       |          
-                        --0.63%--worker
-                                  start_thread
-                                  __clone3 (inlined)
-
-    17.24%  server   libc.so.6             [.] pthread_mutex_unlock@@GLIBC_2.2.5
-            |          
-            |--14.55%--lll_mutex_unlock_optimized (inlined)
-            |          __pthread_mutex_unlock_usercnt (inlined)
-            |          ___pthread_mutex_unlock (inlined)
-            |          |          
-            |          |--10.64%--main
-            |          |          __libc_start_call_main
-            |          |          call_init (inlined)
-            |          |          __libc_start_main_impl (inlined)
-            |          |          _start
-            |          |          
-            |          |--2.65%--ddsrt_mutex_unlock
-            |          |          |          
-            |          |          |--1.00%--0x70182a2d42a2
-            |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x70182a2e1fc5
-            |          |          |          dds_take
-            |          |          |          worker
-            |          |          |          start_thread
-            |          |          |          __clone3 (inlined)
-            |          |          |          
-            |          |          |--0.85%--0x70182a2d7914
-            |          |          |          0x70182a2d7b88
-            |          |          |          0x70182a2e209c
-            |          |          |          dds_take
-            |          |          |          worker
-            |          |          |          start_thread
-            |          |          |          __clone3 (inlined)
-            |          |          |          
-            |          |           --0.80%--0x70182a2e2108
+            |          |           --0.74%--0x7d39963aa258
+            |          |                     dds_entity_pin_with_origin
+            |          |                     0x7d39963b7fc5
             |          |                     dds_take
             |          |                     worker
             |          |                     start_thread
@@ -109,89 +49,194 @@
             |                     start_thread
             |                     __clone3 (inlined)
             |          
-            |--1.20%--__pthread_mutex_unlock_usercnt (inlined)
+             --9.46%--___pthread_mutex_lock (inlined)
+                       |          
+                       |--3.04%--__libc_start_call_main
+                       |          call_init (inlined)
+                       |          __libc_start_main_impl (inlined)
+                       |          _start
+                       |          
+                       |--2.86%--worker
+                       |          start_thread
+                       |          __clone3 (inlined)
+                       |          
+                       |--1.58%--main
+                       |          __libc_start_call_main
+                       |          call_init (inlined)
+                       |          __libc_start_main_impl (inlined)
+                       |          _start
+                       |          
+                        --1.56%--start_thread
+                                  __clone3 (inlined)
+
+    16.65%  server   libc.so.6             [.] pthread_mutex_unlock@@GLIBC_2.2.5
+            |          
+            |--15.06%--lll_mutex_unlock_optimized (inlined)
+            |          __pthread_mutex_unlock_usercnt (inlined)
+            |          ___pthread_mutex_unlock (inlined)
+            |          |          
+            |          |--11.08%--main
+            |          |          __libc_start_call_main
+            |          |          call_init (inlined)
+            |          |          __libc_start_main_impl (inlined)
+            |          |          _start
+            |          |          
+            |          |--2.35%--ddsrt_mutex_unlock
+            |          |          |          
+            |          |          |--0.81%--0x7d39963aa2a2
+            |          |          |          dds_entity_pin_with_origin
+            |          |          |          0x7d39963b7fc5
+            |          |          |          dds_take
+            |          |          |          worker
+            |          |          |          start_thread
+            |          |          |          __clone3 (inlined)
+            |          |          |          
+            |          |          |--0.78%--0x7d39963b8108
+            |          |          |          dds_take
+            |          |          |          worker
+            |          |          |          start_thread
+            |          |          |          __clone3 (inlined)
+            |          |          |          
+            |          |           --0.75%--0x7d39963ad914
+            |          |                     0x7d39963adb88
+            |          |                     0x7d39963b809c
+            |          |                     dds_take
+            |          |                     worker
+            |          |                     start_thread
+            |          |                     __clone3 (inlined)
+            |          |          
+            |           --1.64%--worker
+            |                     start_thread
+            |                     __clone3 (inlined)
+            |          
+            |--0.90%--__pthread_mutex_unlock_usercnt (inlined)
             |          ___pthread_mutex_unlock (inlined)
             |          
-             --1.00%--___pthread_mutex_unlock (inlined)
-                       |          
-                        --0.67%--__libc_start_call_main
-                                  call_init (inlined)
-                                  __libc_start_main_impl (inlined)
-                                  _start
+             --0.69%--___pthread_mutex_unlock (inlined)
 
-     6.00%  server   [kernel.kallsyms]     [k] futex_hash
-            |          
-             --5.73%--futex_hash
-                       |          
-                        --5.41%--futex_wake
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  __lll_lock_wake (inlined)
-                                  |          
-                                  |--2.81%--main
-                                  |          __libc_start_call_main
-                                  |          call_init (inlined)
-                                  |          __libc_start_main_impl (inlined)
-                                  |          _start
-                                  |          
-                                   --2.60%--worker
-                                             start_thread
-                                             __clone3 (inlined)
+     8.19%  server   [kernel.kallsyms]     [k] futex_hash
+            |
+            ---futex_hash
+               |          
+               |--6.45%--futex_wake
+               |          do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __lll_lock_wake (inlined)
+               |          |          
+               |          |--3.48%--main
+               |          |          __libc_start_call_main
+               |          |          call_init (inlined)
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |           --2.97%--worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --1.57%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                          |--0.88%--main
+                          |          __libc_start_call_main
+                          |          call_init (inlined)
+                          |          __libc_start_main_impl (inlined)
+                          |          _start
+                          |          
+                           --0.69%--worker
+                                     start_thread
+                                     __clone3 (inlined)
 
-     4.84%  server   [kernel.kallsyms]     [k] futex_wait_setup
+     7.15%  server   libc.so.6             [.] __GI___lll_lock_wait
             |          
-             --4.73%--futex_wait_setup
-                       |          
-                        --4.67%--__futex_wait
-                                  futex_wait
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  futex_wait (inlined)
-                                  __lll_lock_wait (inlined)
-                                  |          
-                                  |--3.33%--worker
-                                  |          start_thread
-                                  |          __clone3 (inlined)
-                                  |          
-                                   --1.34%--main
-                                             __libc_start_call_main
-                                             call_init (inlined)
-                                             __libc_start_main_impl (inlined)
-                                             _start
-
-     4.08%  server   libc.so.6             [.] __GI___lll_lock_wait
-            |          
-            |--2.90%--__lll_lock_wait (inlined)
+            |--5.99%--__lll_lock_wait (inlined)
             |          |          
-            |          |--2.37%--worker
+            |          |--4.51%--worker
             |          |          start_thread
             |          |          __clone3 (inlined)
             |          |          
-            |           --0.53%--main
+            |           --1.47%--main
             |                     __libc_start_call_main
             |                     call_init (inlined)
             |                     __libc_start_main_impl (inlined)
             |                     _start
             |          
-             --1.05%--entry_SYSCALL_64
+             --1.05%--futex_wait (inlined)
+                       __lll_lock_wait (inlined)
                        |          
-                        --1.01%--__lll_lock_wake (inlined)
-                                  |          
-                                   --0.70%--worker
-                                             start_thread
-                                             __clone3 (inlined)
+                        --0.57%--main
+                                  __libc_start_call_main
+                                  call_init (inlined)
+                                  __libc_start_main_impl (inlined)
+                                  _start
 
-     3.41%  server   [kernel.kallsyms]     [k] native_queued_spin_lock_slowpath
+     5.80%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64
+            |
+            ---entry_SYSCALL_64
+               |          
+               |--3.86%--__lll_lock_wake (inlined)
+               |          |          
+               |          |--2.48%--main
+               |          |          __libc_start_call_main
+               |          |          call_init (inlined)
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |           --1.38%--worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --1.92%--futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                          |--1.19%--main
+                          |          __libc_start_call_main
+                          |          call_init (inlined)
+                          |          __libc_start_main_impl (inlined)
+                          |          _start
+                          |          
+                           --0.72%--worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     4.23%  server   [kernel.kallsyms]     [k] futex_wait_setup
+            |
+            ---futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wait (inlined)
+               __lll_lock_wait (inlined)
+               |          
+               |--2.48%--main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --1.75%--worker
+                          start_thread
+                          __clone3 (inlined)
+
+     3.45%  server   [kernel.kallsyms]     [k] native_queued_spin_lock_slowpath
             |
             ---native_queued_spin_lock_slowpath
                |          
-                --3.39%--futex_wake
+                --3.36%--futex_wake
                           do_futex
                           __x64_sys_futex
                           x64_sys_call
@@ -199,289 +244,284 @@
                           entry_SYSCALL_64_after_hwframe
                           __lll_lock_wake (inlined)
                           |          
-                          |--2.31%--main
+                          |--1.76%--worker
+                          |          start_thread
+                          |          __clone3 (inlined)
+                          |          
+                           --1.60%--main
+                                     __libc_start_call_main
+                                     call_init (inlined)
+                                     __libc_start_main_impl (inlined)
+                                     _start
+
+     2.76%  server   [kernel.kallsyms]     [k] _raw_spin_lock
+            |
+            ---_raw_spin_lock
+               |          
+               |--1.85%--do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __lll_lock_wake (inlined)
+               |          |          
+               |           --1.51%--worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --0.90%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                           --0.51%--worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     2.63%  server   [kernel.kallsyms]     [k] futex_q_unlock
+            |
+            ---futex_q_unlock
+               futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wait (inlined)
+               __lll_lock_wait (inlined)
+               |          
+               |--2.01%--main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.61%--worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.81%  server   [kernel.kallsyms]     [k] arch_exit_to_user_mode_prepare.isra.0
+            |
+            ---arch_exit_to_user_mode_prepare.isra.0
+               |          
+                --1.67%--do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          |          
+                          |--1.05%--__lll_lock_wake (inlined)
+                          |          |          
+                          |           --0.55%--worker
+                          |                     start_thread
+                          |                     __clone3 (inlined)
+                          |          
+                           --0.62%--futex_wait (inlined)
+                                     __lll_lock_wait (inlined)
+
+     1.78%  server   libc.so.6             [.] __GI___lll_lock_wake
+            |
+            ---__lll_lock_wake (inlined)
+               |          
+               |--1.05%--main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.73%--worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.75%  server   [kernel.kallsyms]     [k] get_futex_key
+            |
+            ---get_futex_key
+               |          
+               |--0.96%--futex_wake
+               |          do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __lll_lock_wake (inlined)
+               |          
+                --0.55%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     1.38%  server   [kernel.kallsyms]     [k] futex_wake
+            |
+            ---futex_wake
+               |          
+                --1.31%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+                          |          
+                          |--0.70%--main
                           |          __libc_start_call_main
                           |          call_init (inlined)
                           |          __libc_start_main_impl (inlined)
                           |          _start
                           |          
-                           --1.08%--worker
+                           --0.61%--worker
                                      start_thread
                                      __clone3 (inlined)
 
-     2.97%  server   libc.so.6             [.] __GI___lll_lock_wake
-            |          
-             --2.78%--entry_SYSCALL_64
-                       |          
-                       |--1.58%--__lll_lock_wake (inlined)
-                       |          |          
-                       |          |--0.96%--main
-                       |          |          __libc_start_call_main
-                       |          |          call_init (inlined)
-                       |          |          __libc_start_main_impl (inlined)
-                       |          |          _start
-                       |          |          
-                       |           --0.62%--worker
-                       |                     start_thread
-                       |                     __clone3 (inlined)
-                       |          
-                        --1.20%--futex_wait (inlined)
-                                  __lll_lock_wait (inlined)
-                                  |          
-                                   --0.75%--worker
-                                             start_thread
-                                             __clone3 (inlined)
-
-     2.45%  server   [kernel.kallsyms]     [k] futex_q_unlock
-            |          
-             --2.40%--futex_q_unlock
-                       futex_wait_setup
-                       __futex_wait
-                       futex_wait
-                       do_futex
-                       __x64_sys_futex
-                       x64_sys_call
-                       do_syscall_64
-                       entry_SYSCALL_64_after_hwframe
-                       futex_wait (inlined)
-                       __lll_lock_wait (inlined)
-                       |          
-                       |--1.79%--worker
-                       |          start_thread
-                       |          __clone3 (inlined)
-                       |          
-                        --0.61%--main
-                                  __libc_start_call_main
-                                  call_init (inlined)
-                                  __libc_start_main_impl (inlined)
-                                  _start
-
-     2.32%  server   [kernel.kallsyms]     [k] entry_SYSRETQ_unsafe_stack
-            |          
-            |--1.21%--__lll_lock_wake (inlined)
-            |          |          
-            |           --0.80%--worker
-            |                     start_thread
-            |                     __clone3 (inlined)
-            |          
-             --0.66%--entry_SYSRETQ_unsafe_stack
-
-     2.14%  server   [kernel.kallsyms]     [k] _raw_spin_lock
-            |          
-             --2.11%--_raw_spin_lock
-                       |          
-                       |--1.54%--do_futex
-                       |          __x64_sys_futex
-                       |          x64_sys_call
-                       |          do_syscall_64
-                       |          entry_SYSCALL_64_after_hwframe
-                       |          __lll_lock_wake (inlined)
-                       |          |          
-                       |           --1.35%--main
-                       |                     __libc_start_call_main
-                       |                     call_init (inlined)
-                       |                     __libc_start_main_impl (inlined)
-                       |                     _start
-                       |          
-                        --0.57%--futex_wait_setup
-                                  __futex_wait
-                                  futex_wait
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  futex_wait (inlined)
-                                  __lll_lock_wait (inlined)
-
-     2.08%  server   [kernel.kallsyms]     [k] arch_exit_to_user_mode_prepare.isra.0
-            |          
-             --1.93%--arch_exit_to_user_mode_prepare.isra.0
-                       |          
-                        --1.70%--do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  |          
-                                  |--1.11%--__lll_lock_wake (inlined)
-                                  |          |          
-                                  |          |--0.56%--main
-                                  |          |          __libc_start_call_main
-                                  |          |          call_init (inlined)
-                                  |          |          __libc_start_main_impl (inlined)
-                                  |          |          _start
-                                  |          |          
-                                  |           --0.55%--worker
-                                  |                     start_thread
-                                  |                     __clone3 (inlined)
-                                  |          
-                                   --0.58%--futex_wait (inlined)
-                                             __lll_lock_wait (inlined)
-
-     2.01%  server   [kernel.kallsyms]     [k] futex_wake
-            |          
-             --1.79%--futex_wake
-                       |          
-                        --1.76%--do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  __lll_lock_wake (inlined)
-                                  |          
-                                  |--0.99%--main
-                                  |          __libc_start_call_main
-                                  |          call_init (inlined)
-                                  |          __libc_start_main_impl (inlined)
-                                  |          _start
-                                  |          
-                                   --0.77%--worker
-                                             start_thread
-                                             __clone3 (inlined)
-
-     1.61%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64
-            |          
-             --1.36%--entry_SYSCALL_64
-                       |          
-                        --0.95%--__lll_lock_wake (inlined)
-                                  |          
-                                   --0.56%--worker
-                                             start_thread
-                                             __clone3 (inlined)
-
-     1.59%  server   server                [.] main
-            |          
-             --0.89%--main
-                       __libc_start_call_main
-                       call_init (inlined)
-                       __libc_start_main_impl (inlined)
-                       _start
-
-     1.47%  server   [kernel.kallsyms]     [k] do_syscall_64
-            |          
-             --1.20%--do_syscall_64
-                       |          
-                        --1.15%--entry_SYSCALL_64_after_hwframe
-                                  |          
-                                   --0.73%--__lll_lock_wake (inlined)
-
      1.30%  server   libddsc.so.0.10.5     [.] dds_handle_unpin
-            |          
-             --1.22%--dds_handle_unpin
-                       |          
-                        --1.13%--0x70182a2e2108
-                                  dds_take
-                                  worker
-                                  start_thread
-                                  __clone3 (inlined)
-
-     1.24%  server   [kernel.kallsyms]     [k] get_futex_key
-            |          
-             --1.16%--get_futex_key
-                       |          
-                        --0.70%--futex_wake
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  __lll_lock_wake (inlined)
-
-     1.03%  server   [kernel.kallsyms]     [k] __futex_hash
-            |          
-             --0.94%--__futex_hash
-
-     0.98%  server   [vdso]                [.] 0x0000000000000a06
             |
-            ---0x70182a363a09
+            ---dds_handle_unpin
+               |          
+                --1.26%--0x7d39963b8108
+                          dds_take
+                          worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.28%  server   [kernel.kallsyms]     [k] futex_q_lock
+            |
+            ---futex_q_lock
+               futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wait (inlined)
+               __lll_lock_wait (inlined)
+               |          
+               |--0.77%--main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.50%--worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.23%  server   [kernel.kallsyms]     [k] futex_ref_get
+            |
+            ---futex_ref_get
+               |          
+                --0.79%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     1.03%  server   [kernel.kallsyms]     [k] futex_wait
+            |
+            ---futex_wait
+               |          
+                --1.00%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                           --0.66%--main
+                                     __libc_start_call_main
+                                     call_init (inlined)
+                                     __libc_start_main_impl (inlined)
+                                     _start
+
+     1.02%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64_safe_stack
+            |
+            ---entry_SYSCALL_64_safe_stack
+               |          
+                --0.67%--__lll_lock_wake (inlined)
+
+     0.96%  server   [kernel.kallsyms]     [k] do_syscall_64
+            |
+            ---do_syscall_64
+               |          
+                --0.89%--entry_SYSCALL_64_after_hwframe
+                          |          
+                           --0.61%--__lll_lock_wake (inlined)
+
+     0.91%  server   server                [.] main
+            |
+            ---main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.86%  server   [kernel.kallsyms]     [k] entry_SYSRETQ_unsafe_stack
+            |
+            ---entry_SYSRETQ_unsafe_stack
+               |          
+                --0.55%--__lll_lock_wake (inlined)
+
+     0.73%  server   [kernel.kallsyms]     [k] __futex_hash
+            |
+            ---__futex_hash
+
+     0.70%  server   libddsc.so.0.10.5     [.] 0x00000000000b7292
+            |
+            ---0x7d39963aa292
+               dds_entity_pin_with_origin
+               0x7d39963b7fc5
+               dds_take
+               worker
+               start_thread
+               __clone3 (inlined)
+
+     0.70%  server   [kernel.kallsyms]     [k] futex_hash_put
+            |
+            ---futex_hash_put
+
+     0.68%  server   libddsc.so.0.10.5     [.] 0x00000000000c505f
+            |
+            ---0x7d39963b805f
+               dds_take
+               worker
+               start_thread
+               __clone3 (inlined)
+
+     0.66%  server   [kernel.kallsyms]     [k] __futex_wait
+            |
+            ---__futex_wait
+               |          
+                --0.63%--futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     0.58%  server   [vdso]                [.] 0x0000000000000a09
+            |
+            ---0x7d3996439a09
                __clock_gettime (inlined)
                dds_time
                worker
                start_thread
                __clone3 (inlined)
 
-     0.96%  server   libddsc.so.0.10.5     [.] 0x00000000000b728d
-            |
-            ---0x70182a2d4292
-               dds_entity_pin_with_origin
-               0x70182a2e1fc5
-               dds_take
-               worker
-               start_thread
-               __clone3 (inlined)
-
-     0.93%  server   [kernel.kallsyms]     [k] futex_ref_get
-            |          
-             --0.89%--futex_ref_get
-                       |          
-                        --0.68%--futex_wake
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  __lll_lock_wake (inlined)
-
-     0.85%  server   server                [.] worker
-            |          
-             --0.77%--worker
-                       start_thread
-                       __clone3 (inlined)
-
-     0.76%  server   [kernel.kallsyms]     [k] futex_q_lock
-            |          
-             --0.71%--futex_q_lock
-                       futex_wait_setup
-                       __futex_wait
-                       futex_wait
-                       do_futex
-                       __x64_sys_futex
-                       x64_sys_call
-                       do_syscall_64
-                       entry_SYSCALL_64_after_hwframe
-                       futex_wait (inlined)
-                       __lll_lock_wait (inlined)
-
-     0.72%  server   libddsc.so.0.10.5     [.] 0x00000000000c5056
-            |
-            ---0x70182a2e205f
-               dds_take
-               worker
-               start_thread
-               __clone3 (inlined)
-
-     0.71%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64_after_hwframe
-            |          
-             --0.64%--entry_SYSCALL_64_after_hwframe
-
-     0.70%  server   [kernel.kallsyms]     [k] __futex_wait
-            |          
-             --0.68%--__futex_wait
-                       |          
-                        --0.60%--futex_wait
-                                  do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  futex_wait (inlined)
-                                  __lll_lock_wait (inlined)
-
-     0.68%  server   [kernel.kallsyms]     [k] futex_wait
-            |          
-             --0.61%--futex_wait
-                       |          
-                        --0.58%--do_futex
-                                  __x64_sys_futex
-                                  x64_sys_call
-                                  do_syscall_64
-                                  entry_SYSCALL_64_after_hwframe
-                                  futex_wait (inlined)
-                                  __lll_lock_wait (inlined)
-
-     0.59%  server   [kernel.kallsyms]     [k] futex_hash_put
-            |          
-             --0.55%--futex_hash_put
-
-     0.51%  server   libddsc.so.0.10.5     [.] ddsrt_mutex_unlock
 
 
 #

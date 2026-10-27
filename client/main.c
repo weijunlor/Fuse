@@ -16,7 +16,8 @@ Options (for measurements, see bench/render.sh):
   --stress N           draw N extra animated sprites every frame
   --frames F           exit after F frames and print frame-time statistics
                        (vsync is switched on so every run renders the same way)
-  --render-immediate   one draw call per sprite (optimisation #16 "before") */
+  --render MODE        how sprites are drawn (optimisation #16, see render.h):
+                       immediate, float or short (default) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ static int compare_u64(const void *a, const void *b)
 microseconds, as one key=value line (parsed by bench/render.sh). Sorts the
 array in place. */
 static void print_frame_stats(uint64_t *a_arr_ns, int a_int_frames, int a_int_stress,
-                              bool a_b_immediate, double a_d_wall_s, double a_d_elapsed_s)
+                              RenderMode a_mode, double a_d_wall_s, double a_d_elapsed_s)
 {
     double d_sum = 0;
     for (int i = 0; i < a_int_frames; i++)
@@ -52,7 +53,7 @@ static void print_frame_stats(uint64_t *a_arr_ns, int a_int_frames, int a_int_st
     // bench/render.sh work out how many frames fall in a perf counting window)
     printf("frames=%d stress=%d mode=%s fps=%.2f elapsed_s=%.3f render_us_mean=%.1f"
            " render_us_p50=%.1f render_us_p99=%.1f render_us_max=%.1f gl_renderer=\"%s\"\n",
-           a_int_frames, a_int_stress, a_b_immediate ? "immediate" : "batched",
+           a_int_frames, a_int_stress, render_mode_name(a_mode),
            a_int_frames / a_d_wall_s, a_d_elapsed_s,
            d_sum / a_int_frames / 1000.0,
            a_arr_ns[a_int_frames / 2] / 1000.0,
@@ -76,18 +77,19 @@ int main(int argc, char **argv)
     // Command-line options (see the top of this file)
     int int_stress = 0;
     int int_frames = 0;
-    bool b_immediate = false;
+    RenderMode render_mode = RENDER_BATCHED_SHORT;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
             int_stress = atoi(argv[++i]);
         else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc)
             int_frames = atoi(argv[++i]);
-        else if (strcmp(argv[i], "--render-immediate") == 0)
-            b_immediate = true;
+        else if (strcmp(argv[i], "--render") == 0 && i + 1 < argc &&
+                 render_mode_from_name(argv[i + 1]) >= 0)
+            render_mode = (RenderMode)render_mode_from_name(argv[++i]);
         else
         {
-            fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render-immediate]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n", argv[0]);
             return 1;
         }
     }
@@ -113,7 +115,7 @@ int main(int argc, char **argv)
     }
 
     glfwMakeContextCurrent(window);
-    render_init(b_immediate, int_stress);
+    render_init(render_mode, int_stress);
 
     // Fill the real framebuffer, which is not WIDTH x HEIGHT on a scaled display
     int int_fb_w, int_fb_h;
@@ -154,7 +156,7 @@ int main(int argc, char **argv)
             if (int_frame == int_frames)
             {
                 uint64_t u_end_ns = timing_now_ns();
-                print_frame_stats(arr_frame_ns, int_frames, int_stress, b_immediate,
+                print_frame_stats(arr_frame_ns, int_frames, int_stress, render_mode,
                                   (u_end_ns - u_start_ns) / 1e9, (u_end_ns - u_main_ns) / 1e9);
                 break;
             }

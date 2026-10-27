@@ -1,0 +1,25 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu_core/cycles/'
+# Event count (approx.): 7424567700
+#
+# Overhead  Command      Shared Object                  
+# ........  ...........  ...............................
+#
+    32.26%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so
+    23.76%  client       libgallium-26.0.8-1ubuntu0.3.so
+    23.32%  client       client                         
+     6.78%  client       [kernel.kallsyms]              
+     4.36%  client:gl0   [kernel.kallsyms]              
+     2.92%  client:gl0   libc.so.6                      
+     2.23%  client       libc.so.6                      
+     1.19%  client:zfq0  [kernel.kallsyms]              
+     1.15%  client       libGL.so.1.7.0                 
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -1,0 +1,115 @@
+# started on Tue Oct 27 17:02:20 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 /tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client --stress 1000 --frames 1200':
+
+            348.86 msec task-clock                                                            
+            13,954      context-switches                                                      
+               177      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     1,267,403,013      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       504,439,709      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        79,566,626      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,123,837      cpu_core/branch-misses/                                               
+
+      17.377492547 seconds time elapsed
+
+       0.397289000 seconds user
+       0.315181000 seconds sys
+
+
+# started on Tue Oct 27 17:04:22 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 /tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client --stress 1000 --frames 1200':
+
+            365.04 msec task-clock                                                            
+            15,467      context-switches                                                      
+               150      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     1,283,214,436      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       515,174,043      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        81,530,789      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,272,832      cpu_core/branch-misses/                                               
+
+      17.373476112 seconds time elapsed
+
+       0.460142000 seconds user
+       0.278522000 seconds sys
+
+
+# started on Tue Oct 27 17:06:25 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 /tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client --stress 1000 --frames 1200':
+
+            364.95 msec task-clock                                                            
+            14,056      context-switches                                                      
+                91      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     1,286,593,879      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       505,130,468      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        79,687,940      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,244,603      cpu_core/branch-misses/                                               
+
+      17.404605090 seconds time elapsed
+
+       0.448967000 seconds user
+       0.293499000 seconds sys
+
+
+# started on Tue Oct 27 17:08:27 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 /tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client --stress 1000 --frames 1200':
+
+            355.27 msec task-clock                                                            
+            14,120      context-switches                                                      
+               102      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                      
+     1,266,087,249      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                
+       504,986,374      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                    
+        79,663,859      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                               
+         6,109,189      cpu_core/branch-misses/                                               
+
+      17.371270296 seconds time elapsed
+
+       0.440229000 seconds user
+       0.288511000 seconds sys
+
+
+# started on Tue Oct 27 17:10:30 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 /tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client --stress 1000 --frames 1200':
+
+            358.88 msec task-clock                                                            
+            13,962      context-switches                                                      
+               143      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     1,279,117,271      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       508,746,641      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        80,318,466      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,273,390      cpu_core/branch-misses/                                               
+
+      17.379605356 seconds time elapsed
+
+       0.431800000 seconds user
+       0.293544000 seconds sys
+
+

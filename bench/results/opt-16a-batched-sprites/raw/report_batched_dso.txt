@@ -4,16 +4,17 @@
 # Total Lost Samples: 0
 #
 # Samples: 1K of event 'cpu_core/cycles/'
-# Event count (approx.): 5948875408
+# Event count (approx.): 6089804770
 #
 # Overhead  Command      Shared Object                  
 # ........  ...........  ...............................
 #
-    82.40%  client       libc.so.6                      
-     4.92%  client       client                         
-     4.67%  client       [kernel.kallsyms]              
-     3.77%  client       libgallium-26.0.8-1ubuntu0.3.so
-     1.28%  client:zfq0  [kernel.kallsyms]              
+    81.38%  client       libc.so.6                      
+     6.09%  client       client                         
+     4.57%  client       [kernel.kallsyms]              
+     3.17%  client       libgallium-26.0.8-1ubuntu0.3.so
+     1.41%  client:zfq0  [kernel.kallsyms]              
+     1.01%  client       libvulkan_nouveau.so           
 
 
 #

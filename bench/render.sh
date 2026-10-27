@@ -5,19 +5,29 @@
 #   bench/results/<label>/
 #     setup.txt    machine, OS, GL renderer, build flags and optimisation level, git commit
 #     report.txt   how it was measured and the results table
-#     raw/         client frame-time lines, perf stat CSVs, perf.data, perf script dumps
+#     raw/         client frame-time lines, perf stat text (as printed by perf), perf.data, perf script dumps
 #
 # Usage: bench/render.sh <label> [bin_dir]      (bin_dir default: build)
-#   make profile && bench/render.sh opt-16a-batched-sprites build
+#   make profile && bench/render.sh opt-16b-short-vertices build
 #
 # The client runs alone (no server), with --stress N extra animated sprites and
 # --frames F, then prints the CPU time spent in render_frame() per frame
-# (mean, p50, p99, max). Both drawing paths come from the same binary:
-# immediate (--render-immediate, the "before") and batched (the "after").
+# (mean, p50, p99, max). Every drawing mode comes from the same binary
+# (--render <mode>, see client/render.h), so each step of #16 is measured
+# against the step before it in the same session:
+#   immediate  one glBegin/glEnd per sprite             (#16a before)
+#   float      one glDrawArrays, 16-byte vertices        (#16a after, #16b before)
+#   short      one glDrawArrays, 8-byte vertices         (#16b after)
 #
 # Settings (environment variables, defaults in brackets):
 #   RUNS [5] runs per (mode, N)   FRAMES [1200]   STRESS ["0 1000 10000"]
 #   CPUS [4-7] P-cores the client is pinned to
+#   MODES ["immediate float short"] drawing modes to compare
+#   SOURCE_REF [none] tag/commit the binary was built from, if not the checkout
+#
+# Binaries from before #16b (tag opt-16a-batched-sprites) only have
+# --render-immediate; for those the modes are "immediate batched" (batched =
+# what is now called float), detected automatically.
 #   RECORD_STRESS [10000] sprite count used for perf record
 #
 # Needs perf_event_paranoid <= -1, kptr_restrict = 0, performance governor,
@@ -39,8 +49,16 @@ FRAMES=${FRAMES:-1200}
 STRESS=${STRESS:-0 1000 10000}
 CPUS=${CPUS:-4-7}
 RECORD_STRESS=${RECORD_STRESS:-10000}
-EVENTS=task-clock,cycles,instructions
-MODES="immediate batched"
+# Same events as bench/profile.sh
+EVENTS=task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses
+
+# Older client: one switch (--render-immediate) instead of --render <mode>
+b_legacy=false
+if grep -q -a -- '--render-immediate' "$CLIENT"; then
+    b_legacy=true
+    MODES=${MODES:-immediate batched}
+fi
+MODES=${MODES:-immediate float short}
 
 OUT=bench/results/$LABEL
 RAW=$OUT/raw
@@ -60,18 +78,22 @@ if grep -qv performance /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; t
     echo "Run first: sudo cpupower frequency-set -g performance" >&2; exit 1
 fi
 mkdir -p "$RAW"
-printf '# %s  RUNS=%s FRAMES=%s STRESS="%s" CPUS=%s\n' "$(date -Iseconds)" \
-    "$RUNS" "$FRAMES" "$STRESS" "$CPUS" >> "$CMDS"
+printf '# %s  RUNS=%s FRAMES=%s STRESS="%s" CPUS=%s MODES="%s"\n' "$(date -Iseconds)" \
+    "$RUNS" "$FRAMES" "$STRESS" "$CPUS" "$MODES" >> "$CMDS"
+
+# Client arguments for one drawing mode
+mode_args() {
+    if ! $b_legacy; then
+        echo "--render $1"
+    elif [ "$1" = immediate ]; then
+        echo "--render-immediate"
+    fi
+}
 
 # Print a command to raw/commands.txt, then run it
 logged() {
     printf '%s\n' "$*" >> "$CMDS"
     "$@"
-}
-
-# Client arguments for one drawing mode
-mode_args() {
-    if [ "$1" = immediate ]; then echo "--render-immediate"; fi
 }
 
 # ---------------------------------------------------------------------------
@@ -80,17 +102,18 @@ mode_args() {
 # ---------------------------------------------------------------------------
 for mode in $MODES; do
     for n in $STRESS; do
-        rm -f "$RAW/frames_${mode}_$n.txt" "$RAW/stat_${mode}_$n.csv"
+        rm -f "$RAW/frames_${mode}_$n.txt" "$RAW/stat_${mode}_$n.txt"
     done
 done
 for i in $(seq "$RUNS"); do
     for n in $STRESS; do
         for mode in $MODES; do
             echo "run $i/$RUNS: $mode, $n sprites"
-            # shellcheck disable=SC2046
             # -D 3000: start counting after 3 s, when start-up (zink/Vulkan
             # initialisation alone is ~2 billion instructions) is over
-            logged perf stat -x, --append -D 3000 -o "$RAW/stat_${mode}_$n.csv" -e "$EVENTS" -- \
+            # Normal (human-readable) perf stat output; stat_normalize reads it back
+            # shellcheck disable=SC2046
+            logged perf stat --append -D 3000 -o "$RAW/stat_${mode}_$n.txt" -e "$EVENTS" -- \
                 taskset -c "$CPUS" "$CLIENT" --stress "$n" --frames "$FRAMES" $(mode_args "$mode") \
                 | grep '^frames=' >> "$RAW/frames_${mode}_$n.txt"
         done
@@ -147,8 +170,11 @@ mean_sd() {
     echo "Each run draws the floor (130 tiles) + N animated stress sprites for $FRAMES frames,"
     echo "then prints the CPU time of render_frame() per frame (clock_gettime around the"
     echo "call; GPU work and buffer swaps are not included)."
-    echo "Modes: immediate = one glBegin/glEnd per sprite (--render-immediate, before);"
-    echo "batched = one vertex array and one glDrawArrays per frame (after)."
+    echo "Modes (--render <mode>): immediate = one glBegin/glEnd per sprite;"
+    echo "float = one vertex array and one glDrawArrays per frame, 16-byte vertices;"
+    echo "short = as float with 8-byte vertices (shorts)."
+    echo "(Binaries before #16b call the float mode \"batched\" and select immediate"
+    echo "with --render-immediate.) Modes in this run: $MODES"
     echo "$RUNS runs per mode and N, interleaved. perf stat counts the whole process"
     echo "(all threads, including the GL driver's) from 3 s after start, so start-up is excluded."
     echo
@@ -160,7 +186,7 @@ mean_sd() {
             fps=$(field fps < "$f" | mean_sd | cut -d' ' -f1)
             # Instructions per frame, per run, then averaged. perf counts from
             # 3 s after start, so the frames it saw = fps x (elapsed_s - 3).
-            # Run i of the CSV (blocks start with "# started") pairs with line i of $f.
+            # Run i of the perf stat file (blocks start with "# started") pairs with line i of $f.
             instr=$(awk -F, '
                 NR == FNR {
                     match($0, /fps=[0-9.]+/);       fr[NR] = substr($0, RSTART + 4, RLENGTH - 4) + 0
@@ -171,7 +197,7 @@ mean_sd() {
                 $3 ~ /instructions/ && $1 ~ /^[0-9]+$/ && el[run] > 3 {
                     s += $1 / (fr[run] * (el[run] - 3)); n++
                 }
-                END { if (n) printf "%.0f", s / n }' "$f" "$RAW/stat_${mode}_$n.csv")
+                END { if (n) printf "%.0f", s / n }' "$f" <(stat_normalize "$RAW/stat_${mode}_$n.txt"))
             printf "%-10s %7s %18s %18s %18s %10s %16s\n" "$mode" "$n" \
                 "$(field render_us_mean < "$f" | mean_sd)" \
                 "$(field render_us_p50 < "$f" | mean_sd)" \

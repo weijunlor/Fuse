@@ -1,30 +1,30 @@
-# 2026-10-27T14:15:44+00:00  STEPS="stat lock trace record" RUNS=10 DURATION=30 CLIENTS=4
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84750 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84747 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86694 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86692 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88654 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88652 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 90646 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 90643 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 92605 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 92602 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 94596 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 94593 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 96572 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 96569 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 98555 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 98553 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 100549 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 100546 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_client.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 102536 -- sleep 30
-perf stat -x, --append -o bench/results/baseline-O2/raw/stat_server.csv -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 102534 -- sleep 30
-sudo perf lock record -o bench/results/baseline-O2/raw/lock_server.data -p 104572 -- sleep 30
+# 2026-10-27T16:44:32+00:00  STEPS="stat lock trace record" RUNS=10 DURATION=30 CLIENTS=4
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 238758 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 238756 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 240745 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 240742 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 242692 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 242689 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 244642 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 244639 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 246628 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 246625 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 248614 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 248612 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 250606 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 250604 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 252565 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 252563 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 254515 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 254512 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 256508 -- sleep 30
+perf stat --append -o bench/results/baseline-O2/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 256505 -- sleep 30
+sudo perf lock record -o bench/results/baseline-O2/raw/lock_server.data -p 258496 -- sleep 30
 perf lock contention -i bench/results/baseline-O2/raw/lock_server.data -t
-sudo perf trace -s -o bench/results/baseline-O2/raw/trace_server.txt -p 106540 -- sleep 30
-sudo perf trace -s -o bench/results/baseline-O2/raw/trace_client.txt -p 106543 -- sleep 30
-perf record -q -F 499 --call-graph fp -o bench/results/baseline-O2/raw/record_server.data -p 108515 -- sleep 10
-perf record -q -F 499 --call-graph fp -o bench/results/baseline-O2/raw/record_client.data -p 108518 -- sleep 10
+sudo perf trace -s -o bench/results/baseline-O2/raw/trace_server.txt -p 260455 -- sleep 30
+sudo perf trace -s -o bench/results/baseline-O2/raw/trace_client.txt -p 260457 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/baseline-O2/raw/record_server.data -p 262454 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/baseline-O2/raw/record_client.data -p 262457 -- sleep 10
 perf script -i bench/results/baseline-O2/raw/record_server.data
 perf report -i bench/results/baseline-O2/raw/record_server.data --stdio --no-children --percent-limit 0.5
 perf script -i bench/results/baseline-O2/raw/record_client.data

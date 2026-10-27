@@ -1,0 +1,190 @@
+# started on Tue Oct 27 16:36:18 2026
+
+
+ Performance counter stats for process id '212997':
+
+         30,237.17 msec task-clock                                                            
+            15,554      context-switches                                                      
+               304      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   143,886,099,754      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   276,129,879,439      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    62,516,007,465      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         3,313,830      cpu_core/branch-misses/                                               
+
+      30.004018811 seconds time elapsed
+
+# started on Tue Oct 27 16:36:54 2026
+
+
+ Performance counter stats for process id '214957':
+
+         30,273.41 msec task-clock                                                            
+            15,629      context-switches                                                      
+               301      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   143,968,887,650      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   276,111,928,097      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    62,510,737,220      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         5,054,169      cpu_core/branch-misses/                                               
+
+      30.004071646 seconds time elapsed
+
+# started on Tue Oct 27 16:37:30 2026
+
+
+ Performance counter stats for process id '216964':
+
+         30,262.72 msec task-clock                                                            
+            15,648      context-switches                                                      
+               356      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   143,051,465,072      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   274,160,696,970      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    62,068,568,952      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         4,534,029      cpu_core/branch-misses/                                               
+
+      30.002602073 seconds time elapsed
+
+# started on Tue Oct 27 16:38:06 2026
+
+
+ Performance counter stats for process id '218911':
+
+         30,301.10 msec task-clock                                                            
+            15,502      context-switches                                                      
+               262      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,626,812,624      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   267,606,531,230      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    60,584,233,285      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         4,760,679      cpu_core/branch-misses/                                               
+
+      30.003844189 seconds time elapsed
+
+# started on Tue Oct 27 16:38:42 2026
+
+
+ Performance counter stats for process id '220909':
+
+         30,289.16 msec task-clock                                                            
+            15,472      context-switches                                                      
+               324      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,416,756,358      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   266,929,011,457      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    60,430,930,464      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         4,675,143      cpu_core/branch-misses/                                               
+
+      30.002582826 seconds time elapsed
+
+# started on Tue Oct 27 16:39:18 2026
+
+
+ Performance counter stats for process id '222869':
+
+         30,264.13 msec task-clock                                                            
+            15,503      context-switches                                                      
+               334      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,327,902,647      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   266,960,930,171      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    60,438,182,887      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         3,536,331      cpu_core/branch-misses/                                               
+
+      30.003744562 seconds time elapsed
+
+# started on Tue Oct 27 16:39:54 2026
+
+
+ Performance counter stats for process id '224829':
+
+         30,271.00 msec task-clock                                                            
+            15,498      context-switches                                                      
+               215      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,178,076,545      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   266,863,539,406      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    60,415,947,877      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         3,391,080      cpu_core/branch-misses/                                               
+
+      30.003322667 seconds time elapsed
+
+# started on Tue Oct 27 16:40:31 2026
+
+
+ Performance counter stats for process id '226739':
+
+         30,264.01 msec task-clock                                                            
+            15,353      context-switches                                                      
+               254      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,022,262,000      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   266,629,477,005      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    60,363,767,515      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         3,516,042      cpu_core/branch-misses/                                               
+
+      30.003723572 seconds time elapsed
+
+# started on Tue Oct 27 16:41:07 2026
+
+
+ Performance counter stats for process id '228689':
+
+         30,284.59 msec task-clock                                                            
+            15,513      context-switches                                                      
+               323      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   139,275,339,516      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   273,595,192,449      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    62,213,517,851      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         4,329,021      cpu_core/branch-misses/                                               
+
+      30.003076987 seconds time elapsed
+
+# started on Tue Oct 27 16:41:43 2026
+
+
+ Performance counter stats for process id '230656':
+
+         30,264.77 msec task-clock                                                            
+            15,266      context-switches                                                      
+               291      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+   138,507,988,501      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+   272,217,030,793      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+    61,899,661,161      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         3,515,581      cpu_core/branch-misses/                                               
+
+      30.003575438 seconds time elapsed
+

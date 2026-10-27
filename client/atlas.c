@@ -58,6 +58,12 @@ void atlas_uv(int a_int_sprite, float *u0, float *v0, float *u1, float *v1)
     *v1 = *v0 + f_tile_v;
 }
 
+void atlas_texel(int a_int_sprite, int *x, int *y)
+{
+    *x = (a_int_sprite % ATLAS_COLS) * ATLAS_TILE;
+    *y = (a_int_sprite / ATLAS_COLS) * ATLAS_TILE;
+}
+
 int atlas_frame(int a_int_first, int a_int_frames, int a_int_step,
                 double a_d_time_s, double a_d_frame_s)
 {

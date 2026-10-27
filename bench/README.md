@@ -28,6 +28,11 @@ bench/profile.sh baseline-O2 build/baseline-O2
 make profile && bench/profile.sh opt-01-unlock-before-publish build
 ```
 
+perf stat output is saved exactly as `perf stat` prints it on screen (`raw/stat_*.txt`, one block per run,
+each starting with `# started on`). Runs before 2026-10-27 16:30 (`baseline-O0`, `baseline-O2`, `split-modules`,
+`opt-16a-*`, `opt-16b-*`) saved CSV instead (`raw/stat_*.csv`, `perf stat -x,`); `stat_normalize` in `setup_info.sh`
+reads both.
+
 Use one label per optimisation step (matching the git tag) so the final report can compare every step.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
 
@@ -40,13 +45,13 @@ rendering optimisations. The client has test options for this:
 |---|---|
 | `--stress N` | draw N extra animated sprites (fixed pseudo-random positions, same every run) |
 | `--frames F` | vsync on, draw F frames, print one `frames= ... render_us_mean/p50/p99/max ...` line, exit |
-| `--render-immediate` | the "before" drawing path: one `glBegin`/`glEnd` per sprite (default is batched) |
+| `--render MODE` | drawing path (#16 steps): `immediate` (one `glBegin`/`glEnd` per sprite), `float` (one `glDrawArrays`, 16-byte vertices), `short` (8-byte vertices, default) |
 
-The script runs both modes at each N in `STRESS` (default `0 1000 10000`), 5 interleaved runs each, under
+The script runs every mode in `MODES` (default `immediate float short`) at each N in `STRESS` (default `0 1000 10000`), 5 interleaved runs each, under
 `perf stat` (from 3 s after start, so zink/Vulkan start-up is excluded), then one `perf record` per mode.
 It writes the same `setup.txt` / `report.txt` / `raw/` layout as `profile.sh` (`setup.txt` also gives the GL renderer).
 Both scripts write `setup.txt` with `bench/setup_info.sh`.
 
 ```bash
-make profile && bench/render.sh opt-16a-batched-sprites build
+make profile && bench/render.sh opt-16b-short-vertices build
 ```

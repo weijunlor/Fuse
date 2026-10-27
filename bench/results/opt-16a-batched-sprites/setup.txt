@@ -1,12 +1,12 @@
 Profiling setup: opt-16a-batched-sprites
-Recorded: 2026-10-27T15:57:28+00:00
+Recorded: 2026-10-27T17:12:32+00:00
 
 == Build
-build/client:
+/tmp/claude-1000/-home-ubuntu-Fuse/ba8b87fa-4fe6-4bfb-9d8e-5ca5267664b0/scratchpad/wt/opt-16a-batched-sprites/build/client:
   Optimisation level: -O2
   Compiler flags (DW_AT_producer): GNU C11 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -std=gnu11 -fno-omit-frame-pointer -foffload-options=-l_GCC_m -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
-  sha256: 6c1df64f2af848ac738d9ecf21f69f2277336781e0498b774385b599c5107339
-Git: 7a2ecd4 on main (uncommitted changes)
+  sha256: b1198f88fe0ee3252c0f8b12ce4ed1ede33859bd3d97e8ea06d4bd6a3adaf8ee
+Git: binaries built from opt-16a-batched-sprites (0e654b5)
 
 == Machine
 CPU(s):                                  24
@@ -14,7 +14,7 @@ Model name:                              Intel(R) Core(TM) i7-14650HX
 Thread(s) per core:                      2
 Core(s) per socket:                      16
 Socket(s):                               1
-CPU(s) scaling MHz:                      22%
+CPU(s) scaling MHz:                      29%
 L1d cache:                               640 KiB (16 instances)
 L1i cache:                               768 KiB (16 instances)
 L2 cache:                                24 MiB (10 instances)

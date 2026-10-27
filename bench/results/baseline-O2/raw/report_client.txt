@@ -3,234 +3,193 @@
 #
 # Total Lost Samples: 0
 #
-# Samples: 5K of event 'cpu_core/cycles/P'
-# Event count (approx.): 46116334452
+# Samples: 5K of event 'cpu_core/cycles/'
+# Event count (approx.): 46276875386
 #
 # Overhead  Command      Shared Object                    Symbol                                        
 # ........  ...........  ...............................  ..............................................
 #
-    28.29%  client       libc.so.6                        [.] pthread_mutex_lock@@GLIBC_2.2.5
+    30.76%  client       libc.so.6                        [.] pthread_mutex_lock@@GLIBC_2.2.5
             |          
-            |--22.10%--lll_mutex_lock_optimized (inlined)
+            |--26.00%--lll_mutex_lock_optimized (inlined)
             |          ___pthread_mutex_lock (inlined)
             |          |          
-            |          |--12.18%--ddsrt_mutex_lock
+            |          |--16.14%--ddsrt_mutex_lock
             |          |          |          
-            |          |          |--5.10%--0x782042123258
+            |          |          |--5.77%--0x72b8c7890af0
+            |          |          |          0x72b8c7890b88
+            |          |          |          0x72b8c789b09c
+            |          |          |          dds_take
+            |          |          |          worker
+            |          |          |          start_thread
+            |          |          |          __clone3 (inlined)
+            |          |          |          
+            |          |          |--5.76%--0x72b8c788d258
             |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x782042130fc5
+            |          |          |          0x72b8c789afc5
             |          |          |          dds_take
             |          |          |          worker
             |          |          |          start_thread
             |          |          |          __clone3 (inlined)
             |          |          |          
-            |          |          |--4.21%--dds_handle_unpin
-            |          |          |          0x782042131108
-            |          |          |          dds_take
-            |          |          |          worker
-            |          |          |          start_thread
-            |          |          |          __clone3 (inlined)
-            |          |          |          
-            |          |           --2.87%--0x782042126af0
-            |          |                     0x782042126b88
-            |          |                     0x78204213109c
+            |          |           --4.61%--dds_handle_unpin
+            |          |                     0x72b8c789b108
             |          |                     dds_take
             |          |                     worker
             |          |                     start_thread
             |          |                     __clone3 (inlined)
             |          |          
-            |           --9.92%--worker
+            |           --9.86%--worker
             |                     start_thread
             |                     __clone3 (inlined)
             |          
-            |--5.15%--___pthread_mutex_lock (inlined)
-            |          |          
-            |          |--1.88%--ddsrt_mutex_lock
-            |          |          |          
-            |          |          |--0.78%--0x782042123258
-            |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x782042130fc5
-            |          |          |          dds_take
-            |          |          |          worker
-            |          |          |          start_thread
-            |          |          |          __clone3 (inlined)
-            |          |          |          
-            |          |           --0.60%--dds_handle_unpin
-            |          |                     0x782042131108
-            |          |                     dds_take
-            |          |                     worker
-            |          |                     start_thread
-            |          |                     __clone3 (inlined)
-            |          |          
-            |          |--1.34%--worker
-            |          |          start_thread
-            |          |          __clone3 (inlined)
-            |          |          
-            |          |--0.74%--start_thread
-            |          |          __clone3 (inlined)
-            |          |          
-            |           --0.54%--dds_handle_unpin
-            |                     0x782042131108
-            |                     dds_take
-            |                     worker
-            |                     start_thread
-            |                     __clone3 (inlined)
-            |          
-             --0.54%--ddsrt_mutex_lock
+             --4.76%--___pthread_mutex_lock (inlined)
+                       |          
+                       |--1.20%--start_thread
+                       |          __clone3 (inlined)
+                       |          
+                       |--1.07%--ddsrt_mutex_lock
+                       |          
+                       |--1.02%--worker
+                       |          start_thread
+                       |          __clone3 (inlined)
+                       |          
+                        --0.58%--0x72b8c788d258
+                                  dds_entity_pin_with_origin
+                                  0x72b8c789afc5
+                                  dds_take
+                                  worker
+                                  start_thread
+                                  __clone3 (inlined)
 
-    26.10%  client       libc.so.6                        [.] pthread_mutex_unlock@@GLIBC_2.2.5
+    27.94%  client       libc.so.6                        [.] pthread_mutex_unlock@@GLIBC_2.2.5
             |          
-            |--20.29%--lll_mutex_unlock_optimized (inlined)
+            |--24.17%--lll_mutex_unlock_optimized (inlined)
             |          __pthread_mutex_unlock_usercnt (inlined)
             |          ___pthread_mutex_unlock (inlined)
             |          |          
-            |          |--12.69%--ddsrt_mutex_unlock
+            |          |--13.72%--ddsrt_mutex_unlock
             |          |          |          
-            |          |          |--4.69%--0x782042126914
-            |          |          |          0x782042126b88
-            |          |          |          0x78204213109c
+            |          |          |--4.77%--0x72b8c789b108
             |          |          |          dds_take
             |          |          |          worker
             |          |          |          start_thread
             |          |          |          __clone3 (inlined)
             |          |          |          
-            |          |          |--4.12%--0x7820421232a2
-            |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x782042130fc5
+            |          |          |--4.53%--0x72b8c7890914
+            |          |          |          0x72b8c7890b88
+            |          |          |          0x72b8c789b09c
             |          |          |          dds_take
             |          |          |          worker
             |          |          |          start_thread
             |          |          |          __clone3 (inlined)
             |          |          |          
-            |          |           --3.89%--0x782042131108
+            |          |           --4.42%--0x72b8c788d2a2
+            |          |                     dds_entity_pin_with_origin
+            |          |                     0x72b8c789afc5
             |          |                     dds_take
             |          |                     worker
             |          |                     start_thread
             |          |                     __clone3 (inlined)
             |          |          
-            |           --7.61%--worker
+            |           --10.45%--worker
             |                     start_thread
             |                     __clone3 (inlined)
             |          
-            |--2.67%--__pthread_mutex_unlock_usercnt (inlined)
-            |          ___pthread_mutex_unlock (inlined)
+            |--2.60%--___pthread_mutex_unlock (inlined)
             |          |          
-            |          |--1.68%--ddsrt_mutex_unlock
-            |          |          |          
-            |          |          |--0.74%--0x7820421232a2
-            |          |          |          dds_entity_pin_with_origin
-            |          |          |          0x782042130fc5
-            |          |          |          dds_take
-            |          |          |          worker
-            |          |          |          start_thread
-            |          |          |          __clone3 (inlined)
-            |          |          |          
-            |          |           --0.64%--0x782042126914
-            |          |                     0x782042126b88
-            |          |                     0x78204213109c
-            |          |                     dds_take
-            |          |                     worker
-            |          |                     start_thread
-            |          |                     __clone3 (inlined)
+            |          |--0.73%--ddsrt_mutex_unlock
             |          |          
-            |           --1.00%--worker
+            |           --0.54%--worker
             |                     start_thread
             |                     __clone3 (inlined)
             |          
-            |--1.98%--___pthread_mutex_unlock (inlined)
-            |          |          
-            |          |--0.98%--start_thread
-            |          |          __clone3 (inlined)
-            |          |          
-            |           --0.54%--0x782042126914
-            |                     0x782042126b88
-            |                     0x78204213109c
-            |                     dds_take
-            |                     worker
-            |                     start_thread
-            |                     __clone3 (inlined)
-            |          
-            |--0.60%--ddsrt_mutex_unlock
-            |          
-             --0.56%--worker
-                       start_thread
-                       __clone3 (inlined)
-
-     6.14%  client       libddsc.so.0.10.5                [.] dds_handle_unpin
-            |          
-             --5.70%--dds_handle_unpin
+             --1.18%--__pthread_mutex_unlock_usercnt (inlined)
+                       ___pthread_mutex_unlock (inlined)
                        |          
-                        --5.44%--0x782042131108
-                                  dds_take
-                                  worker
-                                  start_thread
-                                  __clone3 (inlined)
+                        --0.72%--ddsrt_mutex_unlock
 
-     4.55%  client       libddsc.so.0.10.5                [.] 0x00000000000b728d
+     7.29%  client       libddsc.so.0.10.5                [.] dds_handle_unpin
             |
-            ---0x782042123292
+            ---dds_handle_unpin
+               |          
+                --6.91%--0x72b8c789b108
+                          dds_take
+                          worker
+                          start_thread
+                          __clone3 (inlined)
+
+     5.58%  client       libddsc.so.0.10.5                [.] 0x00000000000c505f
+            |
+            ---0x72b8c789b05f
+               dds_take
+               worker
+               start_thread
+               __clone3 (inlined)
+
+     5.00%  client       libddsc.so.0.10.5                [.] 0x00000000000b7292
+            |
+            ---0x72b8c788d292
                dds_entity_pin_with_origin
-               0x782042130fc5
+               0x72b8c789afc5
                dds_take
                worker
                start_thread
                __clone3 (inlined)
 
-     3.82%  client       libddsc.so.0.10.5                [.] 0x00000000000c5056
+     2.07%  client       client                           [.] worker
             |
-            ---0x78204213105f
+            ---worker
+               start_thread
+               __clone3 (inlined)
+
+     1.71%  client       libddsc.so.0.10.5                [.] ddsrt_mutex_lock
+            |
+            ---ddsrt_mutex_lock
+
+     1.59%  client       libddsc.so.0.10.5                [.] ddsrt_mutex_unlock
+            |
+            ---ddsrt_mutex_unlock
+
+     1.15%  client       libddsc.so.0.10.5                [.] pthread_mutex_unlock@plt
+            |
+            ---pthread_mutex_unlock@plt
+
+     0.82%  client       libddsc.so.0.10.5                [.] ddsrt_hh_lookup
+            |
+            ---ddsrt_hh_lookup
+
+     0.63%  client       client                           [.] pthread_mutex_lock@plt
+            |
+            ---pthread_mutex_lock@plt
+               start_thread
+               __clone3 (inlined)
+
+     0.60%  client       libddsc.so.0.10.5                [.] pthread_mutex_lock@plt
+            |
+            ---pthread_mutex_lock@plt
+
+     0.58%  client       libddsc.so.0.10.5                [.] 0x00000000000b5290
+            |
+            ---0x72b8c788b290
+               0x72b8c788d268
+               dds_entity_pin_with_origin
+               0x72b8c789afc5
                dds_take
                worker
                start_thread
                __clone3 (inlined)
 
-     1.76%  client       libddsc.so.0.10.5                [.] ddsrt_mutex_lock
-            |          
-             --1.07%--pthread_mutex_lock@plt
-                       |          
-                        --0.56%--0x782042123258
-                                  dds_entity_pin_with_origin
-                                  0x782042130fc5
-                                  dds_take
-                                  worker
-                                  start_thread
-                                  __clone3 (inlined)
-
-     1.52%  client       libddsc.so.0.10.5                [.] ddsrt_mutex_unlock
-            |          
-             --1.12%--pthread_mutex_unlock@plt
-
-     1.40%  client       client                           [.] worker
-            |          
-             --0.54%--worker
-                       start_thread
-                       __clone3 (inlined)
-
-     1.38%  client       libddsc.so.0.10.5                [.] dds_take
-            |          
-             --0.86%--dds_take
-                       |          
-                        --0.58%--worker
-                                  start_thread
-                                  __clone3 (inlined)
-
-     1.10%  client       libddsc.so.0.10.5                [.] ddsrt_hh_lookup
-            |          
-             --0.74%--ddsrt_hh_lookup
-
-     0.87%  client       libddsc.so.0.10.5                [.] pthread_mutex_unlock@plt
+     0.56%  client       client                           [.] pthread_mutex_unlock@plt
             |
-            ---___pthread_mutex_unlock (inlined)
+            ---pthread_mutex_unlock@plt
+               start_thread
+               __clone3 (inlined)
 
-     0.62%  client       libddsc.so.0.10.5                [.] pthread_mutex_lock@plt
+     0.52%  client       libddsc.so.0.10.5                [.] dds_take
             |
-            ---___pthread_mutex_lock (inlined)
+            ---dds_take
 
-     0.60%  client       libddsc.so.0.10.5                [.] dds_entity_pin_with_origin
-            |          
-             --0.52%--dds_entity_pin_with_origin
-
-     0.54%  client       ld-linux-x86-64.so.2             [.] __tls_get_addr
 
 
 #

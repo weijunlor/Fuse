@@ -7,7 +7,7 @@
 #                  level (read from the binary's debug info), git commit
 #     report.txt   how the profiling was done (scenario, exact perf commands)
 #                  and a summary of the results
-#     raw/         untouched perf output: perf stat CSVs, perf.data files,
+#     raw/         untouched perf output: perf stat text (as printed by perf), perf.data files,
 #                  perf script dumps, perf trace / perf lock output
 #
 # Usage: bench/profile.sh <label> <bin_dir>
@@ -132,14 +132,15 @@ write_setup "$LABEL" "$SERVER" "$CLIENT" > "$OUT/setup.txt"
 # 1. perf stat: server and client #1, RUNS fresh runs
 # ---------------------------------------------------------------------------
 if want stat; then
-    rm -f "$RAW/stat_server.csv" "$RAW/stat_client.csv"
+    rm -f "$RAW/stat_server.txt" "$RAW/stat_client.txt"
     for i in $(seq "$RUNS"); do
         echo "perf stat run $i/$RUNS"
         start_scenario
-        logged perf stat -x, --append -o "$RAW/stat_server.csv" -e "$EVENTS" \
+        # Normal (human-readable) perf stat output; stat_normalize reads it back
+        logged perf stat --append -o "$RAW/stat_server.txt" -e "$EVENTS" \
             -p "$int_server_pid" -- sleep "$DURATION" &
         int_perf_pid=$!
-        logged perf stat -x, --append -o "$RAW/stat_client.csv" -e "$EVENTS" \
+        logged perf stat --append -o "$RAW/stat_client.txt" -e "$EVENTS" \
             -p "${arr_client_pids[0]}" -- sleep "$DURATION"
         wait "$int_perf_pid"
         stop_scenario
@@ -245,7 +246,7 @@ stat_table() {
             }
             row("mean", m, 1)
             row("sd", sd, 0)
-        }' "$1"
+        }' <(stat_normalize "$1")
 }
 
 # Per-thread syscall totals from perf trace -s, largest first
@@ -276,7 +277,8 @@ trace_table() {
     echo "== 3. Measurements"
     echo "a) perf stat: $RUNS runs x ${DURATION} s, server and client #1 counted at the"
     echo "   same time. Events: $EVENTS"
-    echo "   Raw: raw/stat_server.csv, raw/stat_client.csv (one block per run)"
+    echo "   Raw: raw/stat_server.txt, raw/stat_client.txt (perf stat's normal output,"
+    echo "   one block per run)"
     echo "b) perf lock record + perf lock contention: 1 run, ${DURATION} s, server."
     echo "   Kernel lock tracepoints only: pthread mutexes in user space do not"
     echo "   appear here; their contention shows as futex calls in (c)."
@@ -292,9 +294,9 @@ trace_table() {
     echo
     echo "== 4. Results"
     for name in server client; do
-        if [ -s "$RAW/stat_$name.csv" ]; then
+        if [ -s "$RAW/stat_$name.txt" ]; then
             echo "-- perf stat, $name (per ${DURATION} s run; CPUs = task-clock / wall time)"
-            stat_table "$RAW/stat_$name.csv"
+            stat_table "$RAW/stat_$name.txt"
             echo
         fi
     done

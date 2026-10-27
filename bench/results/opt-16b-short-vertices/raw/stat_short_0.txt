@@ -1,0 +1,115 @@
+# started on Tue Oct 27 17:13:13 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 build/client --stress 0 --frames 1200 --render short':
+
+            247.95 msec task-clock                                                            
+            14,076      context-switches                                                      
+               137      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+       740,072,264      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       388,859,677      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        69,780,586      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,167,984      cpu_core/branch-misses/                                               
+
+      17.370507596 seconds time elapsed
+
+       0.276263000 seconds user
+       0.317864000 seconds sys
+
+
+# started on Tue Oct 27 17:16:18 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 build/client --stress 0 --frames 1200 --render short':
+
+            242.63 msec task-clock                                                            
+            13,883      context-switches                                                      
+               278      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                      
+       737,618,537      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                
+       391,832,701      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                    
+        70,259,091      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                               
+         6,179,320      cpu_core/branch-misses/                                               
+
+      17.460489776 seconds time elapsed
+
+       0.291761000 seconds user
+       0.303067000 seconds sys
+
+
+# started on Tue Oct 27 17:19:22 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 build/client --stress 0 --frames 1200 --render short':
+
+            257.92 msec task-clock                                                            
+            14,237      context-switches                                                      
+                67      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+       739,540,621      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       388,599,154      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        69,760,956      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,171,003      cpu_core/branch-misses/                                               
+
+      17.365783038 seconds time elapsed
+
+       0.282298000 seconds user
+       0.334159000 seconds sys
+
+
+# started on Tue Oct 27 17:22:26 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 build/client --stress 0 --frames 1200 --render short':
+
+            255.41 msec task-clock                                                            
+            13,892      context-switches                                                      
+               242      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+       740,564,327      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+       388,728,061      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+        69,753,075      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+         6,214,063      cpu_core/branch-misses/                                               
+
+      17.461019336 seconds time elapsed
+
+       0.273275000 seconds user
+       0.352188000 seconds sys
+
+
+# started on Tue Oct 27 17:25:30 2026
+
+
+ Performance counter stats for 'taskset -c 4-7 build/client --stress 0 --frames 1200 --render short':
+
+            233.97 msec task-clock                                                            
+            14,108      context-switches                                                      
+               257      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                      
+       730,984,209      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                
+       389,270,617      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                    
+        69,864,466      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                               
+         6,055,812      cpu_core/branch-misses/                                               
+
+      17.392377470 seconds time elapsed
+
+       0.287869000 seconds user
+       0.294547000 seconds sys
+
+

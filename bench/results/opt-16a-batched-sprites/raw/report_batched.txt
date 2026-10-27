@@ -4,15 +4,15 @@
 # Total Lost Samples: 0
 #
 # Samples: 1K of event 'cpu_core/cycles/'
-# Event count (approx.): 5948875408
+# Event count (approx.): 6089804770
 #
-# Overhead  Command      Shared Object                    Symbol                                        
-# ........  ...........  ...............................  ..............................................
+# Overhead  Command      Shared Object                    Symbol                                                                                                   
+# ........  ...........  ...............................  .........................................................................................................
 #
-    81.42%  client       libc.so.6                        [.] __memmove_avx_unaligned_erms
+    80.14%  client       libc.so.6                        [.] __memmove_avx_unaligned_erms
             |
             ---__memmove_avx_unaligned_erms
-               0x742c446c3375
+               0x7b2ca4ec4375
                batch_flush (inlined)
                render_frame
                main
@@ -21,7 +21,7 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.96%  client       client                           [.] atlas_uv
+     2.56%  client       client                           [.] atlas_uv
             |
             ---atlas_uv
                render_sprite (inlined)
@@ -32,11 +32,11 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.45%  client       client                           [.] sprite_batched
+     1.58%  client       client                           [.] sprite_batched
             |
             ---sprite_batched
                |          
-                --1.30%--render_sprite (inlined)
+                --1.17%--render_sprite (inlined)
                           render_frame
                           main
                           __libc_start_call_main
@@ -44,18 +44,16 @@
                           __libc_start_main_impl (inlined)
                           _start
 
-     0.86%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000004134c4
-            |
-            ---0x742c446c34c4
-               batch_flush (inlined)
-               render_frame
-               main
-               __libc_start_call_main
-               call_init (inlined)
-               __libc_start_main_impl (inlined)
-               _start
+     1.03%  client       client                           [.] render_frame
+            |          
+             --0.80%--render_frame
+                       main
+                       __libc_start_call_main
+                       call_init (inlined)
+                       __libc_start_main_impl (inlined)
+                       _start
 
-     0.86%  client       client                           [.] atlas_frame
+     0.85%  client       client                           [.] atlas_frame
             |
             ---atlas_frame
                main
@@ -63,15 +61,6 @@
                call_init (inlined)
                __libc_start_main_impl (inlined)
                _start
-
-     0.60%  client       client                           [.] render_frame
-            |          
-             --0.53%--render_frame
-                       main
-                       __libc_start_call_main
-                       call_init (inlined)
-                       __libc_start_main_impl (inlined)
-                       _start
 
 
 

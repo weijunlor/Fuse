@@ -55,6 +55,9 @@ GLuint atlas_load(void);
 // Texture coordinates (0..1) of a sprite's tile: (u0, v0) top-left, (u1, v1) bottom-right
 void atlas_uv(int a_int_sprite, float *u0, float *v0, float *u1, float *v1);
 
+// Pixel position in the atlas image of a sprite's tile (top-left corner)
+void atlas_texel(int a_int_sprite, int *x, int *y);
+
 // Sprite ID of the current frame of a looping animation: a_int_frames frames
 // starting at a_int_first, a_int_step apart, each shown for a_d_frame_s seconds
 int atlas_frame(int a_int_first, int a_int_frames, int a_int_step,

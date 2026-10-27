@@ -1,16 +1,16 @@
 Profiling setup: baseline-O2
-Recorded: 2026-10-27T14:15:44+00:00
+Recorded: 2026-10-27T16:44:32+00:00
 
 == Build
-Optimisation level: -O2
-Compiler flags (DW_AT_producer of build/baseline-O2/server):
-  GNU C23 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -fno-omit-frame-pointer -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
-Client flags (DW_AT_producer of build/baseline-O2/client):
-  GNU C23 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -fno-omit-frame-pointer -foffload-options=-l_GCC_m -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
-Binaries (sha256):
-  f2f12833b783bc79599c487a20b8c46a125ef135b28bd88aadfd2596b8328f4c  build/baseline-O2/server
-  825179cfe010514dbedecc0edf7a017db3627a7be48def59f1d8e9614fa0a0e8  build/baseline-O2/client
-Git: 303bb26 on main (uncommitted changes)
+build/baseline-O2/server:
+  Optimisation level: -O2
+  Compiler flags (DW_AT_producer): GNU C23 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -fno-omit-frame-pointer -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
+  sha256: f2f12833b783bc79599c487a20b8c46a125ef135b28bd88aadfd2596b8328f4c
+build/baseline-O2/client:
+  Optimisation level: -O2
+  Compiler flags (DW_AT_producer): GNU C23 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -fno-omit-frame-pointer -foffload-options=-l_GCC_m -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
+  sha256: 825179cfe010514dbedecc0edf7a017db3627a7be48def59f1d8e9614fa0a0e8
+Git: 0e654b5 on main (uncommitted changes)
 
 == Machine
 CPU(s):                                  24
@@ -18,7 +18,7 @@ Model name:                              Intel(R) Core(TM) i7-14650HX
 Thread(s) per core:                      2
 Core(s) per socket:                      16
 Socket(s):                               1
-CPU(s) scaling MHz:                      30%
+CPU(s) scaling MHz:                      29%
 L1d cache:                               640 KiB (16 instances)
 L1i cache:                               768 KiB (16 instances)
 L2 cache:                                24 MiB (10 instances)
@@ -36,6 +36,7 @@ gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
 perf version 7.0.14
 Cyclone DDS: 0.10.5
 GLFW: 3.4.0
+Mesa: 26.0.8-1ubuntu0.3
 perf_event_paranoid: -1
 kptr_restrict: 0
 Display session: wayland

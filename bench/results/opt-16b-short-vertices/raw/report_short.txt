@@ -1,0 +1,76 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 892  of event 'cpu_core/cycles/'
+# Event count (approx.): 3353638983
+#
+# Overhead  Command        Shared Object                    Symbol                                         
+# ........  .............  ...............................  ...............................................
+#
+    65.57%  client         libc.so.6                        [.] __memmove_avx_unaligned_erms
+            |
+            ---__memmove_avx_unaligned_erms
+               0x7ced916c5375
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     6.33%  client         client                           [.] render_sprite
+            |          
+            |--5.12%--sprite_batched_short (inlined)
+            |          render_sprite
+            |          render_frame
+            |          main
+            |          __libc_start_call_main
+            |          call_init (inlined)
+            |          __libc_start_main_impl (inlined)
+            |          _start
+            |          
+             --1.21%--render_sprite
+                       |          
+                        --0.72%--main
+                                  __libc_start_call_main
+                                  call_init (inlined)
+                                  __libc_start_main_impl (inlined)
+                                  _start
+
+     2.27%  client         client                           [.] atlas_frame
+            |
+            ---atlas_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.66%  client         client                           [.] atlas_texel
+            |
+            ---atlas_texel
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.58%  client         client                           [.] render_frame
+            |
+            ---render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.56%  client         libc.so.6                        [.] __libc_calloc
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

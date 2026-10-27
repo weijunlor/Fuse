@@ -3,40 +3,57 @@
 #
 # Total Lost Samples: 0
 #
-# Samples: 1K of event 'cpu_core/cycles/'
-# Event count (approx.): 6433448413
+# Samples: 2K of event 'cpu_core/cycles/'
+# Event count (approx.): 7806823755
 #
-# Overhead  Command      Shared Object                    Symbol                                     
-# ........  ...........  ...............................  ...........................................
+# Overhead  Command      Shared Object                    Symbol                                         
+# ........  ...........  ...............................  ...............................................
 #
-    12.31%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000023473a
-            |
-            ---0x7dff90ce573a
-               0x7dff90d84192
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     5.08%  client       client                           [.] sprite_immediate
+     7.72%  client       client                           [.] sprite_immediate
             |
             ---sprite_immediate
                |          
-               |--4.45%--render_frame
+               |--7.21%--render_frame
                |          main
                |          __libc_start_call_main
                |          call_init (inlined)
                |          __libc_start_main_impl (inlined)
                |          _start
                |          
-                --0.63%--main
+                --0.51%--main
                           __libc_start_call_main
                           call_init (inlined)
                           __libc_start_main_impl (inlined)
                           _start
 
-     4.17%  client       client                           [.] atlas_uv
+     7.55%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000023473a
+            |
+            ---0x7fe5c14e673a
+               0x7fe5c1585192
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     4.23%  client       client                           [.] atlas_frame
+            |
+            ---atlas_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     3.33%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c232d
+            |
+            ---0x7fe5c147432d
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     2.86%  client       client                           [.] atlas_uv
             |
             ---atlas_uv
                render_frame
@@ -46,26 +63,9 @@
                __libc_start_main_impl (inlined)
                _start
 
-     4.12%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c232d
+     2.44%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada7
             |
-            ---0x7dff90c7332d
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     4.11%  client       client                           [.] atlas_frame
-            |
-            ---atlas_frame
-               main
-               __libc_start_call_main
-               call_init (inlined)
-               __libc_start_main_impl (inlined)
-               _start
-
-     4.09%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada7
-            |
-            ---0x7dff90d7bda7
+            ---0x7fe5c157cda7
                sprite_immediate
                render_frame
                main
@@ -74,26 +74,38 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.69%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2489
+     1.98%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235168
             |
-            ---0x7dff90c73489
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c14e7168
+               0x7fe5c1584c36
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     1.42%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000236260
+     1.75%  client       client                           [.] render_frame
+            |          
+             --1.26%--render_frame
+                       main
+                       __libc_start_call_main
+                       call_init (inlined)
+                       __libc_start_main_impl (inlined)
+                       _start
+
+     1.72%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000236281
             |
-            ---0x7dff90ce7260
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c14e8281
+               0x7fe5c1585adc
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     1.38%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad9d
+     1.66%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada2
             |
-            ---0x7dff90d7bd9d
+            ---0x7fe5c157cda2
                sprite_immediate
                render_frame
                main
@@ -102,7 +114,18 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.34%  client       client                           [.] glVertex2f@plt
+     1.64%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad9d
+            |
+            ---0x7fe5c157cd9d
+               sprite_immediate
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.47%  client       client                           [.] glVertex2f@plt
             |
             ---glVertex2f@plt
                render_frame
@@ -112,10 +135,17 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.21%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada2
+     1.43%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2489
             |
-            ---0x7dff90d7bda2
-               sprite_immediate
+            ---0x7fe5c1474489
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     1.36%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada8
+            |
+            ---0x7fe5c157cda8
                render_frame
                main
                __libc_start_call_main
@@ -123,167 +153,26 @@
                __libc_start_main_impl (inlined)
                _start
 
-     1.18%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a00
+     1.21%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000236260
             |
-            ---0x7dff90ce6a00
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c14e8260
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     1.16%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3ad3
+     1.18%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a68
             |
-            ---0x7dff90d84ad3
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c14e7a68
+               0x7fe5c1585e9c
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     1.02%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3e93
-            |
-            ---0x7dff90d84e93
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     1.00%  client       client                           [.] render_frame
-            |          
-             --0.74%--render_frame
-                       main
-                       __libc_start_call_main
-                       call_init (inlined)
-                       __libc_start_main_impl (inlined)
-                       _start
-
-     0.96%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000236281
-            |
-            ---0x7dff90ce7281
-               0x7dff90d84adc
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.90%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3ac0
-            |
-            ---0x7dff90d84ac0
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.89%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a22
-            |
-            ---0x7dff90ce6a22
-               0x7dff90d84e9c
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.89%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3e80
-            |
-            ---0x7dff90d84e80
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.85%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235aac
-            |
-            ---0x7dff90ce6aac
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.85%  client:gl0   libc.so.6                        [.] __memmove_avx_unaligned_erms
-            |
-            ---__memmove_avx_unaligned_erms
-               0x7dff90d2f4a2
-               0x7dff90ce5644
-               0x7dff90ce56af
-               0x7dff90d84e9c
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.82%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2320
-            |
-            ---0x7dff90c73320
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.77%  client       libc.so.6                        [.] pthread_mutex_lock@@GLIBC_2.2.5
-     0.75%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cada8
-            |
-            ---0x7dff90d7bda8
-               render_frame
-               main
-               __libc_start_call_main
-               call_init (inlined)
-               __libc_start_main_impl (inlined)
-               _start
-
-     0.69%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a53
-            |
-            ---0x7dff90ce6a53
-               0x7dff90d84e9c
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.68%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a68
-            |
-            ---0x7dff90ce6a68
-               0x7dff90d84e9c
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.66%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002362a1
-            |
-            ---0x7dff90ce72a1
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.66%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a8a
-            |
-            ---0x7dff90ce6a8a
-               0x7dff90d84e9c
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
-               start_thread
-               __clone3 (inlined)
-
-     0.65%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096ff64
-            |
-            ---0x7dff91420f64
-               render_frame
-               main
-               __libc_start_call_main
-               call_init (inlined)
-               __libc_start_main_impl (inlined)
-               _start
-
-     0.62%  client       client                           [.] glTexCoord2f@plt
+     1.15%  client       client                           [.] glTexCoord2f@plt
             |
             ---glTexCoord2f@plt
                render_frame
@@ -293,47 +182,25 @@
                __libc_start_main_impl (inlined)
                _start
 
-     0.61%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2331
+     1.11%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3ac0
             |
-            ---0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c1585ac0
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     0.59%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235168
+     1.10%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3ad3
             |
-            ---0x7dff90ce6168
-               0x7dff90d83c36
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c1585ad3
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     0.58%  client       libc.so.6                        [.] pthread_mutex_unlock@@GLIBC_2.2.5
+     1.08%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad98
             |
-            ---lll_mutex_unlock_optimized (inlined)
-               __pthread_mutex_unlock_usercnt (inlined)
-               ___pthread_mutex_unlock (inlined)
-               |          
-                --0.53%--0x7dff9114ed0d
-                          0x7dff911051ed
-                          0x7dff90c73c19
-
-     0.57%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096fc60
-            |
-            ---0x7dff91420c60
-               render_frame
-               main
-               __libc_start_call_main
-               call_init (inlined)
-               __libc_start_main_impl (inlined)
-               _start
-
-     0.57%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad98
-            |
-            ---0x7dff90d7bd98
+            ---0x7fe5c157cd98
                sprite_immediate
                render_frame
                main
@@ -342,23 +209,233 @@
                __libc_start_main_impl (inlined)
                _start
 
-     0.56%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2326
+     1.05%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a00
             |
-            ---0x7dff90c73326
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---0x7fe5c14e7a00
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
 
-     0.51%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000023511e
+     0.88%  client:gl0   libc.so.6                        [.] __memmove_avx_unaligned_erms
             |
-            ---0x7dff90ce611e
-               0x7dff90d83c36
-               0x7dff90c73331
-               0x7dff911046f2
-               0x7dff9114eb5c
+            ---__memmove_avx_unaligned_erms
+               0x7fe5c15304a2
+               0x7fe5c14e6644
+               0x7fe5c14e66af
+               0x7fe5c1585e9c
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
                start_thread
                __clone3 (inlined)
+
+     0.83%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a22
+            |
+            ---0x7fe5c14e7a22
+               0x7fe5c1585e9c
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.81%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad6f
+            |
+            ---0x7fe5c157cd6f
+               sprite_immediate
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.80%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002362a1
+            |
+            ---0x7fe5c14e82a1
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.80%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096ff60
+            |
+            ---0x7fe5c1c21f60
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.79%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096ff64
+            |
+            ---0x7fe5c1c21f64
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.79%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3e93
+            |
+            ---0x7fe5c1585e93
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.78%  client       client                           [.] glBegin@plt
+            |
+            ---glBegin@plt
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.75%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235aac
+            |
+            ---0x7fe5c14e7aac
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.75%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2320
+            |
+            ---0x7fe5c1474320
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.70%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a53
+            |
+            ---0x7fe5c14e7a53
+               0x7fe5c1585e9c
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.64%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2bc5
+            |
+            ---0x7fe5c1474bc5
+               |          
+                --0.54%--0x7fe5c157cdc0
+                          sprite_immediate
+                          render_frame
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.63%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cab6f
+            |
+            ---0x7fe5c157cb6f
+               sprite_immediate
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002cad8b
+            |
+            ---0x7fe5c157cd8b
+               sprite_immediate
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002caba7
+            |
+            ---0x7fe5c157cba7
+               sprite_immediate
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.61%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000235a8a
+            |
+            ---0x7fe5c14e7a8a
+               0x7fe5c1585e9c
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.60%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000023426d
+            |
+            ---0x7fe5c14e626d
+               0x7fe5c14e68da
+               0x7fe5c1585192
+               0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.59%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2326
+            |
+            ---0x7fe5c1474326
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.55%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096fc60
+            |
+            ---0x7fe5c1c21c60
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.54%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c2331
+            |
+            ---0x7fe5c1474331
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.51%  client:gl0   libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000002d3e80
+            |
+            ---0x7fe5c1585e80
+               0x7fe5c19056f2
+               0x7fe5c194fb5c
+               start_thread
+               __clone3 (inlined)
+
+     0.50%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000096fc64
+            |
+            ---0x7fe5c1c21c64
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
 
 
 

@@ -1,17 +1,22 @@
 /* client/render.c
 Batched rendering of players, bomb and HUD.
 
-Optimisation #16 (batched drawing). Two ways to draw sprites, chosen at start-up:
-- Immediate (the first simple version, `--render-immediate`): every sprite is
-  its own glBegin/glEnd, i.e. 4 glTexCoord + 4 glVertex driver calls per
-  sprite.
-- Batched (default): sprites are appended to one vertex array in memory and
+Optimisation #16 (batched drawing). Ways to draw sprites, chosen at start-up
+with --render <mode> (see RenderMode in render.h):
+- immediate (#16a before): every sprite is its own glBegin/glEnd, i.e.
+  4 glTexCoord + 4 glVertex driver calls per sprite.
+- float (#16a after): sprites are appended to one vertex array in memory and
   drawn with a single glDrawArrays call per frame, so the driver is called a
   few times per frame instead of ~9 times per sprite.
-Text is still drawn per string (ui.c) in both modes. */
+- short (#16b after, default): as float, but each vertex is 4 shorts (8 bytes)
+  instead of 4 floats (16 bytes). Measuring #16a showed that with many sprites
+  most of the time is the driver copying the vertex array, so halving its
+  size should halve that copy.
+Text is still drawn per string (ui.c) in every mode. */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <GLFW/glfw3.h>
 #include <stb_image_write.h>   // from libstb-dev; implementation is in libstb.so
 
@@ -29,12 +34,24 @@ Text is still drawn per string (ui.c) in both modes. */
 #define FLOOR_TILES ((WIDTH / ATLAS_TILE) * (HEIGHT / ATLAS_TILE))
 
 // One corner of a sprite quad. Position and texture coordinates are stored
-// together (interleaved), so each corner is one 16-byte read for the driver.
+// together (interleaved), so each corner is one contiguous read for the driver.
+// "float" mode: 16 bytes, texture coordinates 0..1
 typedef struct
 {
     float x, y;
     float u, v;
 } QuadVertex;
+
+// "short" mode: 8 bytes. Positions are whole window pixels (the game only uses
+// whole pixels); texture coordinates are whole atlas pixels, scaled to 0..1 by
+// the texture matrix set in render_init()
+typedef struct
+{
+    short x, y;
+    short u, v;
+} QuadVertexShort;
+
+static const char *const arr_mode_names[] = { "immediate", "float", "short" };
 
 // Animated test sprite for --stress (stands in for particles and embers)
 typedef struct
@@ -46,10 +63,12 @@ typedef struct
 } StressSprite;
 
 static GLuint texture_atlas;
-static bool b_immediate;
+static RenderMode render_mode;
 
-// Batch: vertices of every sprite this frame, drawn by batch_flush()
-static QuadVertex *arr_batch;
+// Batch: vertices of every sprite this frame, drawn by batch_flush(). Only
+// the array of the current mode is allocated.
+static QuadVertex *arr_batch;              // "float" mode
+static QuadVertexShort *arr_batch_short;   // "short" mode
 static int int_batch_len;   // vertices in use
 static int int_batch_cap;   // vertices allocated
 
@@ -85,25 +104,52 @@ static void sprite_batched(int a_int_sprite, float x, float y)
     int_batch_len += 4;
 }
 
+// "short" path: as sprite_batched, with 8-byte vertices
+static void sprite_batched_short(int a_int_sprite, float x, float y)
+{
+    int int_u, int_v;
+    atlas_texel(a_int_sprite, &int_u, &int_v);
+    short sx = (short)x, sy = (short)y;
+    short su = (short)int_u, sv = (short)int_v;
+    const short T = ATLAS_TILE;
+
+    QuadVertexShort *p = &arr_batch_short[int_batch_len];
+    p[0] = (QuadVertexShort){ sx,     sy,     su,     sv     };
+    p[1] = (QuadVertexShort){ sx,     sy + T, su,     sv + T };
+    p[2] = (QuadVertexShort){ sx + T, sy + T, su + T, sv + T };
+    p[3] = (QuadVertexShort){ sx + T, sy,     su + T, sv     };
+    int_batch_len += 4;
+}
+
 // Draw one sprite with its top-left corner at (x, y), at the atlas tile size
 static void render_sprite(int a_int_sprite, float x, float y)
 {
-    if (b_immediate)
-        sprite_immediate(a_int_sprite, x, y);
-    else
-        sprite_batched(a_int_sprite, x, y);
+    switch (render_mode)
+    {
+        case RENDER_IMMEDIATE:     sprite_immediate(a_int_sprite, x, y);     break;
+        case RENDER_BATCHED_FLOAT: sprite_batched(a_int_sprite, x, y);       break;
+        case RENDER_BATCHED_SHORT: sprite_batched_short(a_int_sprite, x, y); break;
+    }
 }
 
-// Batched path: draw every queued sprite with one call, then empty the batch
+// Batched paths: draw every queued sprite with one call, then empty the batch
 static void batch_flush(void)
 {
-    if (b_immediate || int_batch_len == 0)
+    if (render_mode == RENDER_IMMEDIATE || int_batch_len == 0)
         return;
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, sizeof(QuadVertex), &arr_batch[0].x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(QuadVertex), &arr_batch[0].u);
+    if (render_mode == RENDER_BATCHED_FLOAT)
+    {
+        glVertexPointer(2, GL_FLOAT, sizeof(QuadVertex), &arr_batch[0].x);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(QuadVertex), &arr_batch[0].u);
+    }
+    else
+    {
+        glVertexPointer(2, GL_SHORT, sizeof(QuadVertexShort), &arr_batch_short[0].x);
+        glTexCoordPointer(2, GL_SHORT, sizeof(QuadVertexShort), &arr_batch_short[0].u);
+    }
     glDrawArrays(GL_QUADS, 0, int_batch_len);
     // Text (ui.c) draws with its own vertex array; a texture-coordinate array
     // left enabled would make the driver read past the end of ours
@@ -113,7 +159,22 @@ static void batch_flush(void)
     int_batch_len = 0;
 }
 
-void render_init(bool a_b_immediate, int a_int_stress)
+int render_mode_from_name(const char *a_str_name)
+{
+    for (int i = 0; i < (int)(sizeof(arr_mode_names) / sizeof(arr_mode_names[0])); i++)
+    {
+        if (strcmp(a_str_name, arr_mode_names[i]) == 0)
+            return i;
+    }
+    return -1;
+}
+
+const char *render_mode_name(RenderMode a_mode)
+{
+    return arr_mode_names[a_mode];
+}
+
+void render_init(RenderMode a_mode, int a_int_stress)
 {
     /* Use pixel coordinates */
     _Static_assert(ATLAS_TILE == SQ_WIDTH, "player sprites are drawn at hitbox size");
@@ -129,7 +190,18 @@ void render_init(bool a_b_immediate, int a_int_stress)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    b_immediate = a_b_immediate;
+    render_mode = a_mode;
+
+    // "short" mode sends texture coordinates in atlas pixels; the texture
+    // matrix scales them to 0..1 on the GPU. Text is drawn untextured, so the
+    // matrix can stay set for the whole run.
+    if (render_mode == RENDER_BATCHED_SHORT)
+    {
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+        glScalef(1.0f / (ATLAS_TILE * ATLAS_COLS), 1.0f / (ATLAS_TILE * ATLAS_ROWS), 1.0f);
+        glMatrixMode(GL_MODELVIEW);
+    }
 
     // Stress sprites at fixed pseudo-random positions (same every run, so
     // runs are comparable): a mix of embers, sparks, bombs and explosions
@@ -153,8 +225,12 @@ void render_init(bool a_b_immediate, int a_int_stress)
 
     // Batch capacity: floor + players + stress sprites, 4 vertices each
     int_batch_cap = (FLOOR_TILES + MAX_PLAYERS + int_num_stress) * 4;
-    arr_batch = malloc((size_t)int_batch_cap * sizeof(QuadVertex));
-    if (arr_batch == NULL || arr_stress == NULL)
+    bool b_alloc_ok = true;
+    if (render_mode == RENDER_BATCHED_FLOAT)
+        b_alloc_ok = (arr_batch = malloc((size_t)int_batch_cap * sizeof(QuadVertex))) != NULL;
+    else if (render_mode == RENDER_BATCHED_SHORT)
+        b_alloc_ok = (arr_batch_short = malloc((size_t)int_batch_cap * sizeof(QuadVertexShort))) != NULL;
+    if (!b_alloc_ok || arr_stress == NULL)
     {
         fprintf(stderr, "Out of memory for %d sprites\n", int_num_stress);
         exit(1);

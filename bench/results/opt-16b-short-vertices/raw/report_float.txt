@@ -1,0 +1,82 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu_core/cycles/'
+# Event count (approx.): 6143820162
+#
+# Overhead  Command      Shared Object                    Symbol                                                                             
+# ........  ...........  ...............................  ...................................................................................
+#
+    80.46%  client       libc.so.6                        [.] __memmove_avx_unaligned_erms
+            |
+            ---__memmove_avx_unaligned_erms
+               0x7fda216c5375
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.99%  client       client                           [.] render_sprite
+            |          
+            |--1.36%--sprite_batched (inlined)
+            |          render_sprite
+            |          render_frame
+            |          main
+            |          __libc_start_call_main
+            |          call_init (inlined)
+            |          __libc_start_main_impl (inlined)
+            |          _start
+            |          
+             --0.63%--render_sprite
+
+     1.75%  client       client                           [.] atlas_uv
+            |
+            ---atlas_uv
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.76%  client       client                           [.] render_frame
+            |
+            ---render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.60%  client       client                           [.] atlas_frame
+            |
+            ---atlas_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.53%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c3225
+            |
+            ---0x7fda21475225
+               0x7fda214753e5
+               0x7fda216c5375
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

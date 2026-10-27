@@ -28,8 +28,14 @@ write_setup() {
         echo "  Compiler flags (DW_AT_producer): $(build_flags "$bin" | grep . || echo 'unknown (build with -g)')"
         echo "  sha256: $(sha256sum "$bin" | cut -d' ' -f1)"
     done
-    echo "Git: $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)" \
-         "$(git diff --quiet HEAD -- . ':!bench/results' || echo '(uncommitted changes)')"
+    # SOURCE_REF: set when the binaries were built from another commit or tag
+    # (e.g. in a git worktree) than the one checked out here
+    if [ -n "${SOURCE_REF:-}" ]; then
+        echo "Git: binaries built from $SOURCE_REF ($(git rev-parse --short "$SOURCE_REF^{commit}"))"
+    else
+        echo "Git: $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)" \
+             "$(git diff --quiet HEAD -- . ':!bench/results' || echo '(uncommitted changes)')"
+    fi
     echo
     echo "== Machine"
     lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket|L1d|L1i|L2|L3)'
@@ -51,4 +57,22 @@ write_setup() {
     echo "perf_event_paranoid: $(cat /proc/sys/kernel/perf_event_paranoid)"
     echo "kptr_restrict: $(cat /proc/sys/kernel/kptr_restrict)"
     echo "Display session: ${XDG_SESSION_TYPE:-unknown}"
+}
+
+# Turn a perf stat output file into "value,,event" lines (the layout of
+# perf stat -x,) so one parser reads every run. Accepts both the normal
+# human-readable output (current runs: raw/stat_*.txt) and CSV (older runs:
+# raw/stat_*.csv). "# started on" lines are kept: each marks a new run.
+# <not counted> events (E-core copies on the hybrid CPU) are dropped.
+stat_normalize() {
+    awk '
+        /^# started/ { print; next }
+        # CSV line: value,unit,event,...
+        /^[0-9.]+,/ { print; next }
+        # Human-readable line: "  1,234,567      event  # ..." or "  12.34 msec task-clock"
+        $1 ~ /^[0-9][0-9,]*(\.[0-9]+)?$/ && $2 != "seconds" {
+            v = $1; gsub(",", "", v)
+            e = ($2 == "msec") ? $3 : $2
+            print v ",," e
+        }' "$1"
 }

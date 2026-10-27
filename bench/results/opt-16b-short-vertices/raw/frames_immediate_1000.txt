@@ -1,0 +1,5 @@
+frames=1200 stress=1000 mode=immediate fps=60.14 elapsed_s=20.312 render_us_mean=148.5 render_us_p50=81.5 render_us_p99=434.4 render_us_max=485.9 gl_renderer="zink Vulkan 1.4(NVIDIA GeForce RTX 4060 Laptop GPU (NVK AD107) (MESA_NVK))"
+frames=1200 stress=1000 mode=immediate fps=60.04 elapsed_s=20.331 render_us_mean=252.9 render_us_p50=239.3 render_us_p99=455.8 render_us_max=500.5 gl_renderer="zink Vulkan 1.4(NVIDIA GeForce RTX 4060 Laptop GPU (NVK AD107) (MESA_NVK))"
+frames=1200 stress=1000 mode=immediate fps=59.84 elapsed_s=20.396 render_us_mean=251.0 render_us_p50=260.5 render_us_p99=442.2 render_us_max=525.0 gl_renderer="zink Vulkan 1.4(NVIDIA GeForce RTX 4060 Laptop GPU (NVK AD107) (MESA_NVK))"
+frames=1200 stress=1000 mode=immediate fps=60.13 elapsed_s=20.298 render_us_mean=117.8 render_us_p50=72.6 render_us_p99=427.9 render_us_max=491.7 gl_renderer="zink Vulkan 1.4(NVIDIA GeForce RTX 4060 Laptop GPU (NVK AD107) (MESA_NVK))"
+frames=1200 stress=1000 mode=immediate fps=60.06 elapsed_s=20.322 render_us_mean=135.2 render_us_p50=87.5 render_us_p99=426.1 render_us_max=794.9 gl_renderer="zink Vulkan 1.4(NVIDIA GeForce RTX 4060 Laptop GPU (NVK AD107) (MESA_NVK))"
