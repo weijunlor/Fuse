@@ -1,0 +1,68 @@
+LOST 2002 events!
+LOST 4034 events!
+
+ Summary of events:
+
+ gc (80560), 64 events, 0.0%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   futex                 32     16 24101.918     0.000   753.185  8098.888     55.83%
+
+
+ recv (80564), 140 events, 0.0%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   pselect6              20      0 24008.518     0.000  1200.426  7991.653     54.52%
+   futex                 30      8     0.097     0.001     0.003     0.012     19.51%
+   recvmsg               20      0     0.096     0.002     0.005     0.015     18.91%
+
+
+ dq.builtins (80561), 146 events, 0.0%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   futex                 72      0 24101.508     0.000   334.743  7898.434     55.92%
+
+
+ recvUC (80565), 208 events, 0.0%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   recvmsg               48      0 24108.304     0.000   502.256  7891.532     55.41%
+   futex                 56      0     0.149     0.001     0.003     0.013      9.96%
+
+
+ tev (80563), 1780 events, 0.0%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   futex                838    208 29896.960     0.000    35.677   179.609      4.27%
+   sendmsg               52      0     0.524     0.003     0.010     0.043     12.70%
+
+
+ server (80552), 11672121 events, 35.8%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   futex            5785785 152215 17409.242     0.000     0.003    20.361      2.85%
+
+
+ server (80554), 20910488 events, 64.2%
+
+   syscall            calls  errors  total       min       avg       max       stddev
+                                     (msec)    (msec)    (msec)    (msec)        (%)
+   --------------- --------  ------ -------- --------- --------- ---------     ------
+   clock_nanosleep      600      0 12086.204    20.056    20.144    20.204      0.00%
+   futex           10404667 5543835  8455.512     0.000     0.001     0.121      0.01%
+   sendmsg             2395      0    12.688     0.002     0.005     0.040      1.85%
+   write                  2      0     0.003     0.001     0.002     0.002      9.01%
+
+

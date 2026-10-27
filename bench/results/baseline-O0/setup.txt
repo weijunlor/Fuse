@@ -1,0 +1,41 @@
+Profiling setup: baseline-O0
+Recorded: 2026-10-27T14:07:06+00:00
+
+== Build
+Optimisation level: -O0
+Compiler flags (DW_AT_producer of build/baseline-O0/server):
+  GNU C23 15.2.0 -mtune=generic -march=x86-64 -g -O0 -fno-omit-frame-pointer -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
+Client flags (DW_AT_producer of build/baseline-O0/client):
+  GNU C23 15.2.0 -mtune=generic -march=x86-64 -g -O0 -fno-omit-frame-pointer -foffload-options=-l_GCC_m -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
+Binaries (sha256):
+  da4bed9487b0d06caa1fffc380d328ba4ec2170d86adbba2a6e27fd4f3c744e8  build/baseline-O0/server
+  3658ae930faf7dd25734394109bb5fb5708a6930cfc03393ae78d026d82122d4  build/baseline-O0/client
+Git: 303bb26 on main (uncommitted changes)
+
+== Machine
+CPU(s):                                  24
+Model name:                              Intel(R) Core(TM) i7-14650HX
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               1
+CPU(s) scaling MHz:                      45%
+L1d cache:                               640 KiB (16 instances)
+L1i cache:                               768 KiB (16 instances)
+L2 cache:                                24 MiB (10 instances)
+L3 cache:                                30 MiB (1 instance)
+MemTotal:       32621556 kB
+P-cores (cpu_core): 0-15
+E-cores (cpu_atom): 16-23
+Governor: performance 
+Turbo disabled: 0
+
+== Software
+Ubuntu 26.04.1 LTS
+Kernel: 7.0.0-30-generic
+gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+perf version 7.0.14
+Cyclone DDS: 0.10.5
+GLFW: 3.4.0
+perf_event_paranoid: -1
+kptr_restrict: 0
+Display session: wayland

@@ -7,7 +7,7 @@ Project plan, architecture and optimisation list: [docs/PLAN.md](docs/PLAN.md).
 ## Build (WSL / Ubuntu)
 
 ```bash
-sudo apt install -y libgl1-mesa-dev libglfw3-dev cyclonedds-dev cyclonedds-tools
+sudo apt install -y pkg-config libgl1-mesa-dev libglfw3-dev cyclonedds-dev cyclonedds-tools
 make            # build/server, build/client
 make baseline   # build/baseline_server, build/baseline_client (original programs)
 ```

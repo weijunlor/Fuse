@@ -1,6 +1,7 @@
 # FUSE build
 #   make            build server and client (optimised, -O2)
 #   make baseline   build the original lecturer programs, for "before" measurements
+#   make baseline-O0  baseline at -O0 (or -O2, ...) with -g and frame pointers, for perf
 #   make profile    -O2 with debug symbols and frame pointers, for perf
 #   make debug      -O0 with ThreadSanitizer, for data-race checks
 #   make bench      build every bench/bench_*.c
@@ -42,6 +43,18 @@ build/baseline_client: baseline/client.c build/baseline/messages.c
 	$(CC) -O2 -Ibuild/baseline -Ithird_party $^ -o $@ \
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
+# Baseline built for perf at a chosen optimisation level (make baseline-O0,
+# make baseline-O2, ...): debug info and frame pointers so perf can unwind call stacks
+baseline-O%: build/baseline-O%/server build/baseline-O%/client ;
+
+build/baseline-O%/server: baseline/server.c build/baseline/messages.c
+	mkdir -p $(@D) && $(CC) -O$* -g -fno-omit-frame-pointer -Ibuild/baseline $^ -o $@ \
+		$(shell pkg-config --cflags CycloneDDS) $(LDDDS)
+
+build/baseline-O%/client: baseline/client.c build/baseline/messages.c
+	mkdir -p $(@D) && $(CC) -O$* -g -fno-omit-frame-pointer -Ibuild/baseline -Ithird_party $^ -o $@ \
+		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
+
 bench: $(BENCHES)
 
 build/bench_%: bench/bench_%.c
@@ -56,5 +69,8 @@ debug: clean all
 
 clean:
 	rm -rf build generated/messages.c generated/messages.h
+
+# Keep pattern-built baseline binaries (make would delete them as intermediates)
+.PRECIOUS: build/baseline-O%/server build/baseline-O%/client
 
 .PHONY: all baseline bench profile debug clean
