@@ -1,0 +1,35 @@
+# started on Tue Oct 27 15:46:41 2026
+
+386.03,msec,task-clock,386025137,100.00,,
+<not counted>,,cpu_atom/cycles/,0,0.00,,
+1418082414,,cpu_core/cycles/,386029052,100.00,,
+<not counted>,,cpu_atom/instructions/,0,0.00,,
+1709193249,,cpu_core/instructions/,386029052,100.00,,
+# started on Tue Oct 27 15:48:44 2026
+
+381.54,msec,task-clock,381542948,100.00,,
+<not counted>,,cpu_atom/cycles/,0,0.00,,
+1382164685,,cpu_core/cycles/,381542948,100.00,,
+<not counted>,,cpu_atom/instructions/,0,0.00,,
+1694518936,,cpu_core/instructions/,381542948,100.00,,
+# started on Tue Oct 27 15:50:46 2026
+
+387.03,msec,task-clock,387032417,100.00,,
+<not counted>,,cpu_atom/cycles/,0,0.00,,
+1374158924,,cpu_core/cycles/,387032417,100.00,,
+<not counted>,,cpu_atom/instructions/,0,0.00,,
+1685582617,,cpu_core/instructions/,387032417,100.00,,
+# started on Tue Oct 27 15:52:49 2026
+
+381.15,msec,task-clock,381146096,100.00,,
+<not counted>,,cpu_atom/cycles/,0,100.00,,
+1394493187,,cpu_core/cycles/,381146096,100.00,,
+<not counted>,,cpu_atom/instructions/,0,100.00,,
+1695965394,,cpu_core/instructions/,381146096,100.00,,
+# started on Tue Oct 27 15:54:51 2026
+
+390.32,msec,task-clock,390321620,100.00,,
+<not counted>,,cpu_atom/cycles/,0,100.00,,
+1408251021,,cpu_core/cycles/,390321620,100.00,,
+<not counted>,,cpu_atom/instructions/,0,100.00,,
+1701363729,,cpu_core/instructions/,390321620,100.00,,

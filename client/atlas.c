@@ -18,10 +18,10 @@ GLuint atlas_load(void)
                 ATLAS_PATH, stbi_failure_reason());
         exit(1);
     }
-    if (int_w != ATLAS_TILE * ATLAS_GRID || int_h != ATLAS_TILE * ATLAS_GRID)
+    if (int_w != ATLAS_TILE * ATLAS_COLS || int_h != ATLAS_TILE * ATLAS_ROWS)
     {
         fprintf(stderr, "%s is %dx%d, expected %dx%d\n", ATLAS_PATH, int_w, int_h,
-                ATLAS_TILE * ATLAS_GRID, ATLAS_TILE * ATLAS_GRID);
+                ATLAS_TILE * ATLAS_COLS, ATLAS_TILE * ATLAS_ROWS);
         exit(1);
     }
 
@@ -45,14 +45,17 @@ GLuint atlas_load(void)
 
 void atlas_uv(int a_int_sprite, float *u0, float *v0, float *u1, float *v1)
 {
-    const float f_tile = 1.0f / ATLAS_GRID;
-    int int_col = a_int_sprite % ATLAS_GRID;
-    int int_row = a_int_sprite / ATLAS_GRID;
+    // The atlas is not square, so a tile's width and height in texture
+    // coordinates differ
+    const float f_tile_u = 1.0f / ATLAS_COLS;
+    const float f_tile_v = 1.0f / ATLAS_ROWS;
+    int int_col = a_int_sprite % ATLAS_COLS;
+    int int_row = a_int_sprite / ATLAS_COLS;
 
-    *u0 = int_col * f_tile;
-    *v0 = int_row * f_tile;
-    *u1 = *u0 + f_tile;
-    *v1 = *v0 + f_tile;
+    *u0 = int_col * f_tile_u;
+    *v0 = int_row * f_tile_v;
+    *u1 = *u0 + f_tile_u;
+    *v1 = *v0 + f_tile_v;
 }
 
 int atlas_frame(int a_int_first, int a_int_frames, int a_int_step,

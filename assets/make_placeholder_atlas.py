@@ -5,8 +5,10 @@ client/atlas.h, so the client can be built and tested before the final art
 exists. The final art replaces atlas.png with the SAME tile layout, and no
 code changes are needed.
 
-Layout: 512 x 512 pixels = 8 x 8 tiles of 64 x 64. Each sprite is drawn as
-16 x 16 art pixels and scaled up 4x (nearest neighbour), so it stays crisp.
+Layout: 800 x 600 pixels (the window size) = 16 x 12 tiles of 50 x 50, so one
+tile is one floor cell and the size of a player's hitbox. Each sprite is drawn
+as 25 x 25 art pixels and scaled up 2x (nearest neighbour), so it stays crisp.
+Unused tiles are transparent, free for new sprites.
 
   row 0  player 1-5, idle frame 0      (cols 0-4)
   row 1  player 1-5, idle frame 1      (cols 0-4, body one art pixel lower)
@@ -25,10 +27,10 @@ import os
 
 from PIL import Image
 
-TILE = 64          # tile size in the atlas (screen pixels)
-ART = 16           # art pixels per tile side
+TILE = 50          # tile size in the atlas (screen pixels)
+ART = 25           # art pixels per tile side
 SCALE = TILE // ART
-GRID = 8           # tiles per atlas side
+COLS, ROWS = 16, 12  # tiles per atlas row / column (800 x 600)
 
 # Player body colours, index = player_id - 1 (also used for the HUD later)
 PLAYER_COLOURS = [(230, 70, 70), (70, 130, 230), (80, 190, 90),
@@ -80,42 +82,51 @@ def rect(img, x0, y0, x1, y1, colour):
 # Sprites (each returns a 16 x 16 RGBA image)
 # ---------------------------------------------------------------------------
 def player(colour, bob):
-    """Rounded body with outline and eyes; the body fills the 12 x 12 art
-    pixels (48 screen pixels) in the middle, close to the 50 px hitbox."""
+    """Rounded body with outline and eyes; the body fills 21 x 20 of the
+    25 x 25 art pixels, close to the whole 50 px hitbox."""
     img = new_tile()
     top = 2 + bob
-    rect(img, 2, top, 13, top + 11, rgba(darker(colour)))        # outline
-    rect(img, 3, top + 1, 12, top + 10, rgba(colour))            # body
-    rect(img, 3, top + 1, 12, top + 2, rgba(tuple(min(255, v + 50) for v in colour)))  # highlight
-    for corner in [(2, top), (13, top), (2, top + 11), (13, top + 11)]:
-        img.putpixel(corner, CLEAR)                              # rounded corners
-    for ex in (5, 9):                                            # eyes
-        rect(img, ex, top + 4, ex + 1, top + 5, WHITE)
-        img.putpixel((ex + 1, top + 5), BLACK)
+    rect(img, 2, top, 22, top + 19, rgba(darker(colour)))        # outline
+    rect(img, 3, top + 1, 21, top + 18, rgba(colour))            # body
+    rect(img, 3, top + 1, 21, top + 3, rgba(tuple(min(255, v + 50) for v in colour)))  # highlight
+    for x, y in [(2, top), (3, top), (2, top + 1), (22, top), (21, top), (22, top + 1),
+                 (2, top + 19), (3, top + 19), (2, top + 18),
+                 (22, top + 19), (21, top + 19), (22, top + 18)]:
+        img.putpixel((x, y), CLEAR)                              # rounded corners
+    for ex in (7, 14):                                           # eyes
+        rect(img, ex, top + 7, ex + 3, top + 10, WHITE)
+        rect(img, ex + 2, top + 9, ex + 3, top + 10, BLACK)
+    rect(img, 10, top + 14, 14, top + 14, rgba(darker(colour, 0.4)))  # mouth
     return img
 
 
 def bomb(frame):
     """Black bomb with a fuse; glows redder and swells on later frames."""
     img = new_tile()
-    r = 5 + (1 if frame >= 2 else 0)
+    r = 8 + (1 if frame >= 2 else 0)
     glow = [(0, 0, 0), (60, 10, 10), (130, 20, 20), (200, 30, 30)][frame]
     if frame > 0:
-        disc(img, 8, 9, r + 1, rgba(glow, 120))
-    disc(img, 8, 9, r, BLACK)
-    img.putpixel((6, 7), (110, 110, 120, 255))                   # highlight
-    rect(img, 8, 2, 8, 3, (150, 110, 60, 255))                   # fuse
-    img.putpixel((9, 1), (255, 200, 60, 255))                    # lit end
+        disc(img, 12, 14, r + 2, rgba(glow, 120))
+    disc(img, 12, 14, r, BLACK)
+    rect(img, 8, 10, 9, 11, (110, 110, 120, 255))                # highlight
+    rect(img, 11, 3, 13, 5, (90, 90, 100, 255))                  # cap
+    rect(img, 12, 1, 12, 2, (150, 110, 60, 255))                 # fuse
+    rect(img, 13, 0, 14, 1, (255, 200, 60, 255))                 # lit end
     return img
 
 
 def spark(frame):
+    """Small star that flips between + and x shapes."""
     img = new_tile()
     c = (255, 220, 80, 255) if frame == 0 else (255, 140, 40, 255)
-    pts = [(8, 4), (8, 12), (4, 8), (12, 8), (8, 8)] if frame == 0 else \
-          [(5, 5), (11, 11), (5, 11), (11, 5), (8, 8)]
-    for p in pts:
-        img.putpixel(p, c)
+    rect(img, 11, 11, 13, 13, c)
+    if frame == 0:
+        dirs = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    else:
+        dirs = [(-1, -1), (1, 1), (-1, 1), (1, -1)]
+    for dx, dy in dirs:
+        for k in range(2, 6):
+            img.putpixel((12 + dx * k, 12 + dy * k), c)
     return img
 
 
@@ -123,21 +134,22 @@ def explosion(frame):
     """Frames 0-3: growing fireball; frames 4-5: fading smoke ring."""
     img = new_tile()
     if frame < 4:
-        r = 2 + frame * 2
-        disc(img, 8, 8, r, (255, 120, 30, 255))
-        disc(img, 8, 8, max(1, r - 2), (255, 220, 90, 255))
+        r = 3 + frame * 3
+        disc(img, 12, 12, r, (255, 120, 30, 255))
+        disc(img, 12, 12, max(1, r - 3), (255, 220, 90, 255))
     else:
         a = 160 if frame == 4 else 70
-        ring(img, 8, 8, 5, 7, (120, 120, 120, a))
+        ring(img, 12, 12, 8, 11, (120, 120, 120, a))
     return img
 
 
 def ember(frame):
+    """A few 2 x 2 glowing specks that flicker."""
     img = new_tile()
-    pts = [(6, 10), (9, 9), (8, 12), (11, 11)]
-    for i, p in enumerate(pts):
+    pts = [(8, 15), (14, 13), (12, 19), (17, 17), (10, 10)]
+    for i, (x, y) in enumerate(pts):
         bright = (i + frame) % 2 == 0
-        img.putpixel(p, (255, 160, 40, 255) if bright else (200, 60, 20, 255))
+        rect(img, x, y, x + 1, y + 1, (255, 160, 40, 255) if bright else (200, 60, 20, 255))
     return img
 
 
@@ -145,41 +157,47 @@ def pickup(kind):
     """Round token: speed (bolt), shield (shield), fuse reset (plus)."""
     img = new_tile()
     base = {"speed": (40, 90, 200), "shield": (40, 170, 190), "fuse": (60, 160, 70)}[kind]
-    disc(img, 8, 8, 6, rgba(darker(base)))
-    disc(img, 8, 8, 5, rgba(base))
+    disc(img, 12, 12, 9, rgba(darker(base)))
+    disc(img, 12, 12, 8, rgba(base))
+    yellow = (255, 230, 60, 255)
     if kind == "speed":
-        for p in [(9, 4), (8, 5), (7, 6), (7, 7), (8, 7), (9, 7), (8, 8), (7, 9), (6, 10)]:
-            img.putpixel(p, (255, 230, 60, 255))
+        for y, (x0, x1) in zip(range(6, 19), [(13, 14), (12, 13), (11, 12), (10, 11), (9, 10),
+                                              (9, 15), (9, 15), (13, 14), (12, 13), (11, 12),
+                                              (10, 11), (9, 10), (9, 9)]):
+            rect(img, x0, y, x1, y, yellow)
     elif kind == "shield":
-        rect(img, 6, 5, 10, 8, WHITE)
-        rect(img, 7, 9, 9, 9, WHITE)
-        img.putpixel((8, 10), WHITE)
+        rect(img, 8, 7, 16, 12, WHITE)
+        rect(img, 9, 13, 15, 14, WHITE)
+        rect(img, 10, 15, 14, 15, WHITE)
+        rect(img, 11, 16, 13, 16, WHITE)
+        rect(img, 12, 17, 12, 17, WHITE)
     else:
-        rect(img, 7, 5, 8, 10, WHITE)
-        rect(img, 5, 7, 10, 8, WHITE)
+        rect(img, 11, 6, 13, 18, WHITE)
+        rect(img, 6, 11, 18, 13, WHITE)
     return img
 
 
 def shield_bubble():
     img = new_tile()
-    ring(img, 7.5, 7.5, 6.5, 7.6, (120, 230, 255, 170))
+    ring(img, 12, 12, 10.6, 12.1, (120, 230, 255, 170))
     return img
 
 
 def floor():
     img = Image.new("RGBA", (ART, ART), (205, 200, 185, 255))
-    for p in [(3, 4), (11, 2), (7, 12), (14, 9), (1, 14)]:
+    for p in [(4, 6), (17, 3), (11, 19), (22, 14), (2, 22), (14, 10), (20, 22)]:
         img.putpixel(p, (185, 178, 162, 255))
     return img
 
 
 def wall():
     img = Image.new("RGBA", (ART, ART), (120, 70, 55, 255))
-    for y in (0, 5, 10, 15):
-        rect(img, 0, y, ART - 1, y, (80, 45, 35, 255))           # mortar rows
-    for y0, xs in ((1, (0, 8)), (6, (4, 12)), (11, (0, 8))):
+    mortar = (80, 45, 35, 255)
+    for y in (0, 8, 16, 24):
+        rect(img, 0, y, ART - 1, y, mortar)                      # mortar rows
+    for y0, xs in ((1, (0, 12)), (9, (6, 18)), (17, (0, 12))):
         for x in xs:
-            rect(img, x, y0, x, y0 + 3, (80, 45, 35, 255))       # mortar joints
+            rect(img, x, y0, x, y0 + 6, mortar)                  # mortar joints
     return img
 
 
@@ -206,7 +224,7 @@ def main():
     tiles[(5, 0)] = floor()
     tiles[(5, 1)] = wall()
 
-    atlas = Image.new("RGBA", (GRID * TILE, GRID * TILE), CLEAR)
+    atlas = Image.new("RGBA", (COLS * TILE, ROWS * TILE), CLEAR)
     for (row, col), art in tiles.items():
         big = art.resize((TILE, TILE), Image.NEAREST)
         atlas.paste(big, (col * TILE, row * TILE))

@@ -1,5 +1,7 @@
 /* client/atlas.h
-Texture atlas: every sprite is a 64 x 64 tile in assets/atlas.png (8 x 8 tiles).
+Texture atlas: every sprite is a 50 x 50 tile in assets/atlas.png. The atlas
+is the size of the window (800 x 600 = 16 x 12 tiles), so one tile is one cell
+of the floor grid and the size of a player's hitbox (SQ_WIDTH).
 Sprite IDs name the tiles, so drawing code never uses pixel coordinates, and
 the final art can replace atlas.png without code changes as long as the
 layout below stays the same (see assets/make_placeholder_atlas.py). */
@@ -12,15 +14,16 @@ layout below stays the same (see assets/make_placeholder_atlas.py). */
 // Atlas image, relative to the directory the client is started from
 #define ATLAS_PATH "assets/atlas.png"
 
-// Tile size in pixels and tiles per atlas side
-#define ATLAS_TILE 64
-#define ATLAS_GRID 8
+// Tile size in pixels (drawn 1:1 on screen) and tiles per atlas row / column
+#define ATLAS_TILE 50
+#define ATLAS_COLS 16
+#define ATLAS_ROWS 12
 
 // Sprite ID of the tile at (row, col)
-#define SPRITE(row, col) ((row) * ATLAS_GRID + (col))
+#define SPRITE(row, col) ((row) * ATLAS_COLS + (col))
 
 /* Sprite IDs. Animations are consecutive tiles in a row (step 1), except the
-player idle animation, whose frames are one row apart (step ATLAS_GRID) so
+player idle animation, whose frames are one row apart (step ATLAS_COLS) so
 that each player colour is one column. */
 enum
 {
@@ -39,7 +42,7 @@ enum
 
 // Number of animation frames and the sprite-ID step between them
 #define PLAYER_FRAMES    2
-#define PLAYER_STEP      ATLAS_GRID
+#define PLAYER_STEP      ATLAS_COLS
 #define BOMB_FRAMES      4
 #define SPARK_FRAMES     2
 #define EXPLOSION_FRAMES 6

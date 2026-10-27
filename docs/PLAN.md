@@ -98,7 +98,7 @@ Fuse/
 │   ├── interp.c/.h       #   snapshot buffer + interpolation
 │   ├── ui.c/.h           #   lobby, login, win screen, cached text
 │   └── net_client.c/.h   #   DDS worker: send input, receive snapshots
-├── assets/               # atlas.png (64x64 pixel-art tiles, 8x8 grid), make_placeholder_atlas.py
+├── assets/               # atlas.png (800x600: 16x12 pixel-art tiles of 50x50), make_placeholder_atlas.py
 ├── third_party/          # stb_easy_font.h (stb_image comes from libstb-dev)
 ├── security/
 │   ├── config/           #   cyclonedds.xml, governance.xml, permissions_*.xml

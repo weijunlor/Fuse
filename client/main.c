@@ -10,20 +10,88 @@ FUSE client entry point. Based on baseline/client.c (Dr Khoo Teck Ping,
 6. Collision detection among all players and the window is supported (server)
 
 Threads: the main thread owns the window, reads the keyboard and draws;
-a DDS worker thread does all network I/O (net_client.c). */
+a DDS worker thread does all network I/O (net_client.c).
+
+Options (for measurements, see bench/render.sh):
+  --stress N           draw N extra animated sprites every frame
+  --frames F           exit after F frames and print frame-time statistics
+                       (vsync is switched on so every run renders the same way)
+  --render-immediate   one draw call per sprite (optimisation #16 "before") */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 
 #include "config.h"
+#include "timing.h"
 #include "net_client.h"
 #include "input.h"
 #include "render.h"
 
-int main(void)
+// qsort comparison for frame times
+static int compare_u64(const void *a, const void *b)
 {
+    uint64_t x = *(const uint64_t *)a, y = *(const uint64_t *)b;
+    return (x > y) - (x < y);
+}
+
+/* Print statistics of the CPU time spent in render_frame() per frame, in
+microseconds, as one key=value line (parsed by bench/render.sh). Sorts the
+array in place. */
+static void print_frame_stats(uint64_t *a_arr_ns, int a_int_frames, int a_int_stress,
+                              bool a_b_immediate, double a_d_wall_s, double a_d_elapsed_s)
+{
+    double d_sum = 0;
+    for (int i = 0; i < a_int_frames; i++)
+        d_sum += (double)a_arr_ns[i];
+    qsort(a_arr_ns, (size_t)a_int_frames, sizeof(uint64_t), compare_u64);
+
+    // fps: render loop only; elapsed_s: from the start of main() (lets
+    // bench/render.sh work out how many frames fall in a perf counting window)
+    printf("frames=%d stress=%d mode=%s fps=%.2f elapsed_s=%.3f render_us_mean=%.1f"
+           " render_us_p50=%.1f render_us_p99=%.1f render_us_max=%.1f gl_renderer=\"%s\"\n",
+           a_int_frames, a_int_stress, a_b_immediate ? "immediate" : "batched",
+           a_int_frames / a_d_wall_s, a_d_elapsed_s,
+           d_sum / a_int_frames / 1000.0,
+           a_arr_ns[a_int_frames / 2] / 1000.0,
+           a_arr_ns[(int)(a_int_frames * 0.99)] / 1000.0,
+           a_arr_ns[a_int_frames - 1] / 1000.0,
+           (const char *)glGetString(GL_RENDERER));
+}
+
+// GLFW callback: the framebuffer changed size (display scaling applied after
+// the window opened, or the window moved to a monitor with another scale)
+static void on_framebuffer_size(GLFWwindow *a_window, int a_int_w, int a_int_h)
+{
+    (void)a_window;
+    render_resize(a_int_w, a_int_h);
+}
+
+int main(int argc, char **argv)
+{
+    uint64_t u_main_ns = timing_now_ns();
+
+    // Command-line options (see the top of this file)
+    int int_stress = 0;
+    int int_frames = 0;
+    bool b_immediate = false;
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
+            int_stress = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc)
+            int_frames = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--render-immediate") == 0)
+            b_immediate = true;
+        else
+        {
+            fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render-immediate]\n", argv[0]);
+            return 1;
+        }
+    }
+
 	pthread_t thread;
 
     if (pthread_create(&thread, NULL, net_client_worker, NULL) != 0)
@@ -45,7 +113,26 @@ int main(void)
     }
 
     glfwMakeContextCurrent(window);
-    render_init();
+    render_init(b_immediate, int_stress);
+
+    // Fill the real framebuffer, which is not WIDTH x HEIGHT on a scaled display
+    int int_fb_w, int_fb_h;
+    glfwGetFramebufferSize(window, &int_fb_w, &int_fb_h);
+    render_resize(int_fb_w, int_fb_h);
+    glfwSetFramebufferSizeCallback(window, on_framebuffer_size);
+
+    // Measured run: fixed vsync so frame pacing is the same on every run,
+    // and one render_frame() time per frame
+    uint64_t *arr_frame_ns = NULL;
+    if (int_frames > 0)
+    {
+        glfwSwapInterval(1);
+        arr_frame_ns = malloc((size_t)int_frames * sizeof(uint64_t));
+        if (arr_frame_ns == NULL)
+            return 1;
+    }
+    int int_frame = 0;
+    uint64_t u_start_ns = timing_now_ns();
 
     // Screenshots: F12 saves screenshot.png; FUSE_SCREENSHOT=<file> saves one
     // automatically after 2 s (for tests and slides)
@@ -58,7 +145,20 @@ int main(void)
         /* Process keyboard/window events */
         glfwPollEvents();
         input_poll(window);
+
+        uint64_t u_t0 = timing_now_ns();
         render_frame();
+        if (arr_frame_ns != NULL)
+        {
+            arr_frame_ns[int_frame++] = timing_now_ns() - u_t0;
+            if (int_frame == int_frames)
+            {
+                uint64_t u_end_ns = timing_now_ns();
+                print_frame_stats(arr_frame_ns, int_frames, int_stress, b_immediate,
+                                  (u_end_ns - u_start_ns) / 1e9, (u_end_ns - u_main_ns) / 1e9);
+                break;
+            }
+        }
 
         int int_f12 = glfwGetKey(window, GLFW_KEY_F12);
         if (int_f12 == GLFW_PRESS && int_f12_prev == GLFW_RELEASE)

@@ -1,0 +1,39 @@
+# 2026-10-27T15:46:00+00:00  RUNS=5 FRAMES=1200 STRESS="0 1000 10000" CPUS=4-7
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_0.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 0 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_1000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 1000 --frames 1200
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_immediate_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf stat -x, --append -D 3000 -o bench/results/opt-16a-batched-sprites/raw/stat_batched_10000.csv -e task-clock,cycles,instructions -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf record -q -e cpu_core/cycles/ -F 999 -D 3000 --call-graph fp -o bench/results/opt-16a-batched-sprites/raw/record_immediate.data -- taskset -c 4-7 build/client --stress 10000 --frames 1200 --render-immediate
+perf script -i bench/results/opt-16a-batched-sprites/raw/record_immediate.data
+perf report -i bench/results/opt-16a-batched-sprites/raw/record_immediate.data --stdio --no-children --percent-limit 0.5
+perf report -i bench/results/opt-16a-batched-sprites/raw/record_immediate.data --stdio --no-children --sort comm,dso -g none --percent-limit 1
+perf record -q -e cpu_core/cycles/ -F 999 -D 3000 --call-graph fp -o bench/results/opt-16a-batched-sprites/raw/record_batched.data -- taskset -c 4-7 build/client --stress 10000 --frames 1200
+perf script -i bench/results/opt-16a-batched-sprites/raw/record_batched.data
+perf report -i bench/results/opt-16a-batched-sprites/raw/record_batched.data --stdio --no-children --percent-limit 0.5
+perf report -i bench/results/opt-16a-batched-sprites/raw/record_batched.data --stdio --no-children --sort comm,dso -g none --percent-limit 1

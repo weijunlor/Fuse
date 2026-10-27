@@ -30,3 +30,23 @@ make profile && bench/profile.sh opt-01-unlock-before-publish build
 
 Use one label per optimisation step (matching the git tag) so the final report can compare every step.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
+
+## Rendering cost: `render.sh`
+
+`bench/render.sh <label> [bin_dir]` measures the client's drawing code on its own (no server), for #16 and later
+rendering optimisations. The client has test options for this:
+
+| Option | Effect |
+|---|---|
+| `--stress N` | draw N extra animated sprites (fixed pseudo-random positions, same every run) |
+| `--frames F` | vsync on, draw F frames, print one `frames= ... render_us_mean/p50/p99/max ...` line, exit |
+| `--render-immediate` | the "before" drawing path: one `glBegin`/`glEnd` per sprite (default is batched) |
+
+The script runs both modes at each N in `STRESS` (default `0 1000 10000`), 5 interleaved runs each, under
+`perf stat` (from 3 s after start, so zink/Vulkan start-up is excluded), then one `perf record` per mode.
+It writes the same `setup.txt` / `report.txt` / `raw/` layout as `profile.sh` (`setup.txt` also gives the GL renderer).
+Both scripts write `setup.txt` with `bench/setup_info.sh`.
+
+```bash
+make profile && bench/render.sh opt-16a-batched-sprites build
+```

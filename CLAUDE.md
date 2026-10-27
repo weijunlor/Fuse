@@ -20,6 +20,8 @@ CSD3116 team assignment: real-time multiplayer game in C on Cyclone DDS, OpenGL 
 - WSL2 usually lacks hardware perf counters; use native Ubuntu for cache/branch/IPC numbers.
 - Native Ubuntu 26.04 laptop (i7-14650HX, P-cores = CPUs 0-15, E-cores 16-23): README packages plus `pkg-config` are needed. Ubuntu's perf has no BPF, so `perf lock contention -b` fails; use `perf lock record` and then `perf lock contention -i`. Kernel symbols need `kptr_restrict=0`; tracepoint files are root-only, so `bench/profile.sh` runs perf lock/trace with sudo (the user must have set paranoid/kptr/governor first; ask them).
 - `perf lock contention` (tracepoints) sees kernel locks only, not pthread mutexes. Baseline user-space mutex contention shows as futex syscalls in `perf trace -s`: server main thread 7.3M and DDS worker 11.3M futex calls in 30 s (~620k/s). Use the futex count as the "before" for #1–3.
+- Client GL renderer on the native laptop is zink (OpenGL on Vulkan) on NVK, RTX 4060. Mesa has no symbols, so `bench/render.sh` reports perf samples per thread and library. The desktop is Wayland at 133% scaling: the 800x600 window has a 1066x800 framebuffer (the client sets the viewport to it).
+- #16a at 10000 sprites: batched uses 7.6x fewer instructions per frame but no less time, because 82% of samples are one `memmove` in libc called by the driver, copying the client-side vertex array (10000 x 4 x 16 B = 640 KB/frame) at under 1 GB/s. Next step (#16b): GPU vertex buffer and/or smaller vertices.
 - Baseline server CPU use is bimodal: 8 of 10 runs ~1.19 CPUs, 2 runs ~0.79. Report per-run values, not just mean ± stddev.
 
 ## Status (update this section as work progresses)
@@ -32,12 +34,16 @@ Done:
   Tested: a DDS test driver (join, 30 × right, 1000 × up) gives the same results on baseline and split servers; split server works with both new and baseline clients; profiled as `bench/results/split-modules/`.
 - Verified in WSL: `make` and `make baseline` build cleanly; baseline runs.
 - IDL v1 decided: `idl/fuse.idl` (not yet built; replaces `idl/messages.idl` when the server switches to snapshots), constants in `common/types.h`, rationale in PLAN.md section 2.
-- Client draws sprites from `assets/atlas.png` (64x64 pixel-art tiles, layout in `client/atlas.h`; regenerate placeholders with `python3 assets/make_placeholder_atlas.py`). Simple immediate-mode version (one glBegin/glEnd per sprite) = the "before" for #16. F12 or `FUSE_SCREENSHOT=<file>` saves a screenshot. Needs `libstb-dev` (stb_image, stb_image_write via `pkg-config stb`). Client must start from the repo root (atlas path is relative).
+- Client draws sprites from `assets/atlas.png` (800x600 = window size, 16x12 tiles of 50x50 = hitbox size, 25x25 art scaled 2x; layout in `client/atlas.h`; regenerate placeholders with `python3 assets/make_placeholder_atlas.py`). Simple immediate-mode version (one glBegin/glEnd per sprite) = the "before" for #16. F12 or `FUSE_SCREENSHOT=<file>` saves a screenshot. Needs `libstb-dev` (stb_image, stb_image_write via `pkg-config stb`). Client must start from the repo root (atlas path is relative).
 - Git: `baseline-measured` tag on d537567 (baseline profiles); module split committed as 2f36af2, tagged `split-modules` (the "before" for the first optimisation). Pushed to github.com/weijunlor/Fuse (gh logged in as weijunlor). The user runs git commit/tag/push themselves.
 - `bench/profile.sh <label> <bin_dir>`: every profiling run writes `bench/results/<label>/` with `setup.txt`, `report.txt` and `raw/` (see `bench/README.md`). Profile every optimisation step with it, one label per step, so the final report can use all the data.
 - Baseline profiled at -O0 and -O2 (`make baseline-O0 baseline-O2`, -g and frame pointers): `bench/results/baseline-O0/`, `bench/results/baseline-O2/`. At -O2: server ~1.1 CPUs, client ~1.0 CPU, ~50% of samples in `pthread_mutex_lock`/`unlock`, server ~600k futex calls/s.
 
+- Optimisation #16a (batched sprites): `client/render.c` draws all sprites with one `glDrawArrays` per frame; `--render-immediate` keeps the old path. Measured with `bench/render.sh` (client options `--stress N --frames F`), results in `bench/results/opt-16a-batched-sprites/`. render_frame CPU time, immediate → batched: 1000 sprites 187 → 107 µs mean (p99 426 → 116 µs, 3.3x fewer instructions); 10000 sprites 1005 → 991 µs (7.6x fewer instructions, time limited by the driver's copy, see Findings); 0 sprites 12.9 → 15.7 µs (array set-up overhead).
+- Atlas is window-sized (800x600, 16x12 tiles of 50 px = hitbox); viewport follows the framebuffer size.
+
 Not done yet:
+- #16 remaining parts, each measured on its own: vertex buffer / smaller vertices (#16b), cached text vertices, vsync in normal play.
 - No flame graph SVGs: needs FlameGraph scripts on PATH, then `STEPS=record bench/profile.sh <label> <bin_dir>` (raw/record_*.script.gz can also be fed to stackcollapse-perf.pl later).
 
 Next (see PLAN.md section 8 for the full timeline):

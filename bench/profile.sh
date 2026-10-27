@@ -124,48 +124,9 @@ own_files() {
 # ---------------------------------------------------------------------------
 # setup.txt: machine and build (needed below every results table)
 # ---------------------------------------------------------------------------
-# Compile flags of the first compilation unit, from DWARF debug info
-build_flags() {
-    readelf --debug-dump=info "$1" 2> /dev/null \
-        | grep -m1 DW_AT_producer | sed 's/.*): //' || true
-}
-str_flags=$(build_flags "$SERVER")
-str_level=$(grep -o -- ' -O[0-9sgz]*' <<< "$str_flags" | tail -1 | tr -d ' ' || true)
-
-{
-    echo "Profiling setup: $LABEL"
-    echo "Recorded: $(date -Iseconds)"
-    echo
-    echo "== Build"
-    echo "Optimisation level: ${str_level:-unknown (no debug info in binary)}"
-    echo "Compiler flags (DW_AT_producer of $SERVER):"
-    echo "  ${str_flags:-unknown (build with -g to record flags)}"
-    echo "Client flags (DW_AT_producer of $CLIENT):"
-    echo "  $(build_flags "$CLIENT")"
-    echo "Binaries (sha256):"
-    sha256sum "$SERVER" "$CLIENT" | sed 's/^/  /'
-    echo "Git: $(git rev-parse --short HEAD) on $(git rev-parse --abbrev-ref HEAD)" \
-         "$(git diff --quiet HEAD -- . ':!bench/results' || echo '(uncommitted changes)')"
-    echo
-    echo "== Machine"
-    lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket|L1d|L1i|L2|L3)'
-    grep MemTotal /proc/meminfo
-    echo "P-cores (cpu_core): $(cat /sys/devices/cpu_core/cpus 2> /dev/null || echo n/a)"
-    echo "E-cores (cpu_atom): $(cat /sys/devices/cpu_atom/cpus 2> /dev/null || echo n/a)"
-    echo "Governor: $(sort -u /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | tr '\n' ' ')"
-    echo "Turbo disabled: $(cat /sys/devices/system/cpu/intel_pstate/no_turbo 2> /dev/null || echo n/a)"
-    echo
-    echo "== Software"
-    grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"'
-    echo "Kernel: $(uname -r)"
-    gcc --version | head -1
-    perf --version
-    echo "Cyclone DDS: $(pkg-config --modversion CycloneDDS)"
-    echo "GLFW: $(pkg-config --modversion glfw3)"
-    echo "perf_event_paranoid: $(cat /proc/sys/kernel/perf_event_paranoid)"
-    echo "kptr_restrict: $(cat /proc/sys/kernel/kptr_restrict)"
-    echo "Display session: ${XDG_SESSION_TYPE:-unknown}"
-} > "$OUT/setup.txt"
+source bench/setup_info.sh
+str_level=$(opt_level "$SERVER")
+write_setup "$LABEL" "$SERVER" "$CLIENT" > "$OUT/setup.txt"
 
 # ---------------------------------------------------------------------------
 # 1. perf stat: server and client #1, RUNS fresh runs
@@ -226,7 +187,9 @@ if want record; then
     for name in server client; do
         if [ "$name" = server ]; then pid=$int_server_pid; else pid=${arr_client_pids[0]}; fi
         rm -f "$RAW/record_$name.data"
-        logged perf record -q -F "$RECORD_FREQ" --call-graph fp \
+        # cpu_core/cycles/ explicitly: on this hybrid CPU a plain "cycles"
+        # can make perf report show the E-core event (processes are on P-cores)
+        logged perf record -q -e cpu_core/cycles/ -F "$RECORD_FREQ" --call-graph fp \
             -o "$RAW/record_$name.data" -p "$pid" -- sleep "$RECORD_DURATION"
     done
     stop_scenario
