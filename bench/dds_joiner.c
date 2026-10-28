@@ -1,7 +1,8 @@
 /* bench/dds_joiner.c
 Headless client for join tests (#14): joins the game exactly as the real
-client does (same topics and QoS from common/net.c, FUSE_QOS honoured, a
-JoinRequest every 1 s until a JoinResponse arrives), then stays connected and
+client does (same topics and QoS from common/net.c, FUSE_QOS and
+FUSE_JOIN_NONCE honoured, a JoinRequest every 1 s until its JoinResponse
+arrives), then stays connected and
 watches the snapshots. bench/join_loss.sh runs several of these while the
 loopback interface drops packets.
 
@@ -30,11 +31,18 @@ int main(int argc, char **argv)
     dds_entity_t response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
     dds_entity_t snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
 
-    void *p_response = JoinResponse__alloc();
+    void *arr_p_responses[JOIN_TAKE];
+    dds_sample_info_t infos[JOIN_TAKE];
+    for (int i = 0; i < JOIN_TAKE; i++)
+        arr_p_responses[i] = JoinResponse__alloc();
     void *p_snapshot = GameSnapshot__alloc();
     dds_sample_info_t info;
 
+    // As the client: one nonce, sent in every request
     JoinRequest request = {0};
+    bool b_join_nonce = net_join_nonce();
+    if (b_join_nonce)
+        request.nonce = net_random_nonce();
     int int_id = 0, int_requests = 0, int_snapshots = 0, int_active = -1;
     dds_time_t start = dds_time();
     dds_time_t end = start + (dds_duration_t)(d_seconds * 1e9);
@@ -55,10 +63,14 @@ int main(int argc, char **argv)
                     first_request = now;
                 last_request = now;
             }
-            // As the client: the first valid response is taken as ours
-            if (dds_take(response_reader, &p_response, &info, 1, 1) > 0 && info.valid_data)
+            // As the client: the response with our nonce (any response
+            // with FUSE_JOIN_NONCE=off) is taken as ours
+            int rc = dds_take(response_reader, arr_p_responses, infos, JOIN_TAKE, JOIN_TAKE);
+            for (int i = 0; i < rc && int_id == 0; i++)
             {
-                const JoinResponse *p_r = p_response;
+                const JoinResponse *p_r = arr_p_responses[i];
+                if (!infos[i].valid_data || (b_join_nonce && p_r->nonce != request.nonce))
+                    continue;
                 if (p_r->status == JOIN_OK && p_r->player_id != 0)
                 {
                     int_id = p_r->player_id;

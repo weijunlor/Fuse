@@ -16,7 +16,10 @@ network I/O (net_server.c).
 Options:
   --snapshot-hz H   publish a GameSnapshot H times per second (default
                     SNAPSHOT_HZ; H must divide TICK_HZ: 60, 30, 20, 15, 12,
-                    10, ...). Lower rates need client interpolation (#15). */
+                    10, ...). Lower rates need client interpolation (#15).
+  --player-timeout S  remove a player whose client sent no Input for S seconds
+                    (default PLAYER_TIMEOUT_S = 5; 0 = never). FUSE_LEAVE=off
+                    in the environment turns Leave and the timeout off. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,15 +41,25 @@ int main(int argc, char **argv)
 	// Command-line options (see the top of this file)
 	for (int i = 1; i < argc; i++)
 	{
-		int int_hz = 0;
+		bool b_ok = false;
 		if (strcmp(argv[i], "--snapshot-hz") == 0 && i + 1 < argc)
-			int_hz = atoi(argv[++i]);
-		if (int_hz < 1 || int_hz > TICK_HZ || TICK_HZ % int_hz != 0)
 		{
-			fprintf(stderr, "Usage: %s [--snapshot-hz H]  (H divides %d)\n", argv[0], TICK_HZ);
+			int int_hz = atoi(argv[++i]);
+			b_ok = int_hz >= 1 && int_hz <= TICK_HZ && TICK_HZ % int_hz == 0;
+			if (b_ok)
+				int_snapshot_every = TICK_HZ / int_hz;
+		}
+		else if (strcmp(argv[i], "--player-timeout") == 0 && i + 1 < argc)
+		{
+			int_player_timeout_s = atoi(argv[++i]);
+			b_ok = int_player_timeout_s >= 0;
+		}
+		if (!b_ok)
+		{
+			fprintf(stderr, "Usage: %s [--snapshot-hz H] [--player-timeout S]\n"
+			                "  H divides %d; S in seconds, 0 = never\n", argv[0], TICK_HZ);
 			return 1;
 		}
-		int_snapshot_every = TICK_HZ / int_hz;
 	}
 
 	// Seed rand(), so that the random numbers are different for each run
@@ -75,6 +88,8 @@ int main(int argc, char **argv)
 		uint64_t u_now_ns = timing_now_ns();
 		if (u_now_ns >= u_next_tick_ns)
 		{
+			// Remove players not heard from for too long, then move the rest
+			lobby_check_timeouts(u_now_ns);
 			game_tick();
 			u_next_tick_ns += TICK_NS;
 			// More than a second behind (e.g. the process was stopped):

@@ -27,4 +27,11 @@ Game constants shared by server and client: window size, MAX_PLAYERS, tick rate,
 // otherwise (one GameSnapshot every TICK_HZ / SNAPSHOT_HZ ticks)
 #define SNAPSHOT_HZ 60
 
+// A player whose client sends no Input for this long is removed, unless the
+// server's --player-timeout says otherwise (0 = never). Clients repeat their
+// keys every 100 ms even when idle (#13), so only a crashed, killed or cut-off
+// client is that quiet. Long enough that a short network stall does not drop
+// anyone (a clean exit sends Leave and frees the slot at once).
+#define PLAYER_TIMEOUT_S 5
+
 #endif /* COMMON_CONFIG_H */

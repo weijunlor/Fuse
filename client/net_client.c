@@ -10,7 +10,17 @@ stops the player.
 #13 (input on change, the default): an Input is sent only when the held keys
 change, and repeated every INPUT_REPEAT_MS in case one was lost (Input will be
 best-effort, #14 in common/net.h). A held arrow key then costs ~10 messages per second instead
-of ~100. --input-send every-10ms keeps the old behaviour for measurements. */
+of ~100. --input-send every-10ms keeps the old behaviour for measurements.
+
+Join nonce (common/net.h): the client sends the same random nonce in every
+JoinRequest and accepts only the JoinResponse carrying it; responses to other
+clients are taken and dropped. FUSE_JOIN_NONCE=off: nonce 0 and the first
+response is taken, as in the baseline.
+
+Leave (common/net.h): when the window closes, the worker sends a Leave so the
+server frees the slot at once. If the server dropped this client (no Input
+for its timeout, e.g. the network was cut), the client sees its own slot
+missing from the snapshots and joins again with a new nonce. */
 
 #include <stdio.h>
 
@@ -32,6 +42,16 @@ bool b_input_on_change = true;
 Player arr_Players[MAX_PLAYERS] = {0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Set by net_client_stop() (main thread), read by the worker, under the mutex
+static bool b_quit = false;
+
+void net_client_stop(void)
+{
+	pthread_mutex_lock(&mutex);
+	b_quit = true;
+	pthread_mutex_unlock(&mutex);
+}
+
 void *net_client_worker(void *arg)
 {
 	(void)arg;
@@ -41,10 +61,11 @@ void *net_client_worker(void *arg)
 	dds_entity_t snapshot_reader;
 	dds_entity_t join_writer;
 	dds_entity_t input_writer;
+	dds_entity_t leave_writer;
 
 	//Pointer to unknown type
-	void *samples_response[MAX_SAMPLES];
-	dds_sample_info_t infos_response[MAX_SAMPLES];
+	void *samples_response[JOIN_TAKE];
+	dds_sample_info_t infos_response[JOIN_TAKE];
 	void *samples_snapshot[MAX_SAMPLES];
 	dds_sample_info_t infos_snapshot[MAX_SAMPLES];
 	dds_return_t rc;
@@ -57,6 +78,8 @@ void *net_client_worker(void *arg)
 	/* ----------------------------------------------------- */
 	join_writer = net_create_writer(&net, net.join_topic, NET_RELIABLE_ALL);
 	input_writer = net_create_writer(&net, net.input_topic, NET_BEST_EFFORT);
+	// Reliable: a lost Leave would keep the player in the game until the timeout
+	leave_writer = net_create_writer(&net, net.leave_topic, NET_RELIABLE_ALL);
 
 	/* ----------------------------------------------------- */
 	/* Create readers                                        */
@@ -64,8 +87,13 @@ void *net_client_worker(void *arg)
 	response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
 	snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
 
-	// Nonce, name and proof stay empty until the join nonce and login are added
+	// One nonce for this client, the same in every request (so the server
+	// knows a repeated request); name and proof stay empty until the login is
+	// added
 	JoinRequest request = {0};
+	bool b_join_nonce = net_join_nonce();
+	if (b_join_nonce)
+		request.nonce = net_random_nonce();
 
 	// Input message: sequence number counts every input sent
 	Input input = {0};
@@ -73,10 +101,15 @@ void *net_client_worker(void *arg)
 	uint8_t u8_sent_keys = 0;
 	// When the last input was sent (#13 repeats it every INPUT_REPEAT_MS)
 	dds_time_t last_input_time = 0;
+	// True once our own player has appeared in a snapshot; if it disappears
+	// after that, the server has dropped us (snapshots taken before the
+	// server admitted us do not show us yet, so they must not count)
+	bool b_seen_self = false;
 
 	/* Initialize sample buffer, by pointing the void pointer within
 	* the buffer array to a valid sample memory location. */
-	samples_response[0] = JoinResponse__alloc();
+	for (int i = 0; i < JOIN_TAKE; i++)
+		samples_response[i] = JoinResponse__alloc();
 
 	samples_snapshot[0] = GameSnapshot__alloc();
 
@@ -87,33 +120,47 @@ void *net_client_worker(void *arg)
 		// If not in a game yet
 		pthread_mutex_lock(&mutex);
 		int int_player_id_temp = int_player_id;
+		bool b_quit_temp = b_quit;
 		pthread_mutex_unlock(&mutex);
+		// The window was closed
+		if (b_quit_temp)
+			break;
 		if (int_player_id_temp == -1)
 		{
 			//Listen for server join response
-			rc = dds_take(response_reader, samples_response, infos_response, MAX_SAMPLES, MAX_SAMPLES);
+			// Every waiting response (every client receives all of them)
+			rc = dds_take(response_reader, samples_response, infos_response, JOIN_TAKE, JOIN_TAKE);
 
 			if (rc < 0)
 				DDS_FATAL("dds_take: %s\n", dds_strretcode(-rc));
 
-			/* Check if we read some data and it is valid. */
-			if ((rc > 0) && (infos_response[0].valid_data))
+			int int_resp_player_id = -1;
+			for (int i = 0; i < rc && int_resp_player_id == -1; i++)
 			{
+				JoinResponse *response = (JoinResponse *) samples_response[i];
+				// Only the response to our own request (any one without nonce)
+				if (!infos_response[i].valid_data ||
+				    (b_join_nonce && response->nonce != request.nonce))
+					continue;
 				LOG_INFO("Join response received\n");
-				JoinResponse *response = (JoinResponse *) samples_response[0];
-				int int_resp_player_id = response->player_id;
 				// If server responded with an invalid player ID
-				if (response->status != JOIN_OK || int_resp_player_id == 0)
-					LOG_WARN("Unable to join\n");
-				else
+				if (response->status != JOIN_OK || response->player_id == 0)
 				{
-					pthread_mutex_lock(&mutex);
-					// Update player ID
-					int_player_id = int_resp_player_id;
-					pthread_mutex_unlock(&mutex);
+					LOG_WARN("Unable to join\n");
+					int_resp_player_id = 0;
 				}
+				else
+					int_resp_player_id = response->player_id;
 			}
-			else
+
+			if (int_resp_player_id > 0)
+			{
+				pthread_mutex_lock(&mutex);
+				// Update player ID
+				int_player_id = int_resp_player_id;
+				pthread_mutex_unlock(&mutex);
+			}
+			else if (rc == 0)
 			{
 				/* Polling sleep. */
 				dds_sleepfor (DDS_MSECS (20));
@@ -207,7 +254,43 @@ void *net_client_worker(void *arg)
 				arr_Players[i].x = p_state->x;
 				arr_Players[i].y = p_state->y;
 			}
+
+			// Our own slot (if we are playing): still there?
+			if (int_player_id_temp >= 1 && int_player_id_temp <= MAX_PLAYERS && net_leave())
+			{
+				if (arr_Players[int_player_id_temp - 1].b_active)
+					b_seen_self = true;
+				else if (b_seen_self)
+				{
+					// Dropped by the server: join again. A new nonce, so a
+					// late response to the old one cannot be taken by mistake.
+					LOG_WARN("Removed by the server (timed out), joining again\n");
+					int_player_id = -1;
+					b_seen_self = false;
+					if (b_join_nonce)
+						request.nonce = net_random_nonce();
+				}
+			}
 			pthread_mutex_unlock(&mutex);
 		}
 	}
+
+	// Tell the server we are leaving, so it frees the slot now instead of
+	// after the timeout, and wait (briefly) until it has the message: the
+	// process exits right after this
+	if (int_player_id > 0 && net_leave())
+	{
+		Leave leave = {0};
+		leave.player_id = (uint8_t)int_player_id;
+		leave.seq = ++input.seq;   // continues the Input sequence (see the IDL)
+		rc = dds_write(leave_writer, &leave);
+		if (rc != DDS_RETCODE_OK)
+			LOG_WARN("Leave not sent: %s\n", dds_strretcode(-rc));
+		else if (dds_wait_for_acks(leave_writer, DDS_MSECS(500)) != DDS_RETCODE_OK)
+			LOG_WARN("Leave not acknowledged (server gone?)\n");
+		else
+			LOG_INFO("Left the game\n");
+	}
+	dds_delete(net.participant);
+	return NULL;
 }

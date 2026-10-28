@@ -10,6 +10,7 @@ player by PLAYER_SPEED / TICK_HZ pixels per tick, TICK_HZ times per second. */
 
 #include "game.h"
 #include "collision.h"
+#include "timing.h"
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
@@ -22,6 +23,9 @@ int int_snapshot_every = TICK_HZ / SNAPSHOT_HZ;
 
 // Keys each player holds (KEY_* bitmask); index = player ID - 1
 static uint8_t arr_u8_keys[MAX_PLAYERS] = {0};
+
+// When each player's last Input arrived (timing_now_ns); index = player ID - 1
+static uint64_t arr_u64_last_input_ns[MAX_PLAYERS] = {0};
 
 // Ticks done since the server started
 static uint32_t u_tick = 0;
@@ -37,9 +41,23 @@ void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
 	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS)
 		return;
 
+	uint64_t u64_now_ns = timing_now_ns();
 	pthread_mutex_lock(&mutex);
 	arr_u8_keys[a_int_player_id - 1] = a_u8_keys;
+	arr_u64_last_input_ns[a_int_player_id - 1] = u64_now_ns;
 	pthread_mutex_unlock(&mutex);
+}
+
+void game_reset_player(int a_int_index)
+{
+	// Keys left over from the slot's previous player would move the new one
+	arr_u8_keys[a_int_index] = 0;
+	arr_u64_last_input_ns[a_int_index] = timing_now_ns();
+}
+
+uint64_t game_last_input_ns(int a_int_index)
+{
+	return arr_u64_last_input_ns[a_int_index];
 }
 
 // Clamp a coordinate to [0, a_int_max]

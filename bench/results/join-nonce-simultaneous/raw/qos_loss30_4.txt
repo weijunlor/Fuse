@@ -1,0 +1,12 @@
+DDS QoS: per topic (#14)
+Join nonce: off (baseline join)
+joined=1 id=2 join_ms=1905 requests=2 active=3 snapshots=305
+DDS QoS: per topic (#14)
+Join nonce: off (baseline join)
+joined=1 id=3 join_ms=3005 requests=4 active=3 snapshots=272
+DDS QoS: per topic (#14)
+Join nonce: off (baseline join)
+joined=1 id=1 join_ms=506 requests=1 active=3 snapshots=380
+DDS QoS: per topic (#14)
+Join nonce: off (baseline join)
+joined=1 id=2 join_ms=1913 requests=2 active=3 snapshots=301

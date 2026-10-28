@@ -7,106 +7,205 @@ Player slots: join (nonce), leave, liveliness timeout. */
 #include "lobby.h"
 #include "game.h"
 #include "collision.h"
+#include "net.h"
+#include "log.h"
+
+int int_player_timeout_s = PLAYER_TIMEOUT_S;
 
 // Only written by the main thread
 static int int_num_active_players = 0;
 
-// Flag set by worker thread that a player just joined
-// Must be reset to false after processing by main thread
-static bool b_player_join = false;
+// Nonce of the JoinRequest that each slot was given to (0 = none, or the
+// client sent no nonce). Only used by the main thread.
+static uint64_t arr_u64_slot_nonce[MAX_PLAYERS] = {0};
 
-// Player ID is the array index plus 1
-// -1 = No new players
-// 0 = Invalid player ID (unable to admit new players)
-// 1~MAX_PLAYERS = Valid player IDs
-static int int_new_player_id = -1;
+// Join requests waiting for the main thread (nonces, oldest first).
+// Written by the DDS worker, emptied by the main thread, under the mutex.
+static uint64_t arr_u64_pending[JOIN_QUEUE];
+static int int_num_pending = 0;
 
-void lobby_signal_join(void)
+// Player IDs from Leave messages waiting for the main thread.
+// Written by the DDS worker, emptied by the main thread, under the mutex.
+static int arr_int_leaving[JOIN_QUEUE];
+static int int_num_leaving = 0;
+
+// Answers waiting for the DDS worker (oldest first).
+// Written by the main thread, emptied by the DDS worker, under the mutex.
+static JoinResult arr_results[JOIN_QUEUE];
+static int int_num_results = 0;
+
+bool lobby_signal_join(uint64_t a_u64_nonce)
 {
-	// Signal the main thread to check if
-	// number of active players reached
 	pthread_mutex_lock(&mutex);
-	b_player_join = true;
+	bool b_queued = int_num_pending < JOIN_QUEUE;
+	if (b_queued)
+		arr_u64_pending[int_num_pending++] = a_u64_nonce;
 	pthread_mutex_unlock(&mutex);
+	return b_queued;
 }
 
-int lobby_take_new_player_id(void)
+bool lobby_signal_leave(int a_int_player_id)
 {
-	// If a new player ID has been assigned by the main thread
 	pthread_mutex_lock(&mutex);
-	int int_new_player_id_temp = int_new_player_id;
+	bool b_queued = int_num_leaving < JOIN_QUEUE;
+	if (b_queued)
+		arr_int_leaving[int_num_leaving++] = a_int_player_id;
 	pthread_mutex_unlock(&mutex);
-	if (int_new_player_id_temp != -1)
+	return b_queued;
+}
+
+bool lobby_take_result(JoinResult *a_p_out)
+{
+	pthread_mutex_lock(&mutex);
+	bool b_found = int_num_results > 0;
+	if (b_found)
 	{
-		pthread_mutex_lock(&mutex);
-		// Reset the player ID
-		int_new_player_id = -1;
-		pthread_mutex_unlock(&mutex);
+		*a_p_out = arr_results[0];
+		// Close the gap (at most JOIN_QUEUE entries, and joins are rare)
+		int_num_results--;
+		for (int i = 0; i < int_num_results; i++)
+			arr_results[i] = arr_results[i + 1];
 	}
-	return int_new_player_id_temp;
+	pthread_mutex_unlock(&mutex);
+	return b_found;
+}
+
+// Find the slot already given to a_u64_nonce. Returns its index, or -1.
+// Nonce 0 never matches: clients without a nonce cannot be told apart.
+static int find_slot_by_nonce(uint64_t a_u64_nonce)
+{
+	if (a_u64_nonce == 0 || !net_join_nonce())
+		return -1;
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (arr_Players[i].b_active && arr_u64_slot_nonce[i] == a_u64_nonce)
+			return i;
+	}
+	return -1;
+}
+
+// Give a free slot to a new player at a random position where it does not
+// overlap anyone. Returns the slot index, or -1 if the game is full.
+// The caller holds the mutex.
+static int admit_player(uint64_t a_u64_nonce)
+{
+	if (int_num_active_players == MAX_PLAYERS)
+		return -1;
+
+	// Loop through the players list
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (arr_Players[i].b_active == false)
+		{
+			// Set this index to active
+			arr_Players[i].b_active = true;
+			// Increment the number of active players
+			int_num_active_players++;
+			arr_u64_slot_nonce[i] = a_u64_nonce;
+			game_reset_player(i);
+
+			// Calculate initial coords of the new player
+			int int_rand_x = 0;
+			int int_rand_y = 0;
+			while (1)
+			{
+				int_rand_x = rand() % (WIDTH - SQ_WIDTH + 1);
+				int_rand_y = rand() % (HEIGHT - SQ_WIDTH + 1);
+				// Function don't have to lock/unlock mutex
+				bool b_res = collision_detect(arr_Players,
+					MAX_PLAYERS, i + 1, int_rand_x, int_rand_y);
+				// If no collision detected
+				if (b_res == false)
+				{
+					break;
+				}
+			}
+
+			// Set the coords
+			arr_Players[i].x = int_rand_x;
+			arr_Players[i].y = int_rand_y;
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Free slot a_int_index: the player disappears from the next snapshot, and
+// its nonce is forgotten. The caller holds the mutex.
+static void free_slot(int a_int_index)
+{
+	arr_Players[a_int_index].b_active = false;
+	arr_u64_slot_nonce[a_int_index] = 0;
+	game_reset_player(a_int_index);
+	int_num_active_players--;
 }
 
 void lobby_poll(void)
 {
-	// If a join request has been received
 	pthread_mutex_lock(&mutex);
-	bool b_player_join_temp = b_player_join;
-	pthread_mutex_unlock(&mutex);
-	if (b_player_join_temp == true)
+	// Leaves first, so a slot freed now can go to a request in the same pass.
+	// The ID comes from the network: ignore IDs out of range or not playing.
+	// (Until the security layer adds the MAC, anyone can send a Leave for
+	// anyone; the Leave message already has the field for it.)
+	for (int i = 0; i < int_num_leaving; i++)
 	{
-		// Reset the flag
-		pthread_mutex_lock(&mutex);
-		b_player_join = false;
-		pthread_mutex_unlock(&mutex);
-
-		// If max active players reached
-		if (int_num_active_players == MAX_PLAYERS)
+		int int_index = arr_int_leaving[i] - 1;
+		if (int_index >= 0 && int_index < MAX_PLAYERS && arr_Players[int_index].b_active)
 		{
-			// Set invalid player ID
-			pthread_mutex_lock(&mutex);
-			int_new_player_id = 0;
-			pthread_mutex_unlock(&mutex);
-		}
-		else
-		{
-			pthread_mutex_lock(&mutex);
-			// Loop through the players list
-			for(int i = 0; i < MAX_PLAYERS; i++)
-			{
-				if(arr_Players[i].b_active == false)
-				{
-					// Set this index to active
-					arr_Players[i].b_active = true;
-					// Increment the number of active players
-					int_num_active_players++;
-
-					// Calculate initial coords of the new player
-					int int_rand_x = 0;
-					int int_rand_y = 0;
-					while(1)
-					{
-						int_rand_x = rand()%(WIDTH-SQ_WIDTH+1);
-						int_rand_y = rand()%(HEIGHT-SQ_WIDTH+1);
-						// Function don't have to lock/unlock mutex
-						bool b_res = collision_detect(arr_Players,
-							MAX_PLAYERS, i+1, int_rand_x, int_rand_y);
-						// If no collision detected
-						if(b_res == false)
-						{
-							break;
-						}
-					}
-
-					// Set the coords
-					arr_Players[i].x = int_rand_x;
-					arr_Players[i].y = int_rand_y;
-
-					// Set player ID to be the index plus 1
-					int_new_player_id = i+1;
-					break;
-				}
-			}
-			pthread_mutex_unlock(&mutex);
+			free_slot(int_index);
+			LOG_INFO("Player %d left\n", int_index + 1);
 		}
 	}
+	int_num_leaving = 0;
+
+	// Every waiting request, oldest first, while there is room for the answer
+	// (the worker empties the answers every pass, so there almost always is)
+	int int_done = 0;
+	while (int_done < int_num_pending && int_num_results < JOIN_QUEUE)
+	{
+		uint64_t u64_nonce = arr_u64_pending[int_done++];
+		JoinResult result = { .u64_nonce = u64_nonce, .u8_status = JOIN_OK };
+
+		// A request with a nonce that already holds a slot: the client did
+		// not get (or not yet get) our answer and asked again. Answer with the
+		// same slot instead of filling a second one.
+		int int_slot = find_slot_by_nonce(u64_nonce);
+		if (int_slot >= 0)
+			LOG_INFO("Repeated join request, player %d again\n", int_slot + 1);
+		else
+			int_slot = admit_player(u64_nonce);
+
+		if (int_slot >= 0)
+			result.u8_player_id = (uint8_t)(int_slot + 1);   // ID = index + 1
+		else
+			result.u8_status = JOIN_FULL;
+		arr_results[int_num_results++] = result;
+	}
+	// Keep the requests that did not fit for the next call
+	int_num_pending -= int_done;
+	for (int i = 0; i < int_num_pending; i++)
+		arr_u64_pending[i] = arr_u64_pending[i + int_done];
+	pthread_mutex_unlock(&mutex);
+}
+
+void lobby_check_timeouts(uint64_t a_u64_now_ns)
+{
+	if (int_player_timeout_s <= 0 || !net_leave())
+		return;
+	uint64_t u64_timeout_ns = (uint64_t)int_player_timeout_s * 1000000000ull;
+
+	pthread_mutex_lock(&mutex);
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		// The worker may record an Input just after a_u64_now_ns was read, so
+		// the last input can be later than "now": not timed out
+		uint64_t u64_last_ns = game_last_input_ns(i);
+		if (arr_Players[i].b_active && a_u64_now_ns > u64_last_ns &&
+		    a_u64_now_ns - u64_last_ns > u64_timeout_ns)
+		{
+			free_slot(i);
+			LOG_INFO("Player %d timed out (no input for %d s)\n", i + 1, int_player_timeout_s);
+		}
+	}
+	pthread_mutex_unlock(&mutex);
 }

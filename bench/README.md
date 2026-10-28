@@ -107,7 +107,10 @@ removed after every trial and on exit), then starts the server and 4 headless cl
 (`build/dds_joiner`, `make build/dds_joiner`: the client's join code and QoS, no window), with Cyclone's default
 QoS (`FUSE_QOS=default`) and with the game's per-topic QoS. Report: clients joined, join time (p50/p90/max),
 requests per client, ghost slots, duplicate IDs, snapshots received per second.
-Settings: `LOSSES` ["0 10 30"], `TRIALS` [10], `JOINERS` [4], `STAGGER` [1.5] s, `STAY` [10] s.
+Settings: `LOSSES` ["0 10 30"], `TRIALS` [10], `JOINERS` [4], `STAGGER` [1.5] s (0 = all joiners at once), `STAY` [10] s,
+`MODES` ["default qos nonce"]: `default` = Cyclone QoS and baseline join (`FUSE_QOS=default FUSE_JOIN_NONCE=off`),
+`qos` = #14 QoS and baseline join (`FUSE_JOIN_NONCE=off`), `nonce` = #14 QoS and join nonce. The #14 results were
+made before the nonce existed and call `qos` "tuned".
 
 `FUSE_QOS=default` in the environment of `profile.sh` (or of the game) gives the "before" for #14; it is recorded
 in `raw/commands.txt` and the report.

@@ -4,6 +4,7 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/random.h>
 
 #include "net.h"
 #include "log.h"
@@ -35,6 +36,9 @@ void net_create_topics(NetTopics *a_p_net)
 
     a_p_net->snapshot_topic = dds_create_topic(a_p_net->participant,
         &GameSnapshot_desc, "GameSnapshot", NULL, NULL);
+
+    a_p_net->leave_topic = dds_create_topic(a_p_net->participant,
+        &Leave_desc, "Leave", NULL, NULL);
 }
 
 bool net_qos_tuned(void)
@@ -90,4 +94,40 @@ dds_entity_t net_create_writer(const NetTopics *a_p_net, dds_entity_t a_topic, N
     if (writer < 0)
         DDS_FATAL("dds_create_writer: %s\n", dds_strretcode(-writer));
     return writer;
+}
+
+bool net_join_nonce(void)
+{
+    static int int_nonce = -1;   // -1: environment not read yet
+    if (int_nonce < 0)
+    {
+        const char *str_nonce = getenv("FUSE_JOIN_NONCE");
+        int_nonce = !(str_nonce != NULL && strcmp(str_nonce, "off") == 0);
+        LOG_INFO("Join nonce: %s\n", int_nonce ? "on" : "off (baseline join)");
+    }
+    return int_nonce;
+}
+
+uint64_t net_random_nonce(void)
+{
+    uint64_t u64_nonce = 0;
+    // 0 means "no nonce" (baseline clients), so draw again if it comes up
+    while (u64_nonce == 0)
+    {
+        if (getrandom(&u64_nonce, sizeof u64_nonce, 0) != (ssize_t)sizeof u64_nonce)
+            DDS_FATAL("getrandom failed\n");
+    }
+    return u64_nonce;
+}
+
+bool net_leave(void)
+{
+    static int int_leave = -1;   // -1: environment not read yet
+    if (int_leave < 0)
+    {
+        const char *str_leave = getenv("FUSE_LEAVE");
+        int_leave = !(str_leave != NULL && strcmp(str_leave, "off") == 0);
+        LOG_INFO("Leave and timeout: %s\n", int_leave ? "on" : "off (slots never freed)");
+    }
+    return int_leave;
 }

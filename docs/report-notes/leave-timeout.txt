@@ -1,0 +1,66 @@
+Leave and timeout: freeing the slot of a player who quits or disappears
+=====================================================================
+
+The problem (baseline, and still after the join nonce)
+- The server never freed a player slot: nothing ever set b_active back to
+  false. A client that quit or crashed stayed in every snapshot, frozen where
+  it was, until the server restarted, and after 5 clients nobody could join.
+  (Seen in manual testing: 2 clients joined and quit; the next client was
+  player 3 and still saw players 1 and 2.)
+
+What changed (2026-10-28, on top of the join nonce)
+- Clean exit: when the window closes, the client's main thread calls
+  net_client_stop(); the DDS worker leaves its loop, writes a Leave
+  (player_id, seq continuing the Input sequence; reliable, keep-all), waits up
+  to 0.5 s for the server to acknowledge it (dds_wait_for_acks, the process
+  exits right after), and deletes its DDS participant. The main thread joins
+  the worker. The server queues the Leave for the main thread
+  (lobby_signal_leave), which frees the slot: the player disappears from the
+  next snapshot, and the slot forgets its nonce and keys.
+- Crash, kill, network cut: no Leave arrives, so the server frees the slot of
+  any player that sent no Input for PLAYER_TIMEOUT_S = 5 s (server option
+  --player-timeout S, 0 = never). Clients repeat their keys every 100 ms even
+  when idle (#13), so the Input stream doubles as a heartbeat at no extra
+  cost. Checked once per tick by the main thread (lobby_check_timeouts).
+- Why 5 s: long enough that a network stall of a few seconds (or a slow
+  machine) does not throw a player out (they would lose their place in a
+  round), short enough that a crashed player does not stand in the arena for
+  long. A clean exit does not wait for it.
+- A client the server dropped while it was still running (frozen or cut off
+  for more than 5 s) sees its own slot missing from the snapshots and joins
+  again, with a new nonce so that a late answer to the old one cannot be taken.
+  It only counts as dropped after it has seen itself in a snapshot once
+  (snapshots made just before the server admitted it do not show it yet).
+- Leave IDs come from the network: IDs outside 1..5 or for a free slot are
+  ignored. Until the security layer adds the MAC (the Leave message already
+  has the field), anyone could send a Leave for another player.
+- Why not DDS liveliness: it needs extra QoS and keep-alive traffic, and
+  Cyclone's default lease is long; the Input repeat already exists, adds no
+  traffic, and also catches a client whose loop has hung.
+- FUSE_LEAVE=off (server and clients) keeps the baseline: no Leave sent or
+  handled (the server does not even read the topic), no timeout, no rejoin.
+- Note for measurements: with --input-send every-10ms (the #13 "before"), an
+  idle client sends nothing, so the server times it out after 5 s and it
+  rejoins. Rerunning old idle "before" profiles needs FUSE_LEAVE=off.
+
+Testing
+- DDS test tool (Leave, timeout, bad IDs):
+  default:           2 players join; Leave frees slot 1 in 21 ms; the next
+                     client gets player 1; Leaves with IDs 0, 9 and a free slot
+                     change nothing; a silent player is removed after 5014 ms
+                     while one that keeps sending stays.
+  --player-timeout 2: same, silent player removed after 2007 ms.
+  FUSE_LEAVE=off:    Leave ignored, next client gets player 3, silent player
+                     never removed (baseline behaviour).
+- Real clients, one server: clients A and B close normally (--frames) ->
+  server logs "Player 1 left", "Player 2 left"; client C then joins as
+  player 1 and sees only itself (screenshot). Client D killed with kill -9 ->
+  "Player 2 timed out" 5 s later. Client E stopped (SIGSTOP) for 7 s ->
+  timed out; after SIGCONT it logs "Removed by the server (timed out),
+  joining again" and gets a slot again.
+- Join nonce, tick/movement and input tests still pass.
+- ThreadSanitizer (server, under the Leave test): 2 reports, both between
+  Cyclone's own threads inside libddsc; none in FUSE code.
+- No profile: a feature, not an optimisation. The server's worker loop now
+  makes one more dds_take per pass (the Leave reader), so the next
+  optimisation's "before" must be profiled again on this code.

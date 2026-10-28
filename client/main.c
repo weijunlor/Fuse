@@ -215,6 +215,10 @@ int main(int argc, char **argv)
         glfwSwapBuffers(window);
     }
 
+    // Leave the game (the worker sends a Leave and closes DDS)
+    net_client_stop();
+    pthread_join(thread, NULL);
+
     particles_free();
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -23,9 +23,18 @@ extern pthread_mutex_t mutex;
 extern int int_snapshot_every;
 
 // Store the keys (KEY_* bitmask, types.h) that a player holds now, from an
-// Input message; the next tick moves the player by them. IDs outside
+// Input message; the next tick moves the player by them. Also records when
+// the player was last heard from (for the timeout in lobby.c). IDs outside
 // 1..MAX_PLAYERS are ignored. Locks the mutex itself. Called by the DDS worker.
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys);
+
+// Start a slot afresh for a player who joins or leaves: no keys held, last
+// heard from now. The caller holds the mutex.
+void game_reset_player(int a_int_index);
+
+// When the player at a_int_index last sent an Input (or joined), in
+// timing_now_ns() nanoseconds. The caller holds the mutex.
+uint64_t game_last_input_ns(int a_int_index);
 
 // Advance the game by one fixed step of 1/TICK_HZ s: move every active player
 // by its held keys (PLAYER_SPEED, stopping at the window edge and at other

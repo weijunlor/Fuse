@@ -9,7 +9,14 @@ did: those are optimisations #2 and #1, measured separately.
 
 #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
 and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
-dds_take. FUSE_QOS=default keeps Cyclone's defaults and one input per take. */
+dds_take. FUSE_QOS=default keeps Cyclone's defaults and one input per take.
+
+Join nonce (lobby.h, net_join_nonce() in common/net.h): every JoinRequest
+taken is queued for the main thread with its nonce, and every answer is sent
+back with that nonce, so only the client that asked accepts it.
+
+Leave (lobby.h, net_leave() in common/net.h): every Leave taken is queued for
+the main thread, which frees the player's slot. */
 
 #include <stdio.h>
 
@@ -29,12 +36,15 @@ void *net_server_worker(void *arg)
 	dds_entity_t response_writer;
 	dds_entity_t snapshot_writer;
 	dds_entity_t input_reader;
+	dds_entity_t leave_reader;
 
 	//Pointer to unknown type
-	void *samples_join[MAX_SAMPLES];
-	dds_sample_info_t infos_join[MAX_SAMPLES];
+	void *samples_join[JOIN_TAKE];
+	dds_sample_info_t infos_join[JOIN_TAKE];
 	void *samples_input[INPUT_TAKE];
 	dds_sample_info_t infos_input[INPUT_TAKE];
+	void *samples_leave[JOIN_TAKE];
+	dds_sample_info_t infos_leave[JOIN_TAKE];
 
 	dds_return_t rc;
 
@@ -46,6 +56,8 @@ void *net_server_worker(void *arg)
 	/* ----------------------------------------------------- */
 	join_reader = net_create_reader(&net, net.join_topic, NET_RELIABLE_ALL);
 	input_reader = net_create_reader(&net, net.input_topic, NET_BEST_EFFORT);
+	// A lost Leave would leave the player in the game until the timeout
+	leave_reader = net_create_reader(&net, net.leave_topic, NET_RELIABLE_ALL);
 
 	/* ----------------------------------------------------- */
 	/* Create writers                                        */
@@ -55,15 +67,19 @@ void *net_server_worker(void *arg)
 
 	/* Initialize sample buffer, by pointing the void pointer within
 	* the buffer array to a valid sample memory location. */
-	samples_join[0] = JoinRequest__alloc();
+	for (int i = 0; i < JOIN_TAKE; i++)
+		samples_join[i] = JoinRequest__alloc();
 	for (int i = 0; i < INPUT_TAKE; i++)
 		samples_input[i] = Input__alloc();
+	for (int i = 0; i < JOIN_TAKE; i++)
+		samples_leave[i] = Leave__alloc();
+	bool b_leave = net_leave();
 	// Inputs per dds_take: all waiting ones (#14), or one as in the baseline
 	int int_input_take = net_qos_tuned() ? INPUT_TAKE : 1;
 
-	// Create a Join Response (nonce and session key stay 0 until the join
-	// nonce and login are added)
+	// Join Response (the session key stays 0 until the login is added)
 	JoinResponse response = {0};
+	JoinResult result;
 
 	// Copy of the latest snapshot, taken from game.c
 	GameSnapshot snapshot;
@@ -71,36 +87,43 @@ void *net_server_worker(void *arg)
 	/* Poll until data has been read. */
 	while (1)
 	{
-		// Process a join request
-		rc = dds_take(join_reader, samples_join, infos_join, MAX_SAMPLES, MAX_SAMPLES);
+		// Queue every waiting join request for the main thread (the baseline
+		// took one per pass and merged requests that arrived together)
+		rc = dds_take(join_reader, samples_join, infos_join, JOIN_TAKE, JOIN_TAKE);
 
 		if (rc < 0)
 			DDS_FATAL("dds_take: %s\n", dds_strretcode(-rc));
 
-		// Check for valid join request
-		if ((rc > 0) && (infos_join[0].valid_data))
+		for (int i = 0; i < rc; i++)
 		{
-			LOG_INFO("Join request received\n");
-			lobby_signal_join();
+			if (!infos_join[i].valid_data)
+				continue;
+			const JoinRequest *p_request = samples_join[i];
+			LOG_INFO("Join request received (nonce %016llx)\n",
+			         (unsigned long long)p_request->nonce);
+			if (!lobby_signal_join(p_request->nonce))
+				LOG_WARN("Join queue full, request dropped\n");
 		}
 
-		// If a new player ID has been assigned by the main thread
-		int int_new_player_id_temp = lobby_take_new_player_id();
-		if (int_new_player_id_temp != -1)
+		// Send every answer the main thread has made
+		bool b_sent = false;
+		while (lobby_take_result(&result))
 		{
-			// The player ID can be 0, ie invalid (game full)
-			response.player_id = (uint8_t)int_new_player_id_temp;
-			response.status = int_new_player_id_temp == 0 ? JOIN_FULL : JOIN_OK;
+			response.nonce = result.u64_nonce;
+			response.status = result.u8_status;
+			response.player_id = result.u8_player_id;
 
 			rc = dds_write(response_writer, &response);
 			if (rc != DDS_RETCODE_OK)
 			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
-			LOG_INFO("Join response sent\n");
-			/* Polling sleep. */
-			dds_sleepfor (DDS_MSECS (20));
+			LOG_INFO("Join response sent: player %d\n", (int)result.u8_player_id);
+			b_sent = true;
 		}
+		/* Polling sleep (the baseline's, once per pass that sent responses). */
+		if (b_sent)
+			dds_sleepfor (DDS_MSECS (20));
 
 		// Publish the latest snapshot once (game_tick() on the main thread
 		// makes a new one every int_snapshot_every ticks). The write happens
@@ -134,6 +157,23 @@ void *net_server_worker(void *arg)
 			Input *input = (Input *) samples_input[i];
 			// Remember the held keys; the next tick moves the player
 			game_set_keys(input->player_id, input->keys);
+		}
+
+		// Players who quit: queue them for the main thread to remove
+		// (FUSE_LEAVE=off: not even looked at, so the loop is the old one)
+		rc = b_leave ? dds_take(leave_reader, samples_leave, infos_leave, JOIN_TAKE, JOIN_TAKE) : 0;
+
+		if (rc < 0)
+			DDS_FATAL("dds_take: %s\n", dds_strretcode(-rc));
+
+		for (int i = 0; i < rc; i++)
+		{
+			if (!infos_leave[i].valid_data)
+				continue;
+			const Leave *p_leave = samples_leave[i];
+			LOG_INFO("Leave received from player %d\n", (int)p_leave->player_id);
+			if (!lobby_signal_leave(p_leave->player_id))
+				LOG_WARN("Leave queue full, Leave dropped\n");
 		}
 	}
 }

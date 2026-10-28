@@ -26,9 +26,16 @@ extern pthread_mutex_t mutex;
 // baseline rate). Set before starting the worker (--input-send in main.c).
 extern bool b_input_on_change;
 
-/* DDS worker thread (start with pthread_create, never returns). Polls in a
-loop: sends a join request every 1 s until joined, then sends the held keys
-(see b_input_on_change), and copies each received GameSnapshot into arr_Players. */
+/* DDS worker thread (start with pthread_create). Polls in a loop: sends a
+join request every 1 s until joined, then sends the held keys (see
+b_input_on_change), and copies each received GameSnapshot into arr_Players.
+Runs until net_client_stop() is called. */
 void *net_client_worker(void *arg);
+
+/* Ask the worker to stop: it sends a Leave (if joined, and FUSE_LEAVE is not
+off), waits up to 0.5 s for the server to acknowledge it, closes DDS and
+returns. Called by the main thread when the window closes; pthread_join the
+worker afterwards. (The baseline exited without telling the server.) */
+void net_client_stop(void);
 
 #endif /* CLIENT_NET_CLIENT_H */
