@@ -17,7 +17,13 @@ Options (for measurements, see bench/render.sh):
   --frames F           exit after F frames and print frame-time statistics
                        (vsync is switched on so every run renders the same way)
   --render MODE        how sprites are drawn (optimisation #16, see render.h):
-                       immediate, float or short (default) */
+                       immediate, float or short (default)
+  --particles N        keep N particles alive (bursts at random places)
+  --particle-layout L  particle code (#5-#7, see particles.h): aos, soa (default)
+                       soa-intrin or soa-intrin-scan (hand-written AVX2)
+  --particle-threads T threads for the particle update (default 1; more only
+                       pays off with tens of thousands of particles, see
+                       bench/results/opt-05-particle-threads) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +36,7 @@ Options (for measurements, see bench/render.sh):
 #include "net_client.h"
 #include "input.h"
 #include "render.h"
+#include "particles.h"
 
 // qsort comparison for frame times
 static int compare_u64(const void *a, const void *b)
@@ -78,6 +85,9 @@ int main(int argc, char **argv)
     int int_stress = 0;
     int int_frames = 0;
     RenderMode render_mode = RENDER_BATCHED_SHORT;
+    int int_particles = 0;
+    ParticleLayout particle_layout = PARTICLES_SOA;
+    int int_particle_threads = 1;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
@@ -87,9 +97,18 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "--render") == 0 && i + 1 < argc &&
                  render_mode_from_name(argv[i + 1]) >= 0)
             render_mode = (RenderMode)render_mode_from_name(argv[++i]);
+        else if (strcmp(argv[i], "--particles") == 0 && i + 1 < argc)
+            int_particles = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--particle-layout") == 0 && i + 1 < argc &&
+                 particles_layout_from_name(argv[i + 1]) >= 0)
+            particle_layout = (ParticleLayout)particles_layout_from_name(argv[++i]);
+        else if (strcmp(argv[i], "--particle-threads") == 0 && i + 1 < argc)
+            int_particle_threads = atoi(argv[++i]);
         else
         {
-            fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n"
+                            "          [--particles N] [--particle-layout aos|soa|soa-intrin|soa-intrin-scan] [--particle-threads T]\n",
+                    argv[0]);
             return 1;
         }
     }
@@ -115,6 +134,10 @@ int main(int argc, char **argv)
     }
 
     glfwMakeContextCurrent(window);
+    // Room for the stress particles plus explosions (explosions are not
+    // spawned yet: they come with the server's snapshots)
+    particles_init(particle_layout, int_particles + PARTICLES_SPARE, int_particle_threads,
+                   12345u);   // fixed seed: every run spawns the same particles
     render_init(render_mode, int_stress);
 
     // Fill the real framebuffer, which is not WIDTH x HEIGHT on a scaled display
@@ -140,6 +163,7 @@ int main(int argc, char **argv)
     // automatically after 2 s (for tests and slides)
     const char *str_auto_shot = getenv("FUSE_SCREENSHOT");
     int int_f12_prev = GLFW_RELEASE;
+    double d_prev_s = glfwGetTime();
 
     // Render loop: no frame cap; swap interval left at the driver default (as in the baseline)
     while (!glfwWindowShouldClose(window))
@@ -147,6 +171,15 @@ int main(int argc, char **argv)
         /* Process keyboard/window events */
         glfwPollEvents();
         input_poll(window);
+
+        // Particles move by the real time since the last frame (at most 0.1 s,
+        // so a stalled frame does not throw them across the window)
+        double d_now_s = glfwGetTime();
+        double d_dt_s = d_now_s - d_prev_s;
+        d_prev_s = d_now_s;
+        particles_update((float)(d_dt_s < 0.1 ? d_dt_s : 0.1));
+        if (int_particles > 0)
+            particles_fill(int_particles);
 
         uint64_t u_t0 = timing_now_ns();
         render_frame();
@@ -175,6 +208,7 @@ int main(int argc, char **argv)
         glfwSwapBuffers(window);
     }
 
+    particles_free();
     glfwDestroyWindow(window);
     glfwTerminate();
 

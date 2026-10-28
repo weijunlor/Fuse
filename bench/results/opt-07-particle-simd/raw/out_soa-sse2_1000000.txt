@@ -1,0 +1,10 @@
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=0.9974 us_per_tick=997.36 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1278 us_per_tick=1127.77 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.0434 us_per_tick=1043.37 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1254 us_per_tick=1125.42 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1181 us_per_tick=1118.07 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1208 us_per_tick=1120.83 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1231 us_per_tick=1123.06 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.0202 us_per_tick=1020.23 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.1278 us_per_tick=1127.82 checksum=1.202918e+09
+layout=soa threads=1 particles=1000000 capacity=1000000 ticks=300 ns_per_particle=1.0136 us_per_tick=1013.56 checksum=1.202918e+09

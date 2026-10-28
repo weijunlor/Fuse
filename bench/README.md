@@ -4,8 +4,8 @@ Each `bench_<name>.c` is a standalone program built to `build/bench_<name>` by `
 Each one implements the naive and optimised version of one technique, selected by a command-line argument,
 so both can be measured on the same machine with the same build flags.
 
-Planned: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads), bench_collision (branchy vs branchless),
-bench_false_share (padded vs unpadded), bench_reduce (1 vs 4 accumulators).
+Done: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads; see below).
+Planned: bench_collision (branchy vs branchless), bench_false_share (padded vs unpadded), bench_reduce (1 vs 4 accumulators).
 
 Results go in `results/` as CSV (`perf stat -x, -r 10 -o results/<name>.csv ...`).
 
@@ -55,3 +55,38 @@ Both scripts write `setup.txt` with `bench/setup_info.sh`.
 ```bash
 make profile && bench/render.sh opt-16b-short-vertices build
 ```
+
+## Particle system: `particles.sh`
+
+`bench/particles.sh <label> <step>` measures `client/particles.c` (optimisations #5, #6, #7) with `bench_particles`,
+which runs the client's particle code without a window:
+`bench_particles <aos|soa> [threads] [particles] [ticks] [capacity]` updates every particle each tick (dt = 1/60 s),
+respawns until the count is back to `particles`, and prints `ns_per_particle`, `us_per_tick` and a `checksum`
+(must be equal for every layout, build and thread count with the same arguments: the optimised code computes the same particles).
+
+`make bench` builds it three ways from the same source, so each step of #7 is a build, not a code change:
+
+| Binary | Flags | Vectors |
+|---|---|---|
+| `build/bench_particles_scalar` | `-O2 -fno-tree-vectorize` | none |
+| `build/bench_particles_sse2` | `-O3 -fno-trapping-math` | SSE2, 4 floats |
+| `build/bench_particles` | `-O3 -march=native -fno-trapping-math` (= `SIMD_FLAGS`, also used for the client's `particles.o`) | AVX2, 8 floats |
+
+Steps (one results folder each; 10 interleaved runs per configuration, sizes 1000 to 1000000):
+
+| Step | Optimisation | Compares |
+|---|---|---|
+| `layout` | #6 SoA + swap-remove | aos vs soa in the scalar build, 1 thread, pool full and 25% full |
+| `simd` | #7 vectorisation | soa scalar vs SSE2 vs AVX2 (+ aos in the AVX2 build), and hand-written AVX2 intrinsics (`soa-intrin`: update loop; `soa-intrin-scan`: also the dead-particle scan); vectoriser report, disassembly (compiler vs hand-written loop), perf record |
+| `threads` | #5 worker pool | soa AVX2 with 1, 2, 4, 6, 8 threads, one per physical P-core |
+
+```bash
+make bench
+bench/particles.sh opt-06-particle-soa layout
+bench/particles.sh opt-07-particle-simd simd
+bench/particles.sh opt-07b-particle-avx2-intrinsics simd   # same step, with the intrinsic versions
+bench/particles.sh opt-05-particle-threads threads
+```
+
+The client uses the same code: `--particles N` keeps N particles alive on screen, `--particle-layout aos|soa|soa-intrin|soa-intrin-scan`,
+`--particle-threads T`.

@@ -1,0 +1,265 @@
+0000000000001680 <soa_update_job>:
+    1680:	endbr64
+    1684:	push   %rbp
+    1685:	mov    $0x10,%ecx
+    168a:	mov    %rsp,%rbp
+    168d:	push   %r15
+    168f:	push   %r14
+    1691:	lea    -0x40(%rbp),%r8
+    1695:	push   %r13
+    1697:	push   %r12
+    1699:	mov    %rdi,%r12
+    169c:	push   %rbx
+    169d:	sub    $0x28,%rsp
+    16a1:	mov    %esi,-0x48(%rbp)
+    16a4:	mov    0x47ba(%rip),%edi        # 5e64 <int_count>
+    16aa:	mov    %fs:0x28,%r9
+    16b3:	mov    %r9,-0x38(%rbp)
+    16b7:	lea    -0x3c(%rbp),%r9
+    16bb:	call   2ca0 <pool_chunk>
+    16c0:	mov    -0x3c(%rbp),%edi
+    16c3:	mov    -0x40(%rbp),%edx
+    16c6:	mov    0x454b(%rip),%rcx        # 5c18 <arr_vy>
+    16cd:	mov    0x453c(%rip),%rbx        # 5c10 <arr_life>
+    16d4:	mov    %edi,%eax
+    16d6:	mov    0x4543(%rip),%r13        # 5c20 <arr_vx>
+    16dd:	mov    0x4544(%rip),%r14        # 5c28 <arr_y>
+    16e4:	sub    %edx,%eax
+    16e6:	mov    %rcx,-0x50(%rbp)
+    16ea:	mov    0x453f(%rip),%r15        # 5c30 <arr_x>
+    16f1:	mov    %eax,-0x44(%rbp)
+    16f4:	test   %eax,%eax
+    16f6:	jle    19a3 <soa_update_job+0x323>
+    16fc:	sub    $0x1,%eax
+    16ff:	movss  0x4(%r12),%xmm7
+    1706:	movss  (%r12),%xmm8
+    170c:	movslq %edx,%rcx
+    170f:	cmp    $0x2,%eax
+    1712:	jbe    1aa5 <soa_update_job+0x425>
+    1718:	mov    -0x44(%rbp),%r12d
+    171c:	mov    -0x50(%rbp),%r8
+    1720:	movaps %xmm7,%xmm6
+    1723:	movaps %xmm8,%xmm2
+    1727:	xor    %eax,%eax
+    1729:	pxor   %xmm3,%xmm3
+    172d:	shufps $0x0,%xmm6,%xmm6
+    1731:	shufps $0x0,%xmm2,%xmm2
+    1735:	lea    0x0(,%rcx,4),%rsi
+    173d:	movss  0x1a23(%rip),%xmm5        # 3168 <_IO_stdin_used+0x168>
+    1745:	movss  0x1a23(%rip),%xmm4        # 3170 <_IO_stdin_used+0x170>
+    174d:	shr    $0x2,%r12d
+    1751:	lea    (%r8,%rsi,1),%r10
+    1755:	lea    0x0(%r13,%rsi,1),%r11
+    175a:	shl    $0x4,%r12
+    175e:	lea    (%r15,%rsi,1),%r9
+    1762:	lea    (%r14,%rsi,1),%r8
+    1766:	add    %rbx,%rsi
+    1769:	shufps $0x0,%xmm5,%xmm5
+    176d:	shufps $0x0,%xmm4,%xmm4
+    1771:	nopl   0x0(%rax)
+    1775:	data16 cs nopw 0x0(%rax,%rax,1)
+    1780:	movups (%r11,%rax,1),%xmm0
+    1785:	movups (%r10,%rax,1),%xmm1
+    178a:	mulps  %xmm6,%xmm0
+    178d:	mulps  %xmm6,%xmm1
+    1790:	movups %xmm0,(%r11,%rax,1)
+    1795:	mulps  %xmm2,%xmm0
+    1798:	movaps %xmm1,%xmm9
+    179c:	movups %xmm1,(%r10,%rax,1)
+    17a1:	movups (%r9,%rax,1),%xmm1
+    17a6:	mulps  %xmm2,%xmm9
+    17aa:	addps  %xmm0,%xmm1
+    17ad:	movaps %xmm5,%xmm0
+    17b0:	cmpnltps %xmm1,%xmm0
+    17b4:	movaps %xmm1,%xmm10
+    17b8:	cmpnltps %xmm3,%xmm10
+    17bd:	andps  %xmm0,%xmm1
+    17c0:	andnps %xmm5,%xmm0
+    17c3:	orps   %xmm1,%xmm0
+    17c6:	movups (%r8,%rax,1),%xmm1
+    17cb:	andps  %xmm10,%xmm0
+    17cf:	addps  %xmm9,%xmm1
+    17d3:	movups %xmm0,(%r9,%rax,1)
+    17d8:	movaps %xmm4,%xmm0
+    17db:	cmpnltps %xmm1,%xmm0
+    17df:	movaps %xmm1,%xmm9
+    17e3:	cmpnltps %xmm3,%xmm9
+    17e8:	andps  %xmm0,%xmm1
+    17eb:	andnps %xmm4,%xmm0
+    17ee:	orps   %xmm1,%xmm0
+    17f1:	andps  %xmm9,%xmm0
+    17f5:	movups %xmm0,(%r8,%rax,1)
+    17fa:	movups (%rsi,%rax,1),%xmm0
+    17fe:	subps  %xmm2,%xmm0
+    1801:	movups %xmm0,(%rsi,%rax,1)
+    1805:	add    $0x10,%rax
+    1809:	cmp    %rax,%r12
+    180c:	jne    1780 <soa_update_job+0x100>
+    1812:	mov    -0x44(%rbp),%r11d
+    1816:	mov    %r11d,%esi
+    1819:	and    $0xfffffffc,%esi
+    181c:	mov    %esi,%eax
+    181e:	cmp    %esi,%r11d
+    1821:	je     19a3 <soa_update_job+0x323>
+    1827:	mov    -0x44(%rbp),%r12d
+    182b:	sub    %eax,%r12d
+    182e:	cmp    $0x1,%r12d
+    1832:	je     1912 <soa_update_job+0x292>
+    1838:	add    %rcx,%rax
+    183b:	mov    -0x50(%rbp),%r11
+    183f:	movaps %xmm7,%xmm0
+    1842:	pxor   %xmm5,%xmm5
+    1846:	shl    $0x2,%rax
+    184a:	shufps $0x0,%xmm0,%xmm0
+    184e:	movq   0x1911(%rip),%xmm9        # 3168 <_IO_stdin_used+0x168>
+    1857:	lea    0x0(%r13,%rax,1),%r10
+    185c:	lea    (%r11,%rax,1),%r9
+    1860:	movq   (%r10),%xmm1
+    1865:	movq   (%r9),%xmm2
+    186a:	lea    (%r15,%rax,1),%r8
+    186e:	lea    (%r14,%rax,1),%r11
+    1872:	mulps  %xmm0,%xmm1
+    1875:	mulps  %xmm2,%xmm0
+    1878:	movaps %xmm8,%xmm2
+    187c:	shufps $0x0,%xmm2,%xmm2
+    1880:	movlps %xmm1,(%r10)
+    1884:	mulps  %xmm2,%xmm1
+    1887:	movaps %xmm0,%xmm3
+    188a:	movlps %xmm0,(%r9)
+    188e:	movq   (%r8),%xmm0
+    1893:	mulps  %xmm2,%xmm3
+    1896:	addps  %xmm0,%xmm1
+    1899:	movaps %xmm1,%xmm0
+    189c:	movaps %xmm1,%xmm6
+    189f:	cmpnltps %xmm5,%xmm0
+    18a3:	movdqa %xmm0,%xmm4
+    18a7:	movaps %xmm9,%xmm0
+    18ab:	cmpnltps %xmm1,%xmm0
+    18af:	movq   (%r11),%xmm1
+    18b4:	addps  %xmm3,%xmm1
+    18b7:	andps  %xmm0,%xmm6
+    18ba:	andnps %xmm9,%xmm0
+    18be:	orps   %xmm6,%xmm0
+    18c1:	andps  %xmm4,%xmm0
+    18c4:	movaps %xmm1,%xmm4
+    18c7:	movlps %xmm0,(%r8)
+    18cb:	movaps %xmm1,%xmm0
+    18ce:	cmpnltps %xmm5,%xmm0
+    18d2:	movq   0x1896(%rip),%xmm5        # 3170 <_IO_stdin_used+0x170>
+    18da:	movdqa %xmm0,%xmm3
+    18de:	movaps %xmm5,%xmm0
+    18e1:	cmpnltps %xmm1,%xmm0
+    18e5:	andps  %xmm0,%xmm4
+    18e8:	andnps %xmm5,%xmm0
+    18eb:	orps   %xmm4,%xmm0
+    18ee:	andps  %xmm3,%xmm0
+    18f1:	movlps %xmm0,(%r11)
+    18f5:	movq   (%rbx,%rax,1),%xmm0
+    18fa:	subps  %xmm2,%xmm0
+    18fd:	movlps %xmm0,(%rbx,%rax,1)
+    1901:	test   $0x1,%r12b
+    1905:	je     19a3 <soa_update_job+0x323>
+    190b:	and    $0xfffffffe,%r12d
+    190f:	add    %r12d,%esi
+    1912:	movslq %esi,%rax
+    1915:	pxor   %xmm1,%xmm1
+    1919:	add    %rcx,%rax
+    191c:	mov    -0x50(%rbp),%rcx
+    1920:	shl    $0x2,%rax
+    1924:	movss  0x0(%r13,%rax,1),%xmm0
+    192b:	lea    (%r14,%rax,1),%rsi
+    192f:	mulss  %xmm7,%xmm0
+    1933:	mulss  (%rcx,%rax,1),%xmm7
+    1938:	movss  %xmm0,0x0(%r13,%rax,1)
+    193f:	mulss  %xmm8,%xmm0
+    1944:	movss  %xmm7,(%rcx,%rax,1)
+    1949:	lea    (%r15,%rax,1),%rcx
+    194d:	mulss  %xmm8,%xmm7
+    1952:	addss  (%rcx),%xmm0
+    1956:	addss  (%rsi),%xmm7
+    195a:	ucomiss %xmm0,%xmm1
+    195d:	jbe    1a70 <soa_update_job+0x3f0>
+    1963:	movaps %xmm1,%xmm0
+    1966:	pxor   %xmm1,%xmm1
+    196a:	ucomiss %xmm7,%xmm1
+    196d:	ja     1a96 <soa_update_job+0x416>
+    1973:	ucomiss 0x17f6(%rip),%xmm7        # 3170 <_IO_stdin_used+0x170>
+    197a:	movd   %xmm7,%r11d
+    197f:	cmova  0x17e9(%rip),%r11d        # 3170 <_IO_stdin_used+0x170>
+    1987:	movd   %r11d,%xmm7
+    198c:	movss  %xmm0,(%rcx)
+    1990:	movss  (%rbx,%rax,1),%xmm0
+    1995:	movss  %xmm7,(%rsi)
+    1999:	subss  %xmm8,%xmm0
+    199e:	movss  %xmm0,(%rbx,%rax,1)
+    19a3:	cmp    %edx,%edi
+    19a5:	jle    1aa0 <soa_update_job+0x420>
+    19ab:	mov    0x4256(%rip),%r9        # 5c08 <arr_life_max>
+    19b2:	mov    0x4247(%rip),%r8        # 5c00 <arr_sprite>
+    19b9:	movslq %edx,%rcx
+    19bc:	pxor   %xmm0,%xmm0
+    19c0:	comiss (%rbx,%rcx,4),%xmm0
+    19c4:	jae    19d6 <soa_update_job+0x356>
+    19c6:	add    $0x1,%edx
+    19c9:	cmp    %edi,%edx
+    19cb:	jge    1a34 <soa_update_job+0x3b4>
+    19cd:	movslq %edx,%rcx
+    19d0:	comiss (%rbx,%rcx,4),%xmm0
+    19d4:	jb     19c6 <soa_update_job+0x346>
+    19d6:	sub    $0x1,%edi
+    19d9:	mov    -0x50(%rbp),%r10
+    19dd:	movslq %edi,%rsi
+    19e0:	movss  (%r15,%rsi,4),%xmm1
+    19e6:	mov    (%r8,%rsi,4),%eax
+    19ea:	movss  %xmm1,(%r15,%rcx,4)
+    19f0:	movss  (%r14,%rsi,4),%xmm1
+    19f6:	movss  %xmm1,(%r14,%rcx,4)
+    19fc:	movss  0x0(%r13,%rsi,4),%xmm1
+    1a03:	movss  %xmm1,0x0(%r13,%rcx,4)
+    1a0a:	movss  (%r10,%rsi,4),%xmm1
+    1a10:	movss  %xmm1,(%r10,%rcx,4)
+    1a16:	movss  (%rbx,%rsi,4),%xmm1
+    1a1b:	movss  %xmm1,(%rbx,%rcx,4)
+    1a20:	movss  (%r9,%rsi,4),%xmm1
+    1a26:	movss  %xmm1,(%r9,%rcx,4)
+    1a2c:	mov    %eax,(%r8,%rcx,4)
+    1a30:	cmp    %edx,%edi
+    1a32:	jg     19c0 <soa_update_job+0x340>
+    1a34:	sub    -0x40(%rbp),%edi
+    1a37:	mov    %edi,-0x44(%rbp)
+    1a3a:	mov    %edi,%ebx
+    1a3c:	movslq -0x48(%rbp),%rax
+    1a40:	lea    0x39b9(%rip),%rdx        # 5400 <arr_chunk>
+    1a47:	shl    $0x6,%rax
+    1a4b:	mov    %ebx,(%rdx,%rax,1)
+    1a4e:	mov    -0x38(%rbp),%rax
+    1a52:	sub    %fs:0x28,%rax
+    1a5b:	jne    1aae <soa_update_job+0x42e>
+    1a5d:	add    $0x28,%rsp
+    1a61:	pop    %rbx
+    1a62:	pop    %r12
+    1a64:	pop    %r13
+    1a66:	pop    %r14
+    1a68:	pop    %r15
+    1a6a:	pop    %rbp
+    1a6b:	ret
+    1a6c:	nopl   0x0(%rax)
+    1a70:	pxor   %xmm1,%xmm1
+    1a74:	ucomiss 0x16ed(%rip),%xmm0        # 3168 <_IO_stdin_used+0x168>
+    1a7b:	movd   %xmm0,%r11d
+    1a80:	cmova  0x16e0(%rip),%r11d        # 3168 <_IO_stdin_used+0x168>
+    1a88:	ucomiss %xmm7,%xmm1
+    1a8b:	movd   %r11d,%xmm0
+    1a90:	jbe    1973 <soa_update_job+0x2f3>
+    1a96:	pxor   %xmm7,%xmm7
+    1a9a:	jmp    198c <soa_update_job+0x30c>
+    1a9f:	nop
+    1aa0:	mov    -0x44(%rbp),%ebx
+    1aa3:	jmp    1a3c <soa_update_job+0x3bc>
+    1aa5:	xor    %eax,%eax
+    1aa7:	xor    %esi,%esi
+    1aa9:	jmp    1827 <soa_update_job+0x1a7>
+    1aae:	call   11c0 <__stack_chk_fail@plt>
+    1ab3:	xchg   %ax,%ax
+    1ab5:	data16 cs nopw 0x0(%rax,%rax,1)
+

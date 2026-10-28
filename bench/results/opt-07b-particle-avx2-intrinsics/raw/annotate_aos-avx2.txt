@@ -1,0 +1,362 @@
+ Percent |	Source code & Disassembly of bench_particles for cpu_core/cycles/ (1431 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    00000000000025c0 <particles_update>:
+         : 6    }
+         : 7    int_count = int_total;
+         : 8    }
+         :
+         : 10   void particles_update(float a_dt)
+         : 11   {
+    0.00 :   25c0:   endbr64
+    0.00 :   25c4:   push   %rbp
+    0.00 :   25c5:   vmovaps %xmm0,%xmm1
+    0.00 :   25c9:   mov    %rsp,%rbp
+    0.00 :   25cc:   push   %r15
+    0.00 :   25ce:   push   %r14
+    0.00 :   25d0:   push   %r13
+    0.00 :   25d2:   push   %r12
+    0.00 :   25d4:   push   %rbx
+    0.00 :   25d5:   sub    $0xd8,%rsp
+    0.00 :   25dc:   mov    %fs:0x28,%rax
+    0.00 :   25e5:   mov    %rax,-0x38(%rbp)
+    0.00 :   25e9:   xor    %eax,%eax
+         : 25   // Constant for the whole update: computed once, not per particle
+         : 26   float f_drag = powf(DRAG_PER_S, a_dt);
+    0.00 :   25eb:   vmovss %xmm0,-0xd4(%rbp)
+    0.00 :   25f3:   vmovss 0x1a31(%rip),%xmm0        # 402c <_IO_stdin_used+0x2c>
+    0.00 :   25fb:   call   1230 <powf@plt>
+         :
+         : 31   if (layout == PARTICLES_AOS)
+    0.00 :   2600:   mov    0x4866(%rip),%eax        # 6e6c <layout>
+    0.00 :   2606:   vmovss -0xd4(%rbp),%xmm1
+    0.00 :   260e:   test   %eax,%eax
+    0.00 :   2610:   je     292c <particles_update+0x36c>
+         : 36   aos_update(a_dt, f_drag);
+         : 37   return;
+         : 38   }
+         :
+         : 40   UpdateArgs args = { a_dt, f_drag };
+         : 41   int int_count_before = int_count;
+    0.00 :   2616:   mov    0x4848(%rip),%eax        # 6e64 <int_count>
+         : 43   pool_run(&pool, soa_update_job, &args);
+    0.00 :   261c:   lea    -0xc8(%rbp),%rdx
+    0.00 :   2623:   lea    -0x91a(%rip),%rsi        # 1d10 <soa_update_job>
+         : 46   UpdateArgs args = { a_dt, f_drag };
+    0.00 :   262a:   vmovss %xmm1,-0xc8(%rbp)
+         : 48   pool_run(&pool, soa_update_job, &args);
+    0.00 :   2632:   lea    0x3a47(%rip),%rdi        # 6080 <pool>
+         : 50   UpdateArgs args = { a_dt, f_drag };
+    0.00 :   2639:   vmovss %xmm0,-0xc4(%rbp)
+         : 52   int int_count_before = int_count;
+    0.00 :   2641:   mov    %eax,-0xd8(%rbp)
+         : 54   pool_run(&pool, soa_update_job, &args);
+    0.00 :   2647:   call   2fa0 <pool_run>
+         : 56   soa_close_gaps(pool.int_threads, int_count_before);
+    0.00 :   264c:   mov    0x3a2d(%rip),%r15d        # 6080 <pool>
+         : 58   for (int w = 0; w < a_int_workers; w++)
+    0.00 :   2653:   test   %r15d,%r15d
+         : 60   soa_close_gaps(pool.int_threads, int_count_before);
+    0.00 :   2656:   mov    %r15d,-0xd4(%rbp)
+         : 62   for (int w = 0; w < a_int_workers; w++)
+    0.00 :   265d:   jle    2a01 <particles_update+0x441>
+    0.00 :   2663:   lea    -0xcc(%rbp),%r12
+    0.00 :   266a:   lea    -0xc0(%rbp),%r14
+    0.00 :   2671:   xor    %ebx,%ebx
+    0.00 :   2673:   mov    %r12,-0xe0(%rbp)
+    0.00 :   267a:   lea    0x3d7f(%rip),%r13        # 6400 <arr_chunk>
+    0.00 :   2681:   xor    %r12d,%r12d
+    0.00 :   2684:   nopl   0x0(%rax)
+         : 71   pool_chunk(a_int_count_before, w, a_int_workers, LINE_FLOATS, &arr_begin[w], &int_end);
+    0.00 :   2688:   mov    -0xe0(%rbp),%r9
+    0.00 :   268f:   mov    %r14,%r8
+    0.00 :   2692:   mov    %ebx,%esi
+    0.00 :   2694:   mov    %r15d,%edx
+    0.00 :   2697:   mov    $0x10,%ecx
+         : 77   for (int w = 0; w < a_int_workers; w++)
+    0.00 :   269c:   add    $0x1,%ebx
+    0.00 :   269f:   add    $0x4,%r14
+    0.00 :   26a3:   add    $0x40,%r13
+         : 81   pool_chunk(a_int_count_before, w, a_int_workers, LINE_FLOATS, &arr_begin[w], &int_end);
+    0.00 :   26a7:   mov    -0xd8(%rbp),%edi
+    0.00 :   26ad:   call   30b0 <pool_chunk>
+         : 84   int_total += arr_chunk[w].int_live;
+    0.00 :   26b2:   add    -0x40(%r13),%r12d
+         : 86   for (int w = 0; w < a_int_workers; w++)
+    0.00 :   26b6:   cmp    %ebx,%r15d
+    0.00 :   26b9:   jne    2688 <particles_update+0xc8>
+    0.00 :   26bb:   mov    %r12d,%r10d
+         : 90   int w_dst = 0, w_src = a_int_workers - 1;
+    0.00 :   26be:   mov    -0xd4(%rbp),%eax
+         : 92   int int_src_lo = 0, int_src = 0;    // current source run [int_src_lo, int_src)
+    0.00 :   26c4:   xor    %ecx,%ecx
+    0.00 :   26c6:   xor    %ebx,%ebx
+         : 95   int int_dst = 0, int_dst_end = 0;   // current hole
+    0.00 :   26c8:   xor    %r11d,%r11d
+    0.00 :   26cb:   xor    %r8d,%r8d
+         : 98   int w_dst = 0, w_src = a_int_workers - 1;
+    0.00 :   26ce:   xor    %r9d,%r9d
+    0.00 :   26d1:   lea    -0x1(%rax),%r12d
+         : 101  int int_src_lo = 0, int_src = 0;    // current source run [int_src_lo, int_src)
+    0.00 :   26d5:   neg    %eax
+    0.00 :   26d7:   mov    %eax,%edx
+    0.00 :   26d9:   nopl   0x0(%rax)
+         : 105  while (int_dst == int_dst_end && w_dst < a_int_workers)
+    0.00 :   26e0:   cmp    %r11d,%r8d
+         : 107  while (int_src == int_src_lo && w_src >= 0)
+    0.00 :   26e3:   mov    %edx,%eax
+         : 109  while (int_dst == int_dst_end && w_dst < a_int_workers)
+    0.00 :   26e5:   sete   %sil
+         : 111  while (int_src == int_src_lo && w_src >= 0)
+    0.00 :   26e9:   cmp    %ecx,%ebx
+    0.00 :   26eb:   sete   %dil
+    0.00 :   26ef:   shr    $0x1f,%eax
+    0.00 :   26f2:   and    %edi,%eax
+         : 116  while (int_dst == int_dst_end && w_dst < a_int_workers)
+    0.00 :   26f4:   cmp    %r9d,-0xd4(%rbp)
+    0.00 :   26fb:   jle    2750 <particles_update+0x190>
+    0.00 :   26fd:   test   %sil,%sil
+    0.00 :   2700:   je     2750 <particles_update+0x190>
+         : 121  int_dst = arr_begin[w_dst] + arr_chunk[w_dst].int_live;
+    0.00 :   2702:   movslq %r9d,%rax
+    0.00 :   2705:   lea    0x3cf4(%rip),%rdi        # 6400 <arr_chunk>
+         : 124  int_dst_end = (w_dst + 1 < a_int_workers) ? arr_begin[w_dst + 1] : a_int_count_before;
+    0.00 :   270c:   add    $0x1,%r9d
+    0.00 :   2710:   mov    -0xd8(%rbp),%r11d
+         : 127  int_dst = arr_begin[w_dst] + arr_chunk[w_dst].int_live;
+    0.00 :   2717:   mov    %rax,%rsi
+    0.00 :   271a:   shl    $0x6,%rsi
+    0.00 :   271e:   mov    (%rdi,%rsi,1),%r8d
+    0.00 :   2722:   add    -0xc0(%rbp,%rax,4),%r8d
+         : 132  int_dst_end = (w_dst + 1 < a_int_workers) ? arr_begin[w_dst + 1] : a_int_count_before;
+    0.00 :   272a:   cmp    %r9d,-0xd4(%rbp)
+    0.00 :   2731:   jle    273e <particles_update+0x17e>
+    0.00 :   2733:   movslq %r9d,%rax
+    0.00 :   2736:   mov    -0xc0(%rbp,%rax,4),%r11d
+         : 137  if (int_dst_end > int_total)
+    0.00 :   273e:   cmp    %r10d,%r11d
+    0.00 :   2741:   cmovg  %r10d,%r11d
+         : 140  if (int_dst > int_dst_end)
+    0.00 :   2745:   cmp    %r11d,%r8d
+    0.00 :   2748:   cmovg  %r11d,%r8d
+    0.00 :   274c:   jmp    26e0 <particles_update+0x120>
+    0.00 :   274e:   xchg   %ax,%ax
+         : 145  while (int_src == int_src_lo && w_src >= 0)
+    0.00 :   2750:   test   %al,%al
+    0.00 :   2752:   je     27af <particles_update+0x1ef>
+    0.00 :   2754:   movslq %r12d,%rax
+    0.00 :   2757:   lea    0x3ca2(%rip),%rdi        # 6400 <arr_chunk>
+    0.00 :   275e:   lea    -0xc0(%rbp,%rax,4),%rdx
+    0.00 :   2766:   shl    $0x6,%rax
+    0.00 :   276a:   add    %rdi,%rax
+    0.00 :   276d:   nopl   0x0(%rax,%rax,1)
+    0.00 :   2775:   data16 cs nopw 0x0(%rax,%rax,1)
+         : 155  int_src = arr_begin[w_src] + arr_chunk[w_src].int_live;
+    0.00 :   2780:   mov    (%rdx),%ebx
+    0.00 :   2782:   mov    (%rax),%ecx
+    0.00 :   2784:   add    %ebx,%ecx
+         : 159  int_src_lo = arr_begin[w_src] > int_total ? arr_begin[w_src] : int_total;
+    0.00 :   2786:   cmp    %r10d,%ebx
+    0.00 :   2789:   cmovl  %r10d,%ebx
+         : 162  w_src--;
+    0.00 :   278d:   sub    $0x1,%r12d
+         : 164  while (int_src == int_src_lo && w_src >= 0)
+    0.00 :   2791:   cmp    %ebx,%ecx
+    0.00 :   2793:   setle  %dil
+    0.00 :   2797:   sub    $0x4,%rdx
+    0.00 :   279b:   sub    $0x40,%rax
+    0.00 :   279f:   cmp    $0xffffffff,%r12d
+    0.00 :   27a3:   je     27aa <particles_update+0x1ea>
+    0.00 :   27a5:   test   %dil,%dil
+    0.00 :   27a8:   jne    2780 <particles_update+0x1c0>
+         : 173  if (int_src < int_src_lo)
+    0.00 :   27aa:   cmp    %ebx,%ecx
+    0.00 :   27ac:   cmovl  %ebx,%ecx
+         : 176  if (int_dst == int_dst_end || int_src == int_src_lo)
+    0.00 :   27af:   test   %sil,%sil
+    0.00 :   27b2:   jne    2900 <particles_update+0x340>
+    0.00 :   27b8:   test   %dil,%dil
+    0.00 :   27bb:   jne    2900 <particles_update+0x340>
+         : 181  int k = int_dst_end - int_dst;
+    0.00 :   27c1:   mov    %r11d,%edx
+         : 183  if (int_src - int_src_lo < k)
+    0.00 :   27c4:   mov    %ecx,%eax
+         : 185  memcpy(arr_x + int_dst, arr_x + int_src, u_bytes);
+    0.00 :   27c6:   movslq %r8d,%r13
+    0.00 :   27c9:   mov    0x4460(%rip),%rsi        # 6c30 <arr_x>
+         : 188  int k = int_dst_end - int_dst;
+    0.00 :   27d0:   sub    %r8d,%edx
+         : 190  if (int_src - int_src_lo < k)
+    0.00 :   27d3:   sub    %ebx,%eax
+    0.00 :   27d5:   mov    %r10d,-0xf0(%rbp)
+    0.00 :   27dc:   cmp    %eax,%edx
+         : 194  int k = int_dst_end - int_dst;
+    0.00 :   27de:   mov    %r11d,-0xec(%rbp)
+         : 196  if (int_src - int_src_lo < k)
+    0.00 :   27e5:   cmovle %edx,%eax
+         : 198  memcpy(arr_x + int_dst, arr_x + int_src, u_bytes);
+    0.00 :   27e8:   shl    $0x2,%r13
+    0.00 :   27ec:   mov    %r8d,-0xe4(%rbp)
+    0.00 :   27f3:   lea    (%rsi,%r13,1),%rdi
+         :
+         : 203  __fortify_function void *
+         : 204  __NTH (memcpy (void *__restrict __dest, const void *__restrict __src,
+         : 205  size_t __len))
+         : 206  {
+         : 207  return __builtin___memcpy_chk (__dest, __src, __len,
+    0.00 :   27f7:   mov    %r9d,-0xf4(%rbp)
+         : 209  int_src -= k;
+    0.00 :   27fe:   sub    %eax,%ecx
+         : 211  size_t u_bytes = (size_t)k * 4;
+    0.00 :   2800:   movslq %eax,%r14
+    0.00 :   2803:   mov    %eax,-0xe0(%rbp)
+         : 214  memcpy(arr_x + int_dst, arr_x + int_src, u_bytes);
+    0.00 :   2809:   movslq %ecx,%r15
+    0.00 :   280c:   lea    0x0(,%r14,4),%rdx
+    0.00 :   2814:   mov    %ecx,-0xe8(%rbp)
+    0.00 :   281a:   shl    $0x2,%r15
+    0.00 :   281e:   add    %r15,%rsi
+    0.00 :   2821:   call   1210 <memcpy@plt>
+         : 221  memcpy(arr_y + int_dst, arr_y + int_src, u_bytes);
+    0.00 :   2826:   mov    0x43fb(%rip),%rsi        # 6c28 <arr_y>
+    0.00 :   282d:   lea    0x0(,%r14,4),%rdx
+    0.00 :   2835:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   2839:   add    %r15,%rsi
+    0.00 :   283c:   call   1210 <memcpy@plt>
+         : 227  memcpy(arr_vx + int_dst, arr_vx + int_src, u_bytes);
+    0.00 :   2841:   mov    0x43d8(%rip),%rsi        # 6c20 <arr_vx>
+    0.00 :   2848:   lea    0x0(,%r14,4),%rdx
+    0.00 :   2850:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   2854:   add    %r15,%rsi
+    0.00 :   2857:   call   1210 <memcpy@plt>
+         : 233  memcpy(arr_vy + int_dst, arr_vy + int_src, u_bytes);
+    0.00 :   285c:   mov    0x43b5(%rip),%rsi        # 6c18 <arr_vy>
+    0.00 :   2863:   lea    0x0(,%r14,4),%rdx
+    0.00 :   286b:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   286f:   add    %r15,%rsi
+    0.00 :   2872:   call   1210 <memcpy@plt>
+         : 239  memcpy(arr_life + int_dst, arr_life + int_src, u_bytes);
+    0.00 :   2877:   mov    0x4392(%rip),%rsi        # 6c10 <arr_life>
+    0.00 :   287e:   lea    0x0(,%r14,4),%rdx
+    0.00 :   2886:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   288a:   add    %r15,%rsi
+    0.00 :   288d:   call   1210 <memcpy@plt>
+         : 245  memcpy(arr_life_max + int_dst, arr_life_max + int_src, u_bytes);
+    0.00 :   2892:   mov    0x436f(%rip),%rsi        # 6c08 <arr_life_max>
+    0.00 :   2899:   lea    0x0(,%r14,4),%rdx
+    0.00 :   28a1:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   28a5:   add    %r15,%rsi
+    0.00 :   28a8:   call   1210 <memcpy@plt>
+         : 251  memcpy(arr_sprite + int_dst, arr_sprite + int_src, u_bytes);
+    0.00 :   28ad:   mov    0x434c(%rip),%rsi        # 6c00 <arr_sprite>
+    0.00 :   28b4:   lea    0x0(,%r14,4),%rdx
+    0.00 :   28bc:   lea    (%rsi,%r13,1),%rdi
+    0.00 :   28c0:   add    %r15,%rsi
+    0.00 :   28c3:   call   1210 <memcpy@plt>
+         : 257  int_dst += k;
+    0.00 :   28c8:   mov    %r12d,%edx
+    0.00 :   28cb:   mov    -0xe4(%rbp),%r8d
+         : 260  {
+    0.00 :   28d2:   mov    -0xe8(%rbp),%ecx
+    0.00 :   28d8:   mov    -0xec(%rbp),%r11d
+    0.00 :   28df:   mov    -0xf0(%rbp),%r10d
+    0.00 :   28e6:   not    %edx
+    0.00 :   28e8:   mov    -0xf4(%rbp),%r9d
+         : 266  int_dst += k;
+    0.00 :   28ef:   add    -0xe0(%rbp),%r8d
+         : 268  {
+    0.00 :   28f6:   jmp    26e0 <particles_update+0x120>
+    0.00 :   28fb:   nopl   0x0(%rax,%rax,1)
+         : 271  int_count = int_total;
+    0.00 :   2900:   mov    %r10d,0x455d(%rip)        # 6e64 <int_count>
+         : 273  }
+    0.00 :   2907:   mov    -0x38(%rbp),%rax
+    0.00 :   290b:   sub    %fs:0x28,%rax
+    0.00 :   2914:   jne    2a09 <particles_update+0x449>
+    0.00 :   291a:   add    $0xd8,%rsp
+    0.00 :   2921:   pop    %rbx
+    0.00 :   2922:   pop    %r12
+    0.00 :   2924:   pop    %r13
+    0.00 :   2926:   pop    %r14
+    0.00 :   2928:   pop    %r15
+    0.00 :   292a:   pop    %rbp
+    0.00 :   292b:   ret
+         : 285  for (int i = 0; i < int_capacity; i++)
+    0.00 :   292c:   movslq 0x4535(%rip),%rdx        # 6e68 <int_capacity>
+    0.00 :   2933:   test   %edx,%edx
+    0.00 :   2935:   jle    2907 <particles_update+0x347>
+    0.00 :   2937:   shl    $0x5,%rdx
+    0.00 :   293b:   mov    0x4523(%rip),%esi        # 6e64 <int_count>
+         : 291  ParticleAoS *p = &arr_aos[i];
+    0.00 :   2941:   xor    %edi,%edi
+         : 293  float vx = p->vx * a_drag;
+    0.00 :   2943:   vbroadcastss %xmm0,%xmm5
+    0.00 :   2948:   mov    0x42f1(%rip),%rax        # 6c40 <arr_aos>
+    0.00 :   294f:   vmovss 0x16b5(%rip),%xmm7        # 400c <_IO_stdin_used+0xc>
+         : 297  if (x < 0.0f)  x = 0.0f;
+    0.00 :   2957:   vxorps %xmm4,%xmm4,%xmm4
+    0.00 :   295b:   vmovss 0x16a5(%rip),%xmm6        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   2963:   lea    (%rdx,%rax,1),%rcx
+    0.00 :   2967:   nopw   0x0(%rax,%rax,1)
+         : 302  if (!p->b_alive)
+    1.75 :   2970:   movzbl 0x1c(%rax),%edx
+    3.70 :   2974:   test   %dl,%dl
+    0.00 :   2976:   je     29e4 <particles_update+0x424>
+         : 306  float vx = p->vx * a_drag;
+    1.05 :   2978:   vmovq  0x8(%rax),%xmm0
+    2.87 :   297d:   vxorps %xmm3,%xmm3,%xmm3
+    0.56 :   2981:   vmulps %xmm0,%xmm5,%xmm0
+         : 310  float x = p->x + vx * a_dt;
+    3.91 :   2985:   vmovaps %xmm0,%xmm2
+    1.19 :   2989:   vfmadd213ss (%rax),%xmm1,%xmm2
+         : 313  p->vx = vx;
+    5.17 :   298e:   vmovlps %xmm0,0x8(%rax)
+         : 315  float y = p->y + vy * a_dt;
+    3.77 :   2993:   vmovshdup %xmm0,%xmm0
+    4.47 :   2997:   vfmadd213ss 0x4(%rax),%xmm1,%xmm0
+         : 318  if (x < 0.0f)  x = 0.0f;
+    3.00 :   299d:   vminss %xmm2,%xmm6,%xmm8
+    5.73 :   29a1:   vcmpnltss %xmm4,%xmm2,%xmm2
+    1.12 :   29a6:   vblendvps %xmm2,%xmm8,%xmm3,%xmm3
+         : 322  if (y < 0.0f)  y = 0.0f;
+   17.61 :   29ac:   vminss %xmm0,%xmm7,%xmm8
+    3.84 :   29b0:   vxorps %xmm2,%xmm2,%xmm2
+    3.77 :   29b4:   vcmpnltss %xmm4,%xmm0,%xmm0
+    2.38 :   29b9:   vblendvps %xmm0,%xmm8,%xmm2,%xmm2
+         : 327  p->life -= a_dt;
+   13.98 :   29bf:   vmovss 0x10(%rax),%xmm0
+         : 329  p->x = x;
+    2.66 :   29c4:   vunpcklps %xmm2,%xmm3,%xmm3
+         : 331  p->life -= a_dt;
+    4.33 :   29c8:   vsubss %xmm1,%xmm0,%xmm0
+         : 333  p->x = x;
+    2.03 :   29cc:   vmovlps %xmm3,(%rax)
+         : 335  if (p->life <= 0.0f)
+    3.28 :   29d0:   vcomiss %xmm0,%xmm4
+         : 337  p->life -= a_dt;
+    0.56 :   29d4:   vmovss %xmm0,0x10(%rax)
+         : 339  if (p->life <= 0.0f)
+    2.38 :   29d9:   jb     29e4 <particles_update+0x424>
+         : 341  p->b_alive = false;
+    0.00 :   29db:   movb   $0x0,0x1c(%rax)
+         : 343  int_count--;
+    1.75 :   29df:   sub    $0x1,%esi
+    0.00 :   29e2:   mov    %edx,%edi
+         : 346  for (int i = 0; i < int_capacity; i++)
+    1.33 :   29e4:   add    $0x20,%rax
+    1.82 :   29e8:   cmp    %rax,%rcx
+    0.00 :   29eb:   jne    2970 <particles_update+0x3b0>
+    0.00 :   29ed:   test   %dil,%dil
+    0.00 :   29f0:   je     2907 <particles_update+0x347>
+    0.00 :   29f6:   mov    %esi,0x4468(%rip)        # 6e64 <int_count>
+         : 353  return;
+    0.00 :   29fc:   jmp    2907 <particles_update+0x347>
+         : 355  int int_total = 0;
+    0.00 :   2a01:   xor    %r10d,%r10d
+    0.00 :   2a04:   jmp    26be <particles_update+0xfe>
+         : 358  }
+    0.00 :   2a09:   call   11c0 <__stack_chk_fail@plt>

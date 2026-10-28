@@ -1,0 +1,50 @@
+0000000000001680 <soa_move>:
+    1680:	movaps %xmm0,%xmm4
+    1683:	test   %r9d,%r9d
+    1686:	jle    1745 <soa_move+0xc5>
+    168c:	movslq %r9d,%r9
+    168f:	movss  0x1971(%rip),%xmm6        # 3008 <_IO_stdin_used+0x8>
+    1697:	xor    %eax,%eax
+    1699:	pxor   %xmm7,%xmm7
+    169d:	movss  0x1967(%rip),%xmm5        # 300c <_IO_stdin_used+0xc>
+    16a5:	shl    $0x2,%r9
+    16a9:	nopl   0x0(%rax)
+    16b0:	movss  (%rdx,%rax,1),%xmm2
+    16b5:	movss  (%rcx,%rax,1),%xmm0
+    16ba:	pxor   %xmm3,%xmm3
+    16be:	mulss  %xmm1,%xmm2
+    16c2:	mulss  %xmm1,%xmm0
+    16c6:	movss  %xmm2,(%rdx,%rax,1)
+    16cb:	mulss  %xmm4,%xmm2
+    16cf:	addss  (%rdi,%rax,1),%xmm2
+    16d4:	movss  %xmm0,(%rcx,%rax,1)
+    16d9:	mulss  %xmm4,%xmm0
+    16dd:	addss  (%rsi,%rax,1),%xmm0
+    16e2:	comiss %xmm2,%xmm7
+    16e5:	ja     16fe <soa_move+0x7e>
+    16e7:	movaps %xmm6,%xmm3
+    16ea:	movaps %xmm6,%xmm8
+    16ee:	cmpltss %xmm2,%xmm3
+    16f3:	andps  %xmm3,%xmm8
+    16f7:	andnps %xmm2,%xmm3
+    16fa:	orps   %xmm8,%xmm3
+    16fe:	comiss %xmm0,%xmm7
+    1701:	pxor   %xmm2,%xmm2
+    1705:	ja     171e <soa_move+0x9e>
+    1707:	movaps %xmm5,%xmm2
+    170a:	movaps %xmm5,%xmm8
+    170e:	cmpltss %xmm0,%xmm2
+    1713:	andps  %xmm2,%xmm8
+    1717:	andnps %xmm0,%xmm2
+    171a:	orps   %xmm8,%xmm2
+    171e:	movss  (%r8,%rax,1),%xmm0
+    1724:	movss  %xmm3,(%rdi,%rax,1)
+    1729:	movss  %xmm2,(%rsi,%rax,1)
+    172e:	subss  %xmm4,%xmm0
+    1732:	movss  %xmm0,(%r8,%rax,1)
+    1738:	add    $0x4,%rax
+    173c:	cmp    %rax,%r9
+    173f:	jne    16b0 <soa_move+0x30>
+    1745:	ret
+    1746:	cs nopw 0x0(%rax,%rax,1)
+

@@ -1,0 +1,135 @@
+0000000000001680 <soa_update_job>:
+    1680:	endbr64
+    1684:	push   %rbp
+    1685:	mov    $0x10,%ecx
+    168a:	mov    %rsp,%rbp
+    168d:	push   %r15
+    168f:	push   %r14
+    1691:	lea    -0x40(%rbp),%r8
+    1695:	push   %r13
+    1697:	push   %r12
+    1699:	push   %rbx
+    169a:	mov    %rdi,%rbx
+    169d:	sub    $0x28,%rsp
+    16a1:	mov    %esi,-0x48(%rbp)
+    16a4:	mov    0x47ba(%rip),%edi        # 5e64 <int_count>
+    16aa:	mov    %fs:0x28,%r9
+    16b3:	mov    %r9,-0x38(%rbp)
+    16b7:	lea    -0x3c(%rbp),%r9
+    16bb:	call   2960 <pool_chunk>
+    16c0:	mov    -0x3c(%rbp),%esi
+    16c3:	mov    -0x40(%rbp),%edx
+    16c6:	mov    0x4543(%rip),%r11        # 5c10 <arr_life>
+    16cd:	mov    0x4544(%rip),%r12        # 5c18 <arr_vy>
+    16d4:	mov    %esi,%eax
+    16d6:	mov    0x4543(%rip),%r13        # 5c20 <arr_vx>
+    16dd:	mov    0x4544(%rip),%r14        # 5c28 <arr_y>
+    16e4:	sub    %edx,%eax
+    16e6:	mov    0x4543(%rip),%r15        # 5c30 <arr_x>
+    16ed:	mov    %eax,-0x44(%rbp)
+    16f0:	test   %eax,%eax
+    16f2:	jle    17d9 <soa_update_job+0x159>
+    16f8:	movss  0x4(%rbx),%xmm5
+    16fd:	movss  (%rbx),%xmm3
+    1701:	movslq %edx,%rcx
+    1704:	xor    %eax,%eax
+    1706:	movslq -0x44(%rbp),%rbx
+    170a:	shl    $0x2,%rcx
+    170e:	pxor   %xmm4,%xmm4
+    1712:	movss  0x18ee(%rip),%xmm7        # 3008 <_IO_stdin_used+0x8>
+    171a:	movss  0x18ea(%rip),%xmm6        # 300c <_IO_stdin_used+0xc>
+    1722:	lea    0x0(%r13,%rcx,1),%r10
+    1727:	lea    (%r12,%rcx,1),%r9
+    172b:	lea    (%r15,%rcx,1),%r8
+    172f:	lea    (%r14,%rcx,1),%rdi
+    1733:	shl    $0x2,%rbx
+    1737:	add    %r11,%rcx
+    173a:	nopw   0x0(%rax,%rax,1)
+    1740:	movss  (%r10,%rax,1),%xmm1
+    1746:	movss  (%r9,%rax,1),%xmm0
+    174c:	pxor   %xmm2,%xmm2
+    1750:	mulss  %xmm5,%xmm1
+    1754:	mulss  %xmm5,%xmm0
+    1758:	movss  %xmm1,(%r10,%rax,1)
+    175e:	mulss  %xmm3,%xmm1
+    1762:	addss  (%r8,%rax,1),%xmm1
+    1768:	movss  %xmm0,(%r9,%rax,1)
+    176e:	mulss  %xmm3,%xmm0
+    1772:	addss  (%rdi,%rax,1),%xmm0
+    1777:	comiss %xmm1,%xmm4
+    177a:	ja     1793 <soa_update_job+0x113>
+    177c:	movaps %xmm7,%xmm2
+    177f:	movaps %xmm7,%xmm8
+    1783:	cmpltss %xmm1,%xmm2
+    1788:	andps  %xmm2,%xmm8
+    178c:	andnps %xmm1,%xmm2
+    178f:	orps   %xmm8,%xmm2
+    1793:	comiss %xmm0,%xmm4
+    1796:	pxor   %xmm1,%xmm1
+    179a:	ja     17b3 <soa_update_job+0x133>
+    179c:	movaps %xmm6,%xmm1
+    179f:	movaps %xmm6,%xmm8
+    17a3:	cmpltss %xmm0,%xmm1
+    17a8:	andps  %xmm1,%xmm8
+    17ac:	andnps %xmm0,%xmm1
+    17af:	orps   %xmm8,%xmm1
+    17b3:	movss  (%rcx,%rax,1),%xmm0
+    17b8:	movss  %xmm2,(%r8,%rax,1)
+    17be:	movss  %xmm1,(%rdi,%rax,1)
+    17c3:	subss  %xmm3,%xmm0
+    17c7:	movss  %xmm0,(%rcx,%rax,1)
+    17cc:	add    $0x4,%rax
+    17d0:	cmp    %rax,%rbx
+    17d3:	jne    1740 <soa_update_job+0xc0>
+    17d9:	cmp    %edx,%esi
+    17db:	jle    1873 <soa_update_job+0x1f3>
+    17e1:	mov    0x4420(%rip),%r9        # 5c08 <arr_life_max>
+    17e8:	mov    0x4411(%rip),%r8        # 5c00 <arr_sprite>
+    17ef:	pxor   %xmm0,%xmm0
+    17f3:	jmp    1807 <soa_update_job+0x187>
+    17f5:	data16 cs nopw 0x0(%rax,%rax,1)
+    1800:	add    $0x1,%edx
+    1803:	cmp    %esi,%edx
+    1805:	jge    186d <soa_update_job+0x1ed>
+    1807:	movslq %edx,%rax
+    180a:	comiss (%r11,%rax,4),%xmm0
+    180f:	jb     1800 <soa_update_job+0x180>
+    1811:	sub    $0x1,%esi
+    1814:	movslq %esi,%rdi
+    1817:	movss  (%r15,%rdi,4),%xmm1
+    181d:	mov    (%r8,%rdi,4),%ecx
+    1821:	movss  %xmm1,(%r15,%rax,4)
+    1827:	movss  (%r14,%rdi,4),%xmm1
+    182d:	movss  %xmm1,(%r14,%rax,4)
+    1833:	movss  0x0(%r13,%rdi,4),%xmm1
+    183a:	movss  %xmm1,0x0(%r13,%rax,4)
+    1841:	movss  (%r12,%rdi,4),%xmm1
+    1847:	movss  %xmm1,(%r12,%rax,4)
+    184d:	movss  (%r11,%rdi,4),%xmm1
+    1853:	movss  %xmm1,(%r11,%rax,4)
+    1859:	movss  (%r9,%rdi,4),%xmm1
+    185f:	movss  %xmm1,(%r9,%rax,4)
+    1865:	mov    %ecx,(%r8,%rax,4)
+    1869:	cmp    %esi,%edx
+    186b:	jl     1807 <soa_update_job+0x187>
+    186d:	sub    -0x40(%rbp),%esi
+    1870:	mov    %esi,-0x44(%rbp)
+    1873:	movslq -0x48(%rbp),%rax
+    1877:	mov    -0x44(%rbp),%ebx
+    187a:	lea    0x3b7f(%rip),%rdx        # 5400 <arr_chunk>
+    1881:	shl    $0x6,%rax
+    1885:	mov    %ebx,(%rdx,%rax,1)
+    1888:	mov    -0x38(%rbp),%rax
+    188c:	sub    %fs:0x28,%rax
+    1895:	jne    18a6 <soa_update_job+0x226>
+    1897:	add    $0x28,%rsp
+    189b:	pop    %rbx
+    189c:	pop    %r12
+    189e:	pop    %r13
+    18a0:	pop    %r14
+    18a2:	pop    %r15
+    18a4:	pop    %rbp
+    18a5:	ret
+    18a6:	call   11c0 <__stack_chk_fail@plt>
+    18ab:	nopl   0x0(%rax,%rax,1)
+

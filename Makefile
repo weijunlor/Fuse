@@ -4,7 +4,7 @@
 #   make baseline-O0  baseline at -O0 (or -O2, ...) with -g and frame pointers, for perf
 #   make profile    -O2 with debug symbols and frame pointers, for perf
 #   make debug      -O0 with ThreadSanitizer, for data-race checks
-#   make bench      build every bench/bench_*.c
+#   make bench      build every bench/bench_*.c (bench_particles in three builds, see below)
 #   make clean      remove build/ and generated DDS code
 
 CC      := gcc
@@ -17,6 +17,12 @@ LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
 GEN     := generated/messages.c
 COMMON  := $(wildcard common/*.c) $(GEN)
 BENCHES := $(patsubst bench/%.c,build/%,$(wildcard bench/bench_*.c))
+# Particle update (#7, SIMD): optimised and vectorised for this machine's
+# widest vector unit (AVX2 on the test laptop). -fno-trapping-math: the game
+# never reads floating-point exception flags, and without it GCC will not turn
+# the position clamps (x < 0 ? 0 : x) into vector selects, so the loop stays
+# scalar. It does not change any result. Override with SIMD_FLAGS=...
+SIMD_FLAGS ?= -O3 -march=native -fno-trapping-math
 
 all: build/server build/client
 
@@ -27,8 +33,12 @@ $(GEN): idl/messages.idl
 build/server: $(wildcard server/*.c) $(COMMON)
 	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
 
-build/client: $(wildcard client/*.c) $(COMMON)
+build/client: $(filter-out client/particles.c,$(wildcard client/*.c)) build/particles.o $(COMMON)
 	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS) $(LDGL)
+
+# The particle system is the one file built with SIMD_FLAGS
+build/particles.o: client/particles.c client/particles.h common/worker_pool.h
+	mkdir -p build && $(CC) $(filter-out -O2,$(CFLAGS)) $(SIMD_FLAGS) -c $< -o $@
 
 # Baseline uses its own copy of the IDL so it never changes when ours does
 baseline: build/baseline_server build/baseline_client
@@ -55,10 +65,31 @@ build/baseline-O%/client: baseline/client.c build/baseline/messages.c
 	mkdir -p $(@D) && $(CC) -O$* -g -fno-omit-frame-pointer -Ibuild/baseline -Ithird_party $^ -o $@ \
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
-bench: $(BENCHES)
+bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm
+
+# bench_particles runs the client's particle code (client/particles.c), built
+# three ways so each step of #7 is measured from the same source:
+#   _scalar  -O2 with the vectoriser off (no SIMD; #6 aos vs soa is measured here)
+#   _sse2    -O3 -fno-trapping-math for any x86-64: 128-bit SSE2, 4 floats at a time
+#   (none)   SIMD_FLAGS, as the client uses (-march=native: 256-bit AVX2, 8 floats)
+# -g and frame pointers so perf annotate/record can show the hot loop.
+# The vectoriser report (which loops became SIMD) goes to build/*.vec.txt
+# (GCC appends to it, so it is deleted first).
+PART_SRC   := bench/bench_particles.c client/particles.c common/worker_pool.c common/timing.c
+PART_DEPS  := $(PART_SRC) client/particles.h common/worker_pool.h
+PART_FLAGS := $(filter-out -O2,$(CFLAGS)) -g -fno-omit-frame-pointer -Iclient
+
+build/bench_particles_scalar: $(PART_DEPS)
+	mkdir -p build && $(CC) $(PART_FLAGS) -O2 -fno-tree-vectorize $(PART_SRC) -o $@ -pthread -lm
+
+build/bench_particles_sse2: $(PART_DEPS)
+	mkdir -p build && rm -f $@.vec.txt && $(CC) $(PART_FLAGS) -O3 -fno-trapping-math -fopt-info-vec-all=$@.vec.txt $(PART_SRC) -o $@ -pthread -lm
+
+build/bench_particles: $(PART_DEPS)
+	mkdir -p build && rm -f $@.vec.txt && $(CC) $(PART_FLAGS) $(SIMD_FLAGS) -fopt-info-vec-all=$@.vec.txt $(PART_SRC) -o $@ -pthread -lm
 
 profile: CFLAGS += -g -fno-omit-frame-pointer
 profile: clean all

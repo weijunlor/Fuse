@@ -1,0 +1,90 @@
+ Percent |	Source code & Disassembly of bench_particles for cpu_core/cycles/ (315 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000001a70 <soa_move_avx2>:
+         : 6    const __m256 v_zero = _mm256_setzero_ps();
+         : 7    const __m256 v_max_x = _mm256_set1_ps(MAX_X);
+         : 8    const __m256 v_max_y = _mm256_set1_ps(MAX_Y);
+         :
+         : 10   int i = 0;
+         : 11   for (; i + 8 <= a_int_n; i += 8)     // 8 particles per iteration
+    0.00 :   1a70:   cmp    $0x7,%r9d
+         : 13   {
+    0.00 :   1a74:   vmovaps %xmm0,%xmm8
+         : 15   for (; i + 8 <= a_int_n; i += 8)     // 8 particles per iteration
+    0.00 :   1a78:   jle    1b25 <soa_move_avx2+0xb5>
+    0.00 :   1a7e:   mov    %r9d,%r11d
+         :
+         : 19   /* Create a vector with all elements equal to A.  */
+         : 20   extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         : 21   _mm256_set1_ps (float __A)
+         : 22   {
+         : 23   return __extension__ (__m256){ __A, __A, __A, __A,
+    0.00 :   1a81:   vbroadcastss %xmm0,%ymm3
+    0.00 :   1a86:   vbroadcastss %xmm1,%ymm5
+    0.00 :   1a8b:   xor    %eax,%eax
+    0.00 :   1a8d:   shr    $0x3,%r11d
+    0.00 :   1a91:   lea    -0x8(%r9),%r10d
+         : 29   return (__m256) __builtin_ia32_maxps256 ((__v8sf)__A, (__v8sf)__B);
+    0.00 :   1a95:   vxorps %xmm4,%xmm4,%xmm4
+    0.00 :   1a99:   vbroadcastss 0x2566(%rip),%ymm7        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   1aa2:   vbroadcastss 0x2561(%rip),%ymm6        # 400c <_IO_stdin_used+0xc>
+    0.00 :   1aab:   shl    $0x5,%r11
+    0.00 :   1aaf:   nop
+         : 35   return (__m256) ((__v8sf)__A * (__v8sf)__B);
+    0.64 :   1ab0:   vmulps (%rcx,%rax,1),%ymm5,%ymm0
+   11.76 :   1ab5:   vmulps (%rdx,%rax,1),%ymm5,%ymm2
+         : 38   *(__m256 *)__P = __A;
+   17.14 :   1aba:   vmovaps %ymm0,(%rcx,%rax,1)
+         :
+         : 41   extern __inline __m256
+         : 42   __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+         : 43   _mm256_fmadd_ps (__m256 __A, __m256 __B, __m256 __C)
+         : 44   {
+         : 45   return (__m256)__builtin_ia32_vfmaddps256 ((__v8sf)__A, (__v8sf)__B,
+    2.23 :   1abf:   vfmadd213ps (%rsi,%rax,1),%ymm3,%ymm0
+   11.07 :   1ac5:   vmovaps %ymm2,(%rdx,%rax,1)
+    2.54 :   1aca:   vfmadd213ps (%rdi,%rax,1),%ymm3,%ymm2
+         : 49   return (__m256) __builtin_ia32_maxps256 ((__v8sf)__A, (__v8sf)__B);
+   18.13 :   1ad0:   vmaxps %ymm0,%ymm4,%ymm0
+    4.14 :   1ad4:   vmaxps %ymm2,%ymm4,%ymm2
+         : 52   *(__m256 *)__P = __A;
+    6.33 :   1ad8:   vminps %ymm0,%ymm6,%ymm0
+         : 54   return (__m256) __builtin_ia32_minps256 ((__v8sf)__A, (__v8sf)__B);
+    4.45 :   1adc:   vminps %ymm2,%ymm7,%ymm2
+         : 56   *(__m256 *)__P = __A;
+    4.75 :   1ae0:   vmovaps %ymm0,(%rsi,%rax,1)
+         : 58   return (__m256) ((__v8sf)__A - (__v8sf)__B);
+    1.88 :   1ae5:   vmovaps (%r8,%rax,1),%ymm0
+         : 60   *(__m256 *)__P = __A;
+    7.95 :   1aeb:   vmovaps %ymm2,(%rdi,%rax,1)
+         : 62   return (__m256) ((__v8sf)__A - (__v8sf)__B);
+    1.91 :   1af0:   vsubps %ymm3,%ymm0,%ymm0
+         : 64   *(__m256 *)__P = __A;
+    2.23 :   1af4:   vmovaps %ymm0,(%r8,%rax,1)
+    1.27 :   1afa:   add    $0x20,%rax
+    1.59 :   1afe:   cmp    %rax,%r11
+    0.00 :   1b01:   jne    1ab0 <soa_move_avx2+0x40>
+    0.00 :   1b03:   mov    %r10d,%eax
+    0.00 :   1b06:   and    $0xfffffff8,%eax
+    0.00 :   1b09:   add    $0x8,%eax
+         :
+         : 73   _mm256_store_ps(a_life + i, _mm256_sub_ps(_mm256_load_ps(a_life + i), v_dt));
+         : 74   }
+         :
+         : 76   // Last 0-7 particles: same arithmetic, one at a time
+         : 77   soa_move(a_x + i, a_y + i, a_vx + i, a_vy + i, a_life + i, a_int_n - i, a_dt, a_drag);
+    0.00 :   1b0c:   sub    %eax,%r9d
+    0.00 :   1b0f:   shl    $0x2,%rax
+    0.00 :   1b13:   add    %rax,%r8
+    0.00 :   1b16:   add    %rax,%rcx
+    0.00 :   1b19:   add    %rax,%rdx
+    0.00 :   1b1c:   add    %rax,%rsi
+    0.00 :   1b1f:   add    %rax,%rdi
+    0.00 :   1b22:   vzeroupper
+    0.00 :   1b25:   vmovaps %xmm8,%xmm0
+    0.00 :   1b29:   jmp    1680 <soa_move>

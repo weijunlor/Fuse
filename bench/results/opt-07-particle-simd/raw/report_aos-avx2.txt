@@ -1,0 +1,18 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu_core/cycles/'
+# Event count (approx.): 2586333073
+#
+# Overhead  Command          Shared Object         Symbol                          
+# ........  ...............  ....................  ................................
+#
+    59.17%  bench_particles  bench_particles       [.] particles_update
+    40.46%  bench_particles  bench_particles       [.] particles_burst
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

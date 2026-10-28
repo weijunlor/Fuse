@@ -22,6 +22,7 @@ const char *render_mode_name(RenderMode a_mode);
 // Set up a pixel-coordinate projection with (0, 0) at the top-left corner,
 // load the sprite atlas and enable alpha blending. Needs a current GL context.
 // a_int_stress adds that many animated test sprites per frame.
+// Call after particles_init() (the vertex batch has room for every particle).
 void render_init(RenderMode a_mode, int a_int_stress);
 
 // Fit the drawing to a framebuffer of a_int_w x a_int_h pixels. With display
@@ -29,7 +30,7 @@ void render_init(RenderMode a_mode, int a_int_stress);
 // the game is still drawn in WIDTH x HEIGHT game pixels, stretched to fill it.
 void render_resize(int a_int_w, int a_int_h);
 
-// Draw one frame: floor, stress sprites, every active player's sprite and ID,
+// Draw one frame: floor, stress sprites, particles, every active player's sprite and ID,
 // and the banner. Does not swap buffers.
 void render_frame(void);
 

@@ -1,0 +1,48 @@
+0000000000001a70 <soa_move_avx2>:
+    1a70:	cmp    $0x7,%r9d
+    1a74:	vmovaps %xmm0,%xmm8
+    1a78:	jle    1b25 <soa_move_avx2+0xb5>
+    1a7e:	mov    %r9d,%r11d
+    1a81:	vbroadcastss %xmm0,%ymm3
+    1a86:	vbroadcastss %xmm1,%ymm5
+    1a8b:	xor    %eax,%eax
+    1a8d:	shr    $0x3,%r11d
+    1a91:	lea    -0x8(%r9),%r10d
+    1a95:	vxorps %xmm4,%xmm4,%xmm4
+    1a99:	vbroadcastss 0x2566(%rip),%ymm7        # 4008 <_IO_stdin_used+0x8>
+    1aa2:	vbroadcastss 0x2561(%rip),%ymm6        # 400c <_IO_stdin_used+0xc>
+    1aab:	shl    $0x5,%r11
+    1aaf:	nop
+    1ab0:	vmulps (%rcx,%rax,1),%ymm5,%ymm0
+    1ab5:	vmulps (%rdx,%rax,1),%ymm5,%ymm2
+    1aba:	vmovaps %ymm0,(%rcx,%rax,1)
+    1abf:	vfmadd213ps (%rsi,%rax,1),%ymm3,%ymm0
+    1ac5:	vmovaps %ymm2,(%rdx,%rax,1)
+    1aca:	vfmadd213ps (%rdi,%rax,1),%ymm3,%ymm2
+    1ad0:	vmaxps %ymm0,%ymm4,%ymm0
+    1ad4:	vmaxps %ymm2,%ymm4,%ymm2
+    1ad8:	vminps %ymm0,%ymm6,%ymm0
+    1adc:	vminps %ymm2,%ymm7,%ymm2
+    1ae0:	vmovaps %ymm0,(%rsi,%rax,1)
+    1ae5:	vmovaps (%r8,%rax,1),%ymm0
+    1aeb:	vmovaps %ymm2,(%rdi,%rax,1)
+    1af0:	vsubps %ymm3,%ymm0,%ymm0
+    1af4:	vmovaps %ymm0,(%r8,%rax,1)
+    1afa:	add    $0x20,%rax
+    1afe:	cmp    %rax,%r11
+    1b01:	jne    1ab0 <soa_move_avx2+0x40>
+    1b03:	mov    %r10d,%eax
+    1b06:	and    $0xfffffff8,%eax
+    1b09:	add    $0x8,%eax
+    1b0c:	sub    %eax,%r9d
+    1b0f:	shl    $0x2,%rax
+    1b13:	add    %rax,%r8
+    1b16:	add    %rax,%rcx
+    1b19:	add    %rax,%rdx
+    1b1c:	add    %rax,%rsi
+    1b1f:	add    %rax,%rdi
+    1b22:	vzeroupper
+    1b25:	vmovaps %xmm8,%xmm0
+    1b29:	jmp    1680 <soa_move>
+    1b2e:	xchg   %ax,%ax
+

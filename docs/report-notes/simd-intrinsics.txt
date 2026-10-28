@@ -1,0 +1,139 @@
+SIMD (#7): auto-vectorisation vs hand-written AVX2 intrinsics
+Notes for the final report (weijun, 2026-10-28)
+=====================================================================
+
+Data: bench/results/opt-07b-particle-avx2-intrinsics/report.txt
+      (raw perf stat, disassembly, perf record/annotate in raw/)
+      Earlier run without intrinsics: bench/results/opt-07-particle-simd/
+Code: client/particles.c  soa_move()              plain C, vectorised by GCC
+                          soa_move_avx2()         same loop, AVX2 intrinsics
+                          soa_remove_chunk()      plain C dead-particle scan (GCC cannot vectorise it)
+                          soa_remove_chunk_avx2() same scan, AVX2 intrinsics
+Run:  bench_particles <soa|soa-intrin|soa-intrin-scan> 1 <N> <ticks>
+      client: --particle-layout soa|soa-intrin|soa-intrin-scan
+
+
+1. Two ways to get SIMD
+-----------------------
+SIMD = one instruction works on several values at once. AVX2 registers
+(ymm) are 256 bits = 8 floats; SSE2 registers (xmm) are 128 bits = 4 floats.
+
+a) Auto-vectorisation (what "soa" does)
+   We write an ordinary C loop and the compiler turns it into SIMD
+   instructions. Our flags: -O3 -march=native -fno-trapping-math.
+   -march=native lets GCC use everything the build machine supports; on the
+   i7-14650HX that includes AVX2 and FMA, so GCC chose 8-wide ymm code.
+   We never wrote an AVX2 instruction: the loop's shape made it possible:
+     - struct of arrays: x[i..i+7] are next to each other in memory
+     - restrict: the arrays never overlap
+     - no branches: clamps written as selects (x < 0 ? 0 : x)
+     - -fno-trapping-math: without it GCC keeps the clamps as branches
+       (a float compare might set an exception flag) and refuses to
+       vectorise ("unsupported control flow in loop")
+   Proof: -fopt-info-vec says "soa_move loop: loop vectorized using 32 byte
+   vectors"; the disassembly has vmulps / vfmadd213ps on ymm registers.
+
+b) Intrinsics (what "soa-intrin" does)
+   We write the SIMD instructions ourselves, as C functions from
+   <immintrin.h>. Each _mm256_* call is one AVX2 instruction:
+     __m256 vx = _mm256_mul_ps(_mm256_load_ps(a_vx + i), v_drag);   // vmulps
+     __m256 x  = _mm256_fmadd_ps(vx, v_dt, _mm256_load_ps(a_x + i)); // vfmadd
+     x = _mm256_min_ps(v_max_x, _mm256_max_ps(v_zero, x));          // vmaxps, vminps
+   SSE2 is the same idea with __m128 and _mm_*_ps (4 floats).
+
+   Trade-offs:
+                   Auto-vectorisation               Intrinsics
+     Code          plain C, readable                tied to one instruction set
+                                                    (AVX2 code does not run on a
+                                                    CPU without AVX2)
+     Control       compiler decides, may refuse     we choose every instruction
+                   (it did, until -fno-trapping-math)
+     Portability   same source becomes SSE2, AVX2   one version per instruction
+                   or AVX-512 depending on flags    set, or detect the CPU at run
+                                                    time; ours is only compiled
+                                                    when __AVX2__ and __FMA__ are
+                                                    defined
+     Speed         same for a simple loop           pays off for what the
+                                                    compiler cannot vectorise
+
+   Both versions give bit-identical particles (hash of every position
+   checked, and checksums equal in every run). Writing the intrinsics to
+   match exactly needed care: GCC contracts x + vx*dt into an FMA under
+   -march=native, so the intrinsics use FMA too; vmaxps(0, x) is exactly
+   (0 > x ? 0 : x), the same as the C select, even for -0.0.
+
+
+2. Results (1 thread, P-core, 10 runs each, ns per particle update, lower = better)
+----------------------------------------------------------------------------------
+                            N=1000          N=10000         N=100000        N=1000000
+ aos (AVX2 build, not vec.) 2.175           2.325           2.311           3.171
+ soa scalar                 2.177           2.232           2.400           2.451
+ soa SSE2  (auto, 4 wide)   0.890           0.887           0.938           1.064
+ soa AVX2  (auto, 8 wide)   0.726           0.755           0.803           0.995
+ soa-intrin       (hand)    0.680           0.745           0.805           0.984
+ soa-intrin-scan  (hand)    0.549           0.614           0.694           0.890
+ (sd <= 0.04 everywhere; per-run values in the report)
+
+ Instructions per particle update (whole process, perf stat):
+                            N=1000   N=1000000
+ soa scalar                 43.4     60.3
+ soa AVX2 (auto)            10.5     14.2
+ soa-intrin                 10.0     13.5
+ soa-intrin-scan             6.6      8.6
+
+ perf record, N=100000 (share of samples):
+   soa AVX2 (auto): soa_remove_chunk 58%, soa_move 34%, spawning 8%
+   soa-intrin-scan: soa_remove_chunk_avx2 48%, soa_move_avx2 42%, spawning 8%
+
+
+3. What the numbers say
+-----------------------
+a) Hand-written move loop vs the compiler's: almost the same.
+   - 6% faster at 1000 particles (data in L1 cache), 0-1% at 10000+.
+   - Main loop body: compiler 22 instructions per 8 particles, ours 18.
+     The difference is only the clamps: GCC builds them from compare +
+     blend + and (vcmpnltps, vblendvps, vandps); we use vmaxps/vminps.
+     (raw/disasm_bench_particles.txt vs raw/disasm_intrinsics.txt; both
+     loops are listed side by side in report.txt)
+   - Once the data no longer fits in L1, both are limited by memory
+     bandwidth (each update reads and writes 40 bytes), not by the
+     number of instructions, so 4 fewer instructions do not matter.
+   => For a simple loop, a good compiler with the right flags is as good
+      as hand-written intrinsics, and the C version stays portable.
+
+b) Hand-written scan (soa-intrin-scan): 1.12x-1.32x faster than auto.
+   - After #7, the slowest part was no longer the arithmetic: 58% of the
+     time was the scalar loop that looks for dead particles. GCC cannot
+     vectorise it (its length changes while particles are removed:
+     "number of iterations cannot be computed").
+   - With intrinsics: one vcmpps compares 8 lives with 0, vmovmskps packs
+     the 8 results into one int; if it is 0 (no dead particle, ~90% of
+     blocks since about 1 in 75 dies per tick) all 8 are skipped at once.
+   - Instructions per particle 10.5 -> 6.6. Branch-miss rate goes up
+     (0.8% -> 3.2%: "is there a dead one in this block?" is true ~10% of
+     the time, at random), but far fewer instructions win overall.
+   - Gain is largest in cache (1.32x at 1000) and smaller at 1M (1.12x),
+     where memory bandwidth limits everything again.
+   => Intrinsics pay off where the compiler cannot vectorise the loop on
+      its own, not where it already can.
+
+c) Overall SIMD story for the slides (1000 particles, 1 thread):
+   scalar 2.18 ns -> SSE2 0.89 -> AVX2 auto 0.73 -> hand-written 0.55
+   = 4.0x from SIMD on a single core, same results bit for bit.
+   SSE2 -> AVX2 (twice the width) only gives ~1.2x: memory bandwidth, not
+   arithmetic, is the limit (IPC falls from ~4 to ~2-3).
+
+
+4. Caveats to mention
+---------------------
+- -march=native: AVX2 because the test laptop has it. On a CPU without
+  AVX2 the auto version still vectorises (narrower); soa-intrin and
+  soa-intrin-scan are not compiled there and the client refuses those
+  layouts with a message.
+- Timings are for the particle code alone (bench_particles, no window).
+  In the game there are hundreds of particles, not millions: all versions
+  take microseconds per frame there.
+- The game default stays "soa" (auto-vectorised, portable). The intrinsic
+  versions exist to measure the comparison.
+- Measured from uncommitted code on top of commit 4510b14 (binary sha256
+  in setup.txt).

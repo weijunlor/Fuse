@@ -1,0 +1,310 @@
+# started on Wed Oct 28 08:10:09 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            425.55 msec task-clock                                                            
+                 5      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,528,246,131      cpu_atom/cycles/                                                        (0.08%)
+     2,119,729,458      cpu_core/cycles/                                                        (99.92%)
+     1,204,239,390      cpu_atom/instructions/                                                  (0.08%)
+     8,675,075,401      cpu_core/instructions/                                                  (99.92%)
+       223,759,049      cpu_atom/branches/                                                      (0.08%)
+     1,018,755,237      cpu_core/branches/                                                      (99.92%)
+        10,255,052      cpu_atom/branch-misses/                                                 (0.08%)
+        12,523,842      cpu_core/branch-misses/                                                 (99.92%)
+       295,770,445      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,606,306      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            69,742      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         2,374,630      cpu_atom/LLC-loads/                                                     (0.08%)
+            14,915      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+             1,477      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.426254309 seconds time elapsed
+
+       0.425058000 seconds user
+       0.001000000 seconds sys
+
+
+# started on Wed Oct 28 08:10:24 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            425.93 msec task-clock                                                            
+                 8      context-switches                                                      
+                 1      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     2,121,282,561      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+     8,669,228,711      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+     1,018,118,394      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+        12,593,464      cpu_core/branch-misses/                                               
+     <not counted>      cpu_atom/L1-dcache-loads/                                               (0.00%)
+     1,272,817,013      cpu_core/L1-dcache-loads/                                             
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            71,779      cpu_core/L1-dcache-load-misses/                                       
+     <not counted>      cpu_atom/LLC-loads/                                                     (0.00%)
+            14,271      cpu_core/LLC-loads/                                                   
+     <not counted>      cpu_atom/LLC-load-misses/                                               (0.00%)
+             2,100      cpu_core/LLC-load-misses/                                             
+
+       0.426708660 seconds time elapsed
+
+       0.425498000 seconds user
+       0.000998000 seconds sys
+
+
+# started on Wed Oct 28 08:10:38 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            425.03 msec task-clock                                                            
+                 3      context-switches                                                      
+                 1      cpu-migrations                                                        
+     <not counted>      cpu_atom/cycles/                                                        (0.00%)
+     2,118,733,005      cpu_core/cycles/                                                      
+     <not counted>      cpu_atom/instructions/                                                  (0.00%)
+     8,669,199,312      cpu_core/instructions/                                                
+     <not counted>      cpu_atom/branches/                                                      (0.00%)
+     1,018,119,376      cpu_core/branches/                                                    
+     <not counted>      cpu_atom/branch-misses/                                                 (0.00%)
+        12,525,525      cpu_core/branch-misses/                                               
+     <not counted>      cpu_atom/L1-dcache-loads/                                               (0.00%)
+     1,272,807,217      cpu_core/L1-dcache-loads/                                             
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            73,761      cpu_core/L1-dcache-load-misses/                                       
+     <not counted>      cpu_atom/LLC-loads/                                                     (0.00%)
+            13,475      cpu_core/LLC-loads/                                                   
+     <not counted>      cpu_atom/LLC-load-misses/                                               (0.00%)
+             1,257      cpu_core/LLC-load-misses/                                             
+
+       0.425653568 seconds time elapsed
+
+       0.424538000 seconds user
+       0.000998000 seconds sys
+
+
+# started on Wed Oct 28 08:10:53 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            425.06 msec task-clock                                                            
+                 6      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,526,023,570      cpu_atom/cycles/                                                        (0.08%)
+     2,119,687,886      cpu_core/cycles/                                                        (99.92%)
+     1,219,123,454      cpu_atom/instructions/                                                  (0.08%)
+     8,674,801,449      cpu_core/instructions/                                                  (99.92%)
+       225,339,189      cpu_atom/branches/                                                      (0.08%)
+     1,018,706,034      cpu_core/branches/                                                      (99.92%)
+        10,163,691      cpu_atom/branch-misses/                                                 (0.08%)
+        12,510,195      cpu_core/branch-misses/                                                 (99.92%)
+       298,910,511      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,535,145      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            75,571      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         2,320,307      cpu_atom/LLC-loads/                                                     (0.08%)
+            11,852      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+               969      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.425798592 seconds time elapsed
+
+       0.424588000 seconds user
+       0.000999000 seconds sys
+
+
+# started on Wed Oct 28 08:11:07 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.71 msec task-clock                                                            
+                 3      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,527,964,215      cpu_atom/cycles/                                                        (0.08%)
+     2,118,670,108      cpu_core/cycles/                                                        (99.92%)
+     1,176,333,926      cpu_atom/instructions/                                                  (0.08%)
+     8,674,589,215      cpu_core/instructions/                                                  (99.92%)
+       218,103,137      cpu_atom/branches/                                                      (0.08%)
+     1,018,666,626      cpu_core/branches/                                                      (99.92%)
+         9,996,346      cpu_atom/branch-misses/                                                 (0.08%)
+        12,508,307      cpu_core/branch-misses/                                                 (99.92%)
+       288,514,885      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,481,549      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            62,299      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         2,163,804      cpu_atom/LLC-loads/                                                     (0.08%)
+             9,837      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+               506      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.425232513 seconds time elapsed
+
+       0.424173000 seconds user
+       0.001000000 seconds sys
+
+
+# started on Wed Oct 28 08:11:21 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.80 msec task-clock                                                            
+                 3      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,529,510,038      cpu_atom/cycles/                                                        (0.07%)
+     2,119,049,052      cpu_core/cycles/                                                        (99.93%)
+     1,251,236,304      cpu_atom/instructions/                                                  (0.07%)
+     8,674,314,108      cpu_core/instructions/                                                  (99.93%)
+       231,325,281      cpu_atom/branches/                                                      (0.07%)
+     1,018,636,854      cpu_core/branches/                                                      (99.93%)
+        10,409,671      cpu_atom/branch-misses/                                                 (0.07%)
+        12,526,106      cpu_core/branch-misses/                                                 (99.93%)
+       307,299,201      cpu_atom/L1-dcache-loads/                                               (0.07%)
+     1,273,447,682      cpu_core/L1-dcache-loads/                                               (99.93%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            68,684      cpu_core/L1-dcache-load-misses/                                         (99.93%)
+         2,175,295      cpu_atom/LLC-loads/                                                     (0.07%)
+            10,314      cpu_core/LLC-loads/                                                     (99.93%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.07%)
+               698      cpu_core/LLC-load-misses/                                               (99.93%)
+
+       0.425458933 seconds time elapsed
+
+       0.424366000 seconds user
+       0.001000000 seconds sys
+
+
+# started on Wed Oct 28 08:11:36 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.88 msec task-clock                                                            
+                 5      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,530,433,772      cpu_atom/cycles/                                                        (0.08%)
+     2,119,062,179      cpu_core/cycles/                                                        (99.92%)
+     1,253,168,216      cpu_atom/instructions/                                                  (0.08%)
+     8,674,623,926      cpu_core/instructions/                                                  (99.92%)
+       231,863,762      cpu_atom/branches/                                                      (0.08%)
+     1,018,678,760      cpu_core/branches/                                                      (99.92%)
+        10,388,612      cpu_atom/branch-misses/                                                 (0.08%)
+        12,518,644      cpu_core/branch-misses/                                                 (99.92%)
+       307,496,926      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,500,044      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            68,806      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         2,180,422      cpu_atom/LLC-loads/                                                     (0.08%)
+            11,118      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+               776      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.425474122 seconds time elapsed
+
+       0.424368000 seconds user
+       0.001000000 seconds sys
+
+
+# started on Wed Oct 28 08:11:50 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.55 msec task-clock                                                            
+                 3      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,529,502,364      cpu_atom/cycles/                                                        (0.08%)
+     2,117,900,822      cpu_core/cycles/                                                        (99.92%)
+     1,231,833,184      cpu_atom/instructions/                                                  (0.08%)
+     8,674,883,252      cpu_core/instructions/                                                  (99.92%)
+       228,217,401      cpu_atom/branches/                                                      (0.08%)
+     1,018,711,320      cpu_core/branches/                                                      (99.92%)
+        10,136,485      cpu_atom/branch-misses/                                                 (0.08%)
+        12,484,953      cpu_core/branch-misses/                                                 (99.92%)
+       302,614,281      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,554,479      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            66,175      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         1,997,483      cpu_atom/LLC-loads/                                                     (0.08%)
+            11,340      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+               862      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.425193102 seconds time elapsed
+
+       0.423154000 seconds user
+       0.001996000 seconds sys
+
+
+# started on Wed Oct 28 08:12:05 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.97 msec task-clock                                                            
+                 5      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,529,481,106      cpu_atom/cycles/                                                        (0.07%)
+     2,120,008,343      cpu_core/cycles/                                                        (99.93%)
+     1,264,244,792      cpu_atom/instructions/                                                  (0.07%)
+     8,674,147,541      cpu_core/instructions/                                                  (99.93%)
+       234,714,229      cpu_atom/branches/                                                      (0.07%)
+     1,018,607,509      cpu_core/branches/                                                      (99.93%)
+        10,587,621      cpu_atom/branch-misses/                                                 (0.07%)
+        12,548,229      cpu_core/branch-misses/                                                 (99.93%)
+       310,900,472      cpu_atom/L1-dcache-loads/                                               (0.07%)
+     1,273,417,695      cpu_core/L1-dcache-loads/                                               (99.93%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            65,456      cpu_core/L1-dcache-load-misses/                                         (99.93%)
+         2,441,229      cpu_atom/LLC-loads/                                                     (0.07%)
+             9,846      cpu_core/LLC-loads/                                                     (99.93%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.07%)
+               707      cpu_core/LLC-load-misses/                                               (99.93%)
+
+       0.425795873 seconds time elapsed
+
+       0.423526000 seconds user
+       0.001997000 seconds sys
+
+
+# started on Wed Oct 28 08:12:19 2026
+
+
+ Performance counter stats for 'taskset -c 4 build/bench_particles_scalar soa 1 1000 200000 4000':
+
+            424.53 msec task-clock                                                            
+                 3      context-switches                                                      
+                 1      cpu-migrations                                                        
+     1,530,134,421      cpu_atom/cycles/                                                        (0.08%)
+     2,117,834,456      cpu_core/cycles/                                                        (99.92%)
+     1,139,518,952      cpu_atom/instructions/                                                  (0.08%)
+     8,674,799,027      cpu_core/instructions/                                                  (99.92%)
+       211,053,314      cpu_atom/branches/                                                      (0.08%)
+     1,018,683,813      cpu_core/branches/                                                      (99.92%)
+         9,757,162      cpu_atom/branch-misses/                                                 (0.08%)
+        12,486,451      cpu_core/branch-misses/                                                 (99.92%)
+       279,495,645      cpu_atom/L1-dcache-loads/                                               (0.08%)
+     1,273,506,752      cpu_core/L1-dcache-loads/                                               (99.92%)
+   <not supported>      cpu_atom/L1-dcache-load-misses/                                       
+            63,987      cpu_core/L1-dcache-load-misses/                                         (99.92%)
+         2,129,295      cpu_atom/LLC-loads/                                                     (0.08%)
+             9,699      cpu_core/LLC-loads/                                                     (99.92%)
+                 0      cpu_atom/LLC-load-misses/                                               (0.08%)
+               521      cpu_core/LLC-load-misses/                                               (99.92%)
+
+       0.425097040 seconds time elapsed
+
+       0.425003000 seconds user
+       0.000000000 seconds sys
+
+

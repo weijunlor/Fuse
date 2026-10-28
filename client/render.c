@@ -24,6 +24,7 @@ Text is still drawn per string (ui.c) in every mode. */
 #include "atlas.h"
 #include "net_client.h"
 #include "ui.h"
+#include "particles.h"
 
 // Seconds each animation frame is shown
 #define PLAYER_FRAME_S 0.4
@@ -176,6 +177,7 @@ const char *render_mode_name(RenderMode a_mode)
 
 void render_init(RenderMode a_mode, int a_int_stress)
 {
+    // Needs particles_capacity(), so particles_init() must have run
     /* Use pixel coordinates */
     _Static_assert(ATLAS_TILE == SQ_WIDTH, "player sprites are drawn at hitbox size");
     _Static_assert(WIDTH % ATLAS_TILE == 0 && HEIGHT % ATLAS_TILE == 0,
@@ -223,8 +225,9 @@ void render_init(RenderMode a_mode, int a_int_stress)
         arr_stress[i].d_phase_s = (i % 17) * 0.037;
     }
 
-    // Batch capacity: floor + players + stress sprites, 4 vertices each
-    int_batch_cap = (FLOOR_TILES + MAX_PLAYERS + int_num_stress) * 4;
+    // Batch capacity: floor + players + stress sprites + particles, 4 vertices
+    // each (particles_init() must run first)
+    int_batch_cap = (FLOOR_TILES + MAX_PLAYERS + int_num_stress + particles_capacity()) * 4;
     bool b_alloc_ok = true;
     if (render_mode == RENDER_BATCHED_FLOAT)
         b_alloc_ok = (arr_batch = malloc((size_t)int_batch_cap * sizeof(QuadVertex))) != NULL;
@@ -279,6 +282,9 @@ void render_frame(void)
                                      d_time_s + p->d_phase_s, STRESS_FRAME_S);
         render_sprite(int_sprite, p->x, p->y);
     }
+
+    // Particles (explosion sparks and embers), under the players
+    particles_draw(render_sprite);
 
     // Players: the sprite is the same size as the SQ_WIDTH hitbox
     for(int i = 0; i < MAX_PLAYERS; i++)

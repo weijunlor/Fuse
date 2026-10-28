@@ -1,0 +1,352 @@
+ Percent |	Source code & Disassembly of bench_particles for cpu_core/cycles/ (303 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000001680 <soa_move>:
+         : 6    __attribute__((noinline))
+         : 7    static void soa_move(float *restrict a_x, float *restrict a_y,
+         : 8    float *restrict a_vx, float *restrict a_vy,
+         : 9    float *restrict a_life, int a_int_n, float a_dt, float a_drag)
+         : 10   {
+         : 11   for (int i = 0; i < a_int_n; i++)
+    0.00 :   1680:   test   %r9d,%r9d
+    0.00 :   1683:   jle    1a6e <soa_move+0x3ee>
+    0.00 :   1689:   lea    -0x1(%r9),%eax
+    0.00 :   168d:   vmovaps %xmm0,%xmm2
+    0.00 :   1691:   cmp    $0x6,%eax
+    0.00 :   1694:   jbe    1a64 <soa_move+0x3e4>
+    0.00 :   169a:   mov    %r9d,%r10d
+    0.00 :   169d:   vbroadcastss %xmm1,%ymm7
+    0.00 :   16a2:   vbroadcastss %xmm0,%ymm3
+    0.00 :   16a7:   xor    %eax,%eax
+    0.00 :   16a9:   shr    $0x3,%r10d
+         : 23   float vy = a_vy[i] * a_drag;
+         : 24   a_vx[i] = vx;
+         : 25   a_vy[i] = vy;
+         : 26   float x = a_x[i] + vx * a_dt;
+         : 27   float y = a_y[i] + vy * a_dt;
+         : 28   x = x < 0.0f ? 0.0f : x;
+    0.00 :   16ad:   vxorps %xmm4,%xmm4,%xmm4
+    0.00 :   16b1:   vbroadcastss 0x294e(%rip),%ymm6        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   16ba:   vbroadcastss 0x2949(%rip),%ymm5        # 400c <_IO_stdin_used+0xc>
+    0.00 :   16c3:   shl    $0x5,%r10
+    0.00 :   16c7:   nopw   0x0(%rax,%rax,1)
+         : 34   float vx = a_vx[i] * a_drag;
+    0.99 :   16d0:   vmulps (%rdx,%rax,1),%ymm7,%ymm11
+         : 36   float vy = a_vy[i] * a_drag;
+    7.25 :   16d5:   vmulps (%rcx,%rax,1),%ymm7,%ymm0
+         : 38   a_vx[i] = vx;
+    6.30 :   16da:   vmovups %ymm11,(%rdx,%rax,1)
+         : 40   float x = a_x[i] + vx * a_dt;
+    1.99 :   16df:   vfmadd213ps (%rdi,%rax,1),%ymm3,%ymm11
+         : 42   a_vy[i] = vy;
+    8.91 :   16e5:   vmovups %ymm0,(%rcx,%rax,1)
+         : 44   float y = a_y[i] + vy * a_dt;
+    1.33 :   16ea:   vfmadd213ps (%rsi,%rax,1),%ymm3,%ymm0
+         : 46   x = x > MAX_X ? MAX_X : x;
+    8.95 :   16f0:   vcmpnltps %ymm11,%ymm6,%ymm9
+         : 48   x = x < 0.0f ? 0.0f : x;
+    3.31 :   16f6:   vcmpnltps %ymm4,%ymm11,%ymm8
+    2.98 :   16fb:   vblendvps %ymm9,%ymm11,%ymm6,%ymm13
+         : 51   y = y < 0.0f ? 0.0f : y;
+         : 52   y = y > MAX_Y ? MAX_Y : y;
+   14.41 :   1701:   vcmpnltps %ymm0,%ymm5,%ymm9
+    2.98 :   1706:   vandps %ymm8,%ymm13,%ymm12
+         : 55   y = y < 0.0f ? 0.0f : y;
+   10.82 :   170b:   vcmpnltps %ymm4,%ymm0,%ymm8
+         : 57   a_x[i] = x;
+    3.62 :   1710:   vmovups %ymm12,(%rdi,%rax,1)
+         : 59   a_y[i] = y;
+    2.98 :   1715:   vblendvps %ymm9,%ymm0,%ymm5,%ymm0
+    6.30 :   171b:   vandps %ymm8,%ymm0,%ymm0
+    6.63 :   1720:   vmovups %ymm0,(%rsi,%rax,1)
+         : 63   a_life[i] -= a_dt;
+    0.99 :   1725:   vmovups (%r8,%rax,1),%ymm0
+    6.28 :   172b:   vsubps %ymm3,%ymm0,%ymm0
+    0.99 :   172f:   vmovups %ymm0,(%r8,%rax,1)
+         : 67   for (int i = 0; i < a_int_n; i++)
+    0.66 :   1735:   add    $0x20,%rax
+    1.33 :   1739:   cmp    %r10,%rax
+    0.00 :   173c:   jne    16d0 <soa_move+0x50>
+    0.00 :   173e:   mov    %r9d,%r10d
+    0.00 :   1741:   and    $0xfffffff8,%r10d
+    0.00 :   1745:   cmp    %r10d,%r9d
+    0.00 :   1748:   mov    %r10d,%eax
+    0.00 :   174b:   je     1a60 <soa_move+0x3e0>
+    0.00 :   1751:   vzeroupper
+         : 77   {
+    0.00 :   1754:   push   %rbp
+    0.00 :   1755:   mov    %r9d,%r11d
+    0.00 :   1758:   sub    %eax,%r11d
+    0.00 :   175b:   mov    %rsp,%rbp
+    0.00 :   175e:   push   %r14
+    0.00 :   1760:   push   %r13
+    0.00 :   1762:   push   %r12
+    0.00 :   1764:   push   %rbx
+    0.00 :   1765:   lea    -0x1(%r11),%ebx
+    0.00 :   1769:   cmp    $0x2,%ebx
+    0.00 :   176c:   jbe    181a <soa_move+0x19a>
+    0.00 :   1772:   vbroadcastss %xmm1,%xmm0
+    0.00 :   1777:   shl    $0x2,%rax
+    0.00 :   177b:   vbroadcastss %xmm2,%xmm5
+         : 92   x = x < 0.0f ? 0.0f : x;
+    0.00 :   1780:   vxorps %xmm6,%xmm6,%xmm6
+    0.00 :   1784:   lea    (%rdx,%rax,1),%r14
+    0.00 :   1788:   lea    (%rdi,%rax,1),%r12
+         : 96   x = x > MAX_X ? MAX_X : x;
+    0.00 :   178c:   vbroadcastss 0x2873(%rip),%xmm3        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   1795:   test   $0x3,%r11b
+         : 99   float vx = a_vx[i] * a_drag;
+    0.00 :   1799:   vmulps (%r14),%xmm0,%xmm4
+    0.00 :   179e:   lea    (%rcx,%rax,1),%r13
+    0.00 :   17a2:   lea    (%rsi,%rax,1),%rbx
+         : 103  float vy = a_vy[i] * a_drag;
+    0.00 :   17a6:   vmulps 0x0(%r13),%xmm0,%xmm0
+         : 105  a_vx[i] = vx;
+    0.00 :   17ac:   vmovups %xmm4,(%r14)
+         : 107  float x = a_x[i] + vx * a_dt;
+    0.00 :   17b1:   vfmadd213ps (%r12),%xmm5,%xmm4
+         : 109  a_vy[i] = vy;
+    0.00 :   17b7:   vmovups %xmm0,0x0(%r13)
+         : 111  float y = a_y[i] + vy * a_dt;
+    0.00 :   17bd:   vfmadd213ps (%rbx),%xmm5,%xmm0
+         : 113  x = x > MAX_X ? MAX_X : x;
+    0.00 :   17c2:   vcmpnltps %xmm4,%xmm3,%xmm8
+         : 115  x = x < 0.0f ? 0.0f : x;
+    0.00 :   17c7:   vcmpnltps %xmm6,%xmm4,%xmm7
+         : 117  y = y < 0.0f ? 0.0f : y;
+    0.00 :   17cc:   vcmpnltps %xmm6,%xmm0,%xmm6
+    0.00 :   17d1:   vblendvps %xmm8,%xmm4,%xmm3,%xmm3
+    0.00 :   17d7:   vandps %xmm7,%xmm3,%xmm3
+         : 121  a_x[i] = x;
+    0.00 :   17db:   vmovups %xmm3,(%r12)
+         : 123  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   17e1:   vbroadcastss 0x2822(%rip),%xmm3        # 400c <_IO_stdin_used+0xc>
+    0.00 :   17ea:   vcmpnltps %xmm0,%xmm3,%xmm4
+         : 126  a_y[i] = y;
+    0.00 :   17ef:   vblendvps %xmm4,%xmm0,%xmm3,%xmm3
+         : 128  a_life[i] -= a_dt;
+    0.00 :   17f5:   vmovups (%r8,%rax,1),%xmm0
+         : 130  a_y[i] = y;
+    0.00 :   17fb:   vandps %xmm6,%xmm3,%xmm3
+         : 132  a_life[i] -= a_dt;
+    0.00 :   17ff:   vsubps %xmm5,%xmm0,%xmm0
+         : 134  a_y[i] = y;
+    0.00 :   1803:   vmovups %xmm3,(%rbx)
+         : 136  a_life[i] -= a_dt;
+    0.00 :   1807:   vmovups %xmm0,(%r8,%rax,1)
+         : 138  for (int i = 0; i < a_int_n; i++)
+    0.00 :   180d:   je     19c0 <soa_move+0x340>
+    0.00 :   1813:   and    $0xfffffffc,%r11d
+    0.00 :   1817:   add    %r11d,%r10d
+         : 142  float vx = a_vx[i] * a_drag;
+    0.00 :   181a:   movslq %r10d,%rax
+         : 144  x = x < 0.0f ? 0.0f : x;
+    0.00 :   181d:   vxorps %xmm4,%xmm4,%xmm4
+         : 146  float vx = a_vx[i] * a_drag;
+    0.00 :   1821:   shl    $0x2,%rax
+    0.00 :   1825:   vmulss (%rdx,%rax,1),%xmm1,%xmm3
+         : 149  float x = a_x[i] + vx * a_dt;
+    0.00 :   182a:   lea    (%rdi,%rax,1),%r11
+         : 151  float y = a_y[i] + vy * a_dt;
+    0.00 :   182e:   lea    (%rsi,%rax,1),%rbx
+         : 153  float vy = a_vy[i] * a_drag;
+    0.00 :   1832:   vmulss (%rcx,%rax,1),%xmm1,%xmm0
+         : 155  a_vx[i] = vx;
+    0.00 :   1837:   vmovss %xmm3,(%rdx,%rax,1)
+         : 157  float x = a_x[i] + vx * a_dt;
+    0.00 :   183c:   vfmadd213ss (%r11),%xmm2,%xmm3
+         : 159  a_vy[i] = vy;
+    0.00 :   1841:   vmovss %xmm0,(%rcx,%rax,1)
+         : 161  float y = a_y[i] + vy * a_dt;
+    0.00 :   1846:   vfmadd213ss (%rbx),%xmm2,%xmm0
+         : 163  x = x < 0.0f ? 0.0f : x;
+    0.00 :   184b:   vucomiss %xmm3,%xmm4
+    0.00 :   184f:   jbe    19d0 <soa_move+0x350>
+         : 166  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1855:   vxorps %xmm4,%xmm4,%xmm4
+         : 168  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1859:   vxorps %xmm3,%xmm3,%xmm3
+         : 170  y = y < 0.0f ? 0.0f : y;
+    0.00 :   185d:   vucomiss %xmm0,%xmm4
+    0.00 :   1861:   ja     19f8 <soa_move+0x378>
+         : 173  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1867:   vucomiss 0x279d(%rip),%xmm0        # 400c <_IO_stdin_used+0xc>
+    0.00 :   186f:   vmovd  %xmm0,%r14d
+    0.00 :   1874:   cmova  0x2790(%rip),%r14d        # 400c <_IO_stdin_used+0xc>
+    0.00 :   187c:   vmovd  %r14d,%xmm0
+         : 178  a_y[i] = y;
+    0.00 :   1881:   vmovss %xmm0,(%rbx)
+         : 180  a_life[i] -= a_dt;
+    0.00 :   1885:   vmovss (%r8,%rax,1),%xmm0
+         : 182  a_x[i] = x;
+    0.00 :   188b:   vmovss %xmm3,(%r11)
+         : 184  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1890:   lea    0x1(%r10),%r11d
+         : 186  a_life[i] -= a_dt;
+    0.00 :   1894:   vsubss %xmm2,%xmm0,%xmm0
+         : 188  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1898:   cmp    %r9d,%r11d
+         : 190  a_life[i] -= a_dt;
+    0.00 :   189b:   vmovss %xmm0,(%r8,%rax,1)
+         : 192  for (int i = 0; i < a_int_n; i++)
+    0.00 :   18a1:   jge    19c0 <soa_move+0x340>
+         : 194  float vx = a_vx[i] * a_drag;
+    0.00 :   18a7:   lea    0x4(%rax),%r11
+         : 196  x = x < 0.0f ? 0.0f : x;
+    0.00 :   18ab:   vxorps %xmm4,%xmm4,%xmm4
+         : 198  float vx = a_vx[i] * a_drag;
+    0.00 :   18af:   vmulss (%rdx,%r11,1),%xmm1,%xmm3
+         : 200  float x = a_x[i] + vx * a_dt;
+    0.00 :   18b5:   lea    (%rdi,%r11,1),%r12
+         : 202  float y = a_y[i] + vy * a_dt;
+    0.00 :   18b9:   lea    (%rsi,%r11,1),%rbx
+         : 204  float vy = a_vy[i] * a_drag;
+    0.00 :   18bd:   vmulss (%rcx,%r11,1),%xmm1,%xmm0
+         : 206  a_vx[i] = vx;
+    0.00 :   18c3:   vmovss %xmm3,(%rdx,%r11,1)
+         : 208  float x = a_x[i] + vx * a_dt;
+    0.00 :   18c9:   vfmadd213ss (%r12),%xmm2,%xmm3
+         : 210  a_vy[i] = vy;
+    0.00 :   18cf:   vmovss %xmm0,(%rcx,%r11,1)
+         : 212  float y = a_y[i] + vy * a_dt;
+    0.00 :   18d5:   vfmadd213ss (%rbx),%xmm2,%xmm0
+         : 214  x = x < 0.0f ? 0.0f : x;
+    0.00 :   18da:   vucomiss %xmm3,%xmm4
+    0.00 :   18de:   ja     1a08 <soa_move+0x388>
+         : 217  y = y < 0.0f ? 0.0f : y;
+    0.00 :   18e4:   vxorps %xmm4,%xmm4,%xmm4
+         : 219  x = x > MAX_X ? MAX_X : x;
+    0.00 :   18e8:   vucomiss 0x2718(%rip),%xmm3        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   18f0:   vmovd  %xmm3,%r14d
+    0.00 :   18f5:   cmova  0x270b(%rip),%r14d        # 4008 <_IO_stdin_used+0x8>
+         : 223  y = y < 0.0f ? 0.0f : y;
+    0.00 :   18fd:   vucomiss %xmm0,%xmm4
+         : 225  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1901:   vmovd  %r14d,%xmm3
+         : 227  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1906:   ja     1a1a <soa_move+0x39a>
+         : 229  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   190c:   vucomiss 0x26f8(%rip),%xmm0        # 400c <_IO_stdin_used+0xc>
+    0.00 :   1914:   vmovd  %xmm0,%r14d
+    0.00 :   1919:   cmova  0x26eb(%rip),%r14d        # 400c <_IO_stdin_used+0xc>
+    0.00 :   1921:   vmovd  %r14d,%xmm0
+         : 234  a_y[i] = y;
+    0.00 :   1926:   vmovss %xmm0,(%rbx)
+         : 236  a_life[i] -= a_dt;
+    0.00 :   192a:   vmovss (%r8,%r11,1),%xmm0
+         : 238  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1930:   add    $0x2,%r10d
+    0.00 :   1934:   cmp    %r10d,%r9d
+         : 241  a_x[i] = x;
+    0.00 :   1937:   vmovss %xmm3,(%r12)
+         : 243  a_life[i] -= a_dt;
+    0.00 :   193d:   vsubss %xmm2,%xmm0,%xmm0
+    0.00 :   1941:   vmovss %xmm0,(%r8,%r11,1)
+         : 246  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1947:   jle    19c0 <soa_move+0x340>
+         : 248  float vx = a_vx[i] * a_drag;
+    0.00 :   1949:   add    $0x8,%rax
+         : 250  x = x < 0.0f ? 0.0f : x;
+    0.00 :   194d:   vxorps %xmm3,%xmm3,%xmm3
+         : 252  float vx = a_vx[i] * a_drag;
+    0.00 :   1951:   vmulss (%rdx,%rax,1),%xmm1,%xmm0
+         : 254  float x = a_x[i] + vx * a_dt;
+    0.00 :   1956:   add    %rax,%rdi
+         : 256  float y = a_y[i] + vy * a_dt;
+    0.00 :   1959:   add    %rax,%rsi
+         : 258  float vy = a_vy[i] * a_drag;
+    0.00 :   195c:   vmulss (%rcx,%rax,1),%xmm1,%xmm1
+         : 260  a_vx[i] = vx;
+    0.00 :   1961:   vmovss %xmm0,(%rdx,%rax,1)
+         : 262  float x = a_x[i] + vx * a_dt;
+    0.00 :   1966:   vfmadd213ss (%rdi),%xmm2,%xmm0
+         : 264  a_vy[i] = vy;
+    0.00 :   196b:   vmovss %xmm1,(%rcx,%rax,1)
+         : 266  float y = a_y[i] + vy * a_dt;
+    0.00 :   1970:   vfmadd213ss (%rsi),%xmm2,%xmm1
+         : 268  x = x < 0.0f ? 0.0f : x;
+    0.00 :   1975:   vucomiss %xmm0,%xmm3
+    0.00 :   1979:   jbe    1a28 <soa_move+0x3a8>
+         : 271  x = x > MAX_X ? MAX_X : x;
+    0.00 :   197f:   vmovaps %xmm3,%xmm0
+         : 273  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1983:   vxorps %xmm3,%xmm3,%xmm3
+    0.00 :   1987:   vucomiss %xmm1,%xmm3
+    0.00 :   198b:   ja     1a4d <soa_move+0x3cd>
+         : 277  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1991:   vucomiss 0x2673(%rip),%xmm1        # 400c <_IO_stdin_used+0xc>
+    0.00 :   1999:   vmovd  %xmm1,%ebx
+    0.00 :   199d:   cmova  0x2668(%rip),%ebx        # 400c <_IO_stdin_used+0xc>
+    0.00 :   19a4:   vmovd  %ebx,%xmm1
+         : 282  a_x[i] = x;
+    0.00 :   19a8:   vmovss %xmm0,(%rdi)
+         : 284  a_life[i] -= a_dt;
+    0.00 :   19ac:   vmovss (%r8,%rax,1),%xmm0
+         : 286  a_y[i] = y;
+    0.00 :   19b2:   vmovss %xmm1,(%rsi)
+         : 288  a_life[i] -= a_dt;
+    0.00 :   19b6:   vsubss %xmm2,%xmm0,%xmm0
+    0.00 :   19ba:   vmovss %xmm0,(%r8,%rax,1)
+         : 291  }
+         : 292  }
+    0.00 :   19c0:   pop    %rbx
+    0.00 :   19c1:   pop    %r12
+    0.00 :   19c3:   pop    %r13
+    0.00 :   19c5:   pop    %r14
+    0.00 :   19c7:   pop    %rbp
+    0.00 :   19c8:   ret
+    0.00 :   19c9:   nopl   0x0(%rax)
+         : 300  y = y < 0.0f ? 0.0f : y;
+    0.00 :   19d0:   vxorps %xmm4,%xmm4,%xmm4
+         : 302  x = x > MAX_X ? MAX_X : x;
+    0.00 :   19d4:   vucomiss 0x262c(%rip),%xmm3        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   19dc:   vmovd  %xmm3,%r14d
+    0.00 :   19e1:   cmova  0x261f(%rip),%r14d        # 4008 <_IO_stdin_used+0x8>
+         : 306  y = y < 0.0f ? 0.0f : y;
+    0.00 :   19e9:   vucomiss %xmm0,%xmm4
+         : 308  x = x > MAX_X ? MAX_X : x;
+    0.00 :   19ed:   vmovd  %r14d,%xmm3
+         : 310  y = y < 0.0f ? 0.0f : y;
+    0.00 :   19f2:   jbe    1867 <soa_move+0x1e7>
+         : 312  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   19f8:   vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   19fc:   jmp    1881 <soa_move+0x201>
+    0.00 :   1a01:   nopl   0x0(%rax)
+         : 316  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a08:   vxorps %xmm4,%xmm4,%xmm4
+         : 318  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1a0c:   vxorps %xmm3,%xmm3,%xmm3
+         : 320  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a10:   vucomiss %xmm0,%xmm4
+    0.00 :   1a14:   jbe    190c <soa_move+0x28c>
+         : 323  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1a1a:   vxorps %xmm0,%xmm0,%xmm0
+    0.00 :   1a1e:   jmp    1926 <soa_move+0x2a6>
+    0.00 :   1a23:   nopl   0x0(%rax,%rax,1)
+         : 327  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a28:   vxorps %xmm3,%xmm3,%xmm3
+         : 329  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1a2c:   vucomiss 0x25d4(%rip),%xmm0        # 4008 <_IO_stdin_used+0x8>
+    0.00 :   1a34:   vmovd  %xmm0,%ebx
+    0.00 :   1a38:   cmova  0x25c9(%rip),%ebx        # 4008 <_IO_stdin_used+0x8>
+         : 333  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a3f:   vucomiss %xmm1,%xmm3
+         : 335  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1a43:   vmovd  %ebx,%xmm0
+         : 337  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a47:   jbe    1991 <soa_move+0x311>
+         : 339  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1a4d:   vxorps %xmm1,%xmm1,%xmm1
+    0.00 :   1a51:   jmp    19a8 <soa_move+0x328>
+    0.00 :   1a56:   cs nopw 0x0(%rax,%rax,1)
+    0.00 :   1a60:   vzeroupper
+    0.00 :   1a63:   ret
+         : 345  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1a64:   xor    %eax,%eax
+    0.00 :   1a66:   xor    %r10d,%r10d
+    0.00 :   1a69:   jmp    1754 <soa_move+0xd4>
+    0.00 :   1a6e:   ret

@@ -1,0 +1,19 @@
+client/particles.c:348:23: optimized: loop vectorized using 16 byte vectors
+client/particles.c:348:23: optimized: loop vectorized using 8 byte vectors
+client/particles.c:436:33: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:177:22: missed: not vectorized: no vectype for stmt: arr_dir_x[i_7] = _92;
+client/particles.c:247:23: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:235:23: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:262:24: optimized: basic block part vectorized using 8 byte vectors
+client/particles.c:262:24: optimized: basic block part vectorized using 8 byte vectors
+client/particles.c:262:24: optimized: basic block part vectorized using 8 byte vectors
+client/particles.c:285:22: missed: not vectorized: number of iterations cannot be computed.
+client/particles.c:303:23: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:554:12: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:546:38: missed: not vectorized: number of iterations cannot be computed.
+client/particles.c:311:15: optimized: basic block part vectorized using 8 byte vectors
+client/particles.c:319:14: optimized: basic block part vectorized using 8 byte vectors
+client/particles.c:606:27: missed: not vectorized: unsupported control flow in loop.
+client/particles.c:615:27: missed: not vectorized: number of iterations cannot be computed.
+client/particles.c:643:44: missed: not vectorized: no vectype for stmt: _7 = _5->x;
+client/particles.c:648:27: optimized: loop vectorized using 16 byte vectors

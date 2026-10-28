@@ -1,0 +1,394 @@
+ Percent |	Source code & Disassembly of bench_particles_sse2 for cpu_core/cycles/ (954 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000001680 <soa_update_job>:
+         : 6    // dead particles inside the chunk by moving the chunk's last live particle
+         : 7    // into each hole. About 1 in 75 particles dies per tick, so the "if" is
+         : 8    // almost always false and well predicted. The chunk was just updated by this
+         : 9    // core, so the removal works on data already in this core's cache.
+         : 10   static void soa_update_job(void *a_arg, int a_int_worker, int a_int_workers)
+         : 11   {
+    0.00 :   1680:   endbr64
+    0.00 :   1684:   push   %rbp
+         : 14   const UpdateArgs *p_args = a_arg;
+         : 15   int int_begin, int_end;
+         : 16   pool_chunk(int_count, a_int_worker, a_int_workers, LINE_FLOATS, &int_begin, &int_end);
+    0.00 :   1685:   mov    $0x10,%ecx
+         : 18   {
+    0.00 :   168a:   mov    %rsp,%rbp
+    0.00 :   168d:   push   %r15
+    0.00 :   168f:   push   %r14
+         : 22   pool_chunk(int_count, a_int_worker, a_int_workers, LINE_FLOATS, &int_begin, &int_end);
+    0.00 :   1691:   lea    -0x40(%rbp),%r8
+         : 24   {
+    0.00 :   1695:   push   %r13
+    0.00 :   1697:   push   %r12
+    0.00 :   1699:   mov    %rdi,%r12
+    0.00 :   169c:   push   %rbx
+    0.00 :   169d:   sub    $0x28,%rsp
+    0.00 :   16a1:   mov    %esi,-0x48(%rbp)
+         : 31   pool_chunk(int_count, a_int_worker, a_int_workers, LINE_FLOATS, &int_begin, &int_end);
+    0.00 :   16a4:   mov    0x47ba(%rip),%edi        # 5e64 <int_count>
+    0.00 :   16aa:   mov    %fs:0x28,%r9
+    0.00 :   16b3:   mov    %r9,-0x38(%rbp)
+    0.00 :   16b7:   lea    -0x3c(%rbp),%r9
+    0.00 :   16bb:   call   2ca0 <pool_chunk>
+         :
+         : 38   soa_move(arr_x + int_begin, arr_y + int_begin, arr_vx + int_begin, arr_vy + int_begin,
+    0.00 :   16c0:   mov    -0x3c(%rbp),%edi
+    0.00 :   16c3:   mov    -0x40(%rbp),%edx
+    0.00 :   16c6:   mov    0x454b(%rip),%rcx        # 5c18 <arr_vy>
+    0.00 :   16cd:   mov    0x453c(%rip),%rbx        # 5c10 <arr_life>
+    0.00 :   16d4:   mov    %edi,%eax
+    0.00 :   16d6:   mov    0x4543(%rip),%r13        # 5c20 <arr_vx>
+    0.00 :   16dd:   mov    0x4544(%rip),%r14        # 5c28 <arr_y>
+    0.00 :   16e4:   sub    %edx,%eax
+    0.00 :   16e6:   mov    %rcx,-0x50(%rbp)
+    0.00 :   16ea:   mov    0x453f(%rip),%r15        # 5c30 <arr_x>
+    0.00 :   16f1:   mov    %eax,-0x44(%rbp)
+         : 50   for (int i = 0; i < a_int_n; i++)
+    0.00 :   16f4:   test   %eax,%eax
+    0.00 :   16f6:   jle    19a3 <soa_update_job+0x323>
+    0.00 :   16fc:   sub    $0x1,%eax
+         : 54   arr_life + int_begin, int_end - int_begin, p_args->dt, p_args->drag);
+    0.00 :   16ff:   movss  0x4(%r12),%xmm7
+    0.00 :   1706:   movss  (%r12),%xmm8
+    0.00 :   170c:   movslq %edx,%rcx
+    0.00 :   170f:   cmp    $0x2,%eax
+    0.00 :   1712:   jbe    1aa5 <soa_update_job+0x425>
+    0.00 :   1718:   mov    -0x44(%rbp),%r12d
+    0.00 :   171c:   mov    -0x50(%rbp),%r8
+    0.00 :   1720:   movaps %xmm7,%xmm6
+    0.00 :   1723:   movaps %xmm8,%xmm2
+    0.00 :   1727:   xor    %eax,%eax
+         : 65   x = x < 0.0f ? 0.0f : x;
+    0.00 :   1729:   pxor   %xmm3,%xmm3
+    0.00 :   172d:   shufps $0x0,%xmm6,%xmm6
+    0.00 :   1731:   shufps $0x0,%xmm2,%xmm2
+    0.00 :   1735:   lea    0x0(,%rcx,4),%rsi
+    0.00 :   173d:   movss  0x1a23(%rip),%xmm5        # 3168 <_IO_stdin_used+0x168>
+    0.00 :   1745:   movss  0x1a23(%rip),%xmm4        # 3170 <_IO_stdin_used+0x170>
+    0.00 :   174d:   shr    $0x2,%r12d
+    0.00 :   1751:   lea    (%r8,%rsi,1),%r10
+    0.00 :   1755:   lea    0x0(%r13,%rsi,1),%r11
+    0.00 :   175a:   shl    $0x4,%r12
+    0.00 :   175e:   lea    (%r15,%rsi,1),%r9
+    0.00 :   1762:   lea    (%r14,%rsi,1),%r8
+    0.00 :   1766:   add    %rbx,%rsi
+    0.00 :   1769:   shufps $0x0,%xmm5,%xmm5
+    0.00 :   176d:   shufps $0x0,%xmm4,%xmm4
+    0.00 :   1771:   nopl   0x0(%rax)
+    0.00 :   1775:   data16 cs nopw 0x0(%rax,%rax,1)
+         : 83   float vx = a_vx[i] * a_drag;
+    0.63 :   1780:   movups (%r11,%rax,1),%xmm0
+         : 85   float vy = a_vy[i] * a_drag;
+    1.26 :   1785:   movups (%r10,%rax,1),%xmm1
+         : 87   float vx = a_vx[i] * a_drag;
+    1.89 :   178a:   mulps  %xmm6,%xmm0
+         : 89   float vy = a_vy[i] * a_drag;
+    0.42 :   178d:   mulps  %xmm6,%xmm1
+         : 91   a_vx[i] = vx;
+    0.63 :   1790:   movups %xmm0,(%r11,%rax,1)
+         : 93   float x = a_x[i] + vx * a_dt;
+    0.21 :   1795:   mulps  %xmm2,%xmm0
+         : 95   float y = a_y[i] + vy * a_dt;
+    1.78 :   1798:   movaps %xmm1,%xmm9
+         : 97   a_vy[i] = vy;
+    0.21 :   179c:   movups %xmm1,(%r10,%rax,1)
+         : 99   float x = a_x[i] + vx * a_dt;
+    0.21 :   17a1:   movups (%r9,%rax,1),%xmm1
+         : 101  float y = a_y[i] + vy * a_dt;
+    2.41 :   17a6:   mulps  %xmm2,%xmm9
+         : 103  float x = a_x[i] + vx * a_dt;
+    4.20 :   17aa:   addps  %xmm0,%xmm1
+         : 105  x = x > MAX_X ? MAX_X : x;
+    0.63 :   17ad:   movaps %xmm5,%xmm0
+    0.94 :   17b0:   cmpnltps %xmm1,%xmm0
+         : 108  x = x < 0.0f ? 0.0f : x;
+    0.73 :   17b4:   movaps %xmm1,%xmm10
+    2.20 :   17b8:   cmpnltps %xmm3,%xmm10
+    0.10 :   17bd:   andps  %xmm0,%xmm1
+    2.20 :   17c0:   andnps %xmm5,%xmm0
+    0.41 :   17c3:   orps   %xmm1,%xmm0
+         : 114  float y = a_y[i] + vy * a_dt;
+    3.46 :   17c6:   movups (%r8,%rax,1),%xmm1
+    0.42 :   17cb:   andps  %xmm10,%xmm0
+    1.36 :   17cf:   addps  %xmm9,%xmm1
+         : 118  a_x[i] = x;
+    0.53 :   17d3:   movups %xmm0,(%r9,%rax,1)
+         : 120  y = y > MAX_Y ? MAX_Y : y;
+    2.52 :   17d8:   movaps %xmm4,%xmm0
+    0.31 :   17db:   cmpnltps %xmm1,%xmm0
+         : 123  y = y < 0.0f ? 0.0f : y;
+    1.15 :   17df:   movaps %xmm1,%xmm9
+    0.31 :   17e3:   cmpnltps %xmm3,%xmm9
+         : 126  a_y[i] = y;
+    3.04 :   17e8:   andps  %xmm0,%xmm1
+    1.05 :   17eb:   andnps %xmm4,%xmm0
+    0.84 :   17ee:   orps   %xmm1,%xmm0
+    0.73 :   17f1:   andps  %xmm9,%xmm0
+    3.98 :   17f5:   movups %xmm0,(%r8,%rax,1)
+         : 132  a_life[i] -= a_dt;
+    0.42 :   17fa:   movups (%rsi,%rax,1),%xmm0
+    2.52 :   17fe:   subps  %xmm2,%xmm0
+    0.52 :   1801:   movups %xmm0,(%rsi,%rax,1)
+         : 136  for (int i = 0; i < a_int_n; i++)
+    1.68 :   1805:   add    $0x10,%rax
+    0.31 :   1809:   cmp    %rax,%r12
+    0.00 :   180c:   jne    1780 <soa_update_job+0x100>
+    0.00 :   1812:   mov    -0x44(%rbp),%r11d
+    0.00 :   1816:   mov    %r11d,%esi
+    0.00 :   1819:   and    $0xfffffffc,%esi
+    0.00 :   181c:   mov    %esi,%eax
+    0.00 :   181e:   cmp    %esi,%r11d
+    0.00 :   1821:   je     19a3 <soa_update_job+0x323>
+    0.00 :   1827:   mov    -0x44(%rbp),%r12d
+    0.00 :   182b:   sub    %eax,%r12d
+    0.00 :   182e:   cmp    $0x1,%r12d
+    0.00 :   1832:   je     1912 <soa_update_job+0x292>
+    0.00 :   1838:   add    %rcx,%rax
+    0.00 :   183b:   mov    -0x50(%rbp),%r11
+         : 152  float vx = a_vx[i] * a_drag;
+    0.00 :   183f:   movaps %xmm7,%xmm0
+         : 154  x = x < 0.0f ? 0.0f : x;
+    0.00 :   1842:   pxor   %xmm5,%xmm5
+    0.00 :   1846:   shl    $0x2,%rax
+         : 157  float vx = a_vx[i] * a_drag;
+    0.00 :   184a:   shufps $0x0,%xmm0,%xmm0
+         : 159  x = x > MAX_X ? MAX_X : x;
+    0.00 :   184e:   movq   0x1911(%rip),%xmm9        # 3168 <_IO_stdin_used+0x168>
+    0.00 :   1857:   lea    0x0(%r13,%rax,1),%r10
+    0.00 :   185c:   lea    (%r11,%rax,1),%r9
+         : 163  float vx = a_vx[i] * a_drag;
+    0.00 :   1860:   movq   (%r10),%xmm1
+         : 165  float vy = a_vy[i] * a_drag;
+    0.00 :   1865:   movq   (%r9),%xmm2
+    0.00 :   186a:   lea    (%r15,%rax,1),%r8
+    0.00 :   186e:   lea    (%r14,%rax,1),%r11
+         : 169  float vx = a_vx[i] * a_drag;
+    0.00 :   1872:   mulps  %xmm0,%xmm1
+         : 171  float vy = a_vy[i] * a_drag;
+    0.00 :   1875:   mulps  %xmm2,%xmm0
+         : 173  float y = a_y[i] + vy * a_dt;
+    0.00 :   1878:   movaps %xmm8,%xmm2
+    0.00 :   187c:   shufps $0x0,%xmm2,%xmm2
+         : 176  a_vx[i] = vx;
+    0.00 :   1880:   movlps %xmm1,(%r10)
+         : 178  float x = a_x[i] + vx * a_dt;
+    0.00 :   1884:   mulps  %xmm2,%xmm1
+         : 180  float y = a_y[i] + vy * a_dt;
+    0.00 :   1887:   movaps %xmm0,%xmm3
+         : 182  a_vy[i] = vy;
+    0.00 :   188a:   movlps %xmm0,(%r9)
+         : 184  float x = a_x[i] + vx * a_dt;
+    0.00 :   188e:   movq   (%r8),%xmm0
+         : 186  float y = a_y[i] + vy * a_dt;
+    0.00 :   1893:   mulps  %xmm2,%xmm3
+         : 188  float x = a_x[i] + vx * a_dt;
+    0.00 :   1896:   addps  %xmm0,%xmm1
+         : 190  x = x < 0.0f ? 0.0f : x;
+    0.00 :   1899:   movaps %xmm1,%xmm0
+         : 192  float x = a_x[i] + vx * a_dt;
+    0.00 :   189c:   movaps %xmm1,%xmm6
+         : 194  x = x < 0.0f ? 0.0f : x;
+    0.00 :   189f:   cmpnltps %xmm5,%xmm0
+    0.00 :   18a3:   movdqa %xmm0,%xmm4
+         : 197  x = x > MAX_X ? MAX_X : x;
+    0.00 :   18a7:   movaps %xmm9,%xmm0
+    0.00 :   18ab:   cmpnltps %xmm1,%xmm0
+         : 200  float y = a_y[i] + vy * a_dt;
+    0.00 :   18af:   movq   (%r11),%xmm1
+    0.00 :   18b4:   addps  %xmm3,%xmm1
+    0.00 :   18b7:   andps  %xmm0,%xmm6
+    0.00 :   18ba:   andnps %xmm9,%xmm0
+    0.00 :   18be:   orps   %xmm6,%xmm0
+    0.00 :   18c1:   andps  %xmm4,%xmm0
+    0.00 :   18c4:   movaps %xmm1,%xmm4
+         : 208  a_x[i] = x;
+    0.00 :   18c7:   movlps %xmm0,(%r8)
+         : 210  y = y < 0.0f ? 0.0f : y;
+    0.00 :   18cb:   movaps %xmm1,%xmm0
+    0.00 :   18ce:   cmpnltps %xmm5,%xmm0
+         : 213  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   18d2:   movq   0x1896(%rip),%xmm5        # 3170 <_IO_stdin_used+0x170>
+         : 215  y = y < 0.0f ? 0.0f : y;
+    0.00 :   18da:   movdqa %xmm0,%xmm3
+         : 217  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   18de:   movaps %xmm5,%xmm0
+    0.00 :   18e1:   cmpnltps %xmm1,%xmm0
+         : 220  a_y[i] = y;
+    0.00 :   18e5:   andps  %xmm0,%xmm4
+    0.00 :   18e8:   andnps %xmm5,%xmm0
+    0.00 :   18eb:   orps   %xmm4,%xmm0
+    0.00 :   18ee:   andps  %xmm3,%xmm0
+    0.00 :   18f1:   movlps %xmm0,(%r11)
+         : 226  a_life[i] -= a_dt;
+    0.00 :   18f5:   movq   (%rbx,%rax,1),%xmm0
+    0.00 :   18fa:   subps  %xmm2,%xmm0
+    0.00 :   18fd:   movlps %xmm0,(%rbx,%rax,1)
+         : 230  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1901:   test   $0x1,%r12b
+    0.00 :   1905:   je     19a3 <soa_update_job+0x323>
+    0.00 :   190b:   and    $0xfffffffe,%r12d
+    0.00 :   190f:   add    %r12d,%esi
+         : 235  float vx = a_vx[i] * a_drag;
+    0.00 :   1912:   movslq %esi,%rax
+         : 237  x = x < 0.0f ? 0.0f : x;
+    0.00 :   1915:   pxor   %xmm1,%xmm1
+    0.00 :   1919:   add    %rcx,%rax
+         : 240  float vy = a_vy[i] * a_drag;
+    0.00 :   191c:   mov    -0x50(%rbp),%rcx
+    0.00 :   1920:   shl    $0x2,%rax
+         : 243  float vx = a_vx[i] * a_drag;
+    0.00 :   1924:   movss  0x0(%r13,%rax,1),%xmm0
+         : 245  float y = a_y[i] + vy * a_dt;
+    0.00 :   192b:   lea    (%r14,%rax,1),%rsi
+         : 247  float vx = a_vx[i] * a_drag;
+    0.00 :   192f:   mulss  %xmm7,%xmm0
+         : 249  float vy = a_vy[i] * a_drag;
+    0.00 :   1933:   mulss  (%rcx,%rax,1),%xmm7
+         : 251  a_vx[i] = vx;
+    0.00 :   1938:   movss  %xmm0,0x0(%r13,%rax,1)
+         : 253  float x = a_x[i] + vx * a_dt;
+    0.00 :   193f:   mulss  %xmm8,%xmm0
+         : 255  a_vy[i] = vy;
+    0.00 :   1944:   movss  %xmm7,(%rcx,%rax,1)
+         : 257  float x = a_x[i] + vx * a_dt;
+    0.00 :   1949:   lea    (%r15,%rax,1),%rcx
+         : 259  float y = a_y[i] + vy * a_dt;
+    0.00 :   194d:   mulss  %xmm8,%xmm7
+         : 261  float x = a_x[i] + vx * a_dt;
+    0.00 :   1952:   addss  (%rcx),%xmm0
+         : 263  float y = a_y[i] + vy * a_dt;
+    0.00 :   1956:   addss  (%rsi),%xmm7
+         : 265  x = x < 0.0f ? 0.0f : x;
+    0.00 :   195a:   ucomiss %xmm0,%xmm1
+    0.00 :   195d:   jbe    1a70 <soa_update_job+0x3f0>
+         : 268  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1963:   movaps %xmm1,%xmm0
+         : 270  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1966:   pxor   %xmm1,%xmm1
+    0.00 :   196a:   ucomiss %xmm7,%xmm1
+    0.00 :   196d:   ja     1a96 <soa_update_job+0x416>
+         : 274  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1973:   ucomiss 0x17f6(%rip),%xmm7        # 3170 <_IO_stdin_used+0x170>
+    0.00 :   197a:   movd   %xmm7,%r11d
+    0.00 :   197f:   cmova  0x17e9(%rip),%r11d        # 3170 <_IO_stdin_used+0x170>
+    0.00 :   1987:   movd   %r11d,%xmm7
+         : 279  a_x[i] = x;
+    0.00 :   198c:   movss  %xmm0,(%rcx)
+         : 281  a_life[i] -= a_dt;
+    0.00 :   1990:   movss  (%rbx,%rax,1),%xmm0
+         : 283  a_y[i] = y;
+    0.00 :   1995:   movss  %xmm7,(%rsi)
+         : 285  a_life[i] -= a_dt;
+    0.00 :   1999:   subss  %xmm8,%xmm0
+    0.00 :   199e:   movss  %xmm0,(%rbx,%rax,1)
+         :
+         : 289  int int_last = int_end;     // live particles are in [int_begin, int_last)
+         : 290  for (int i = int_begin; i < int_last; )
+    0.00 :   19a3:   cmp    %edx,%edi
+    0.00 :   19a5:   jle    1aa0 <soa_update_job+0x420>
+         : 293  arr_life_max[a_int_dst] = arr_life_max[a_int_src];
+    0.00 :   19ab:   mov    0x4256(%rip),%r9        # 5c08 <arr_life_max>
+         : 295  arr_sprite[a_int_dst] = arr_sprite[a_int_src];
+    0.00 :   19b2:   mov    0x4247(%rip),%r8        # 5c00 <arr_sprite>
+    0.00 :   19b9:   movslq %edx,%rcx
+         : 298  {
+         : 299  if (arr_life[i] <= 0.0f)
+    0.00 :   19bc:   pxor   %xmm0,%xmm0
+    0.32 :   19c0:   comiss (%rbx,%rcx,4),%xmm0
+    3.88 :   19c4:   jae    19d6 <soa_update_job+0x356>
+         : 303  soa_copy(i, --int_last);    // check slot i again: the moved one may be dead too
+         : 304  else
+         : 305  i++;
+   14.55 :   19c6:   add    $0x1,%edx
+         : 307  for (int i = int_begin; i < int_last; )
+    1.68 :   19c9:   cmp    %edi,%edx
+    0.00 :   19cb:   jge    1a34 <soa_update_job+0x3b4>
+   12.68 :   19cd:   movslq %edx,%rcx
+         : 311  if (arr_life[i] <= 0.0f)
+    1.35 :   19d0:   comiss (%rbx,%rcx,4),%xmm0
+   10.80 :   19d4:   jb     19c6 <soa_update_job+0x346>
+         : 314  soa_copy(i, --int_last);    // check slot i again: the moved one may be dead too
+    0.94 :   19d6:   sub    $0x1,%edi
+         : 316  arr_vy[a_int_dst] = arr_vy[a_int_src];
+    2.83 :   19d9:   mov    -0x50(%rbp),%r10
+         : 318  arr_x[a_int_dst] = arr_x[a_int_src];
+    0.21 :   19dd:   movslq %edi,%rsi
+    0.00 :   19e0:   movss  (%r15,%rsi,4),%xmm1
+         : 321  arr_sprite[a_int_dst] = arr_sprite[a_int_src];
+    1.05 :   19e6:   mov    (%r8,%rsi,4),%eax
+         : 323  arr_x[a_int_dst] = arr_x[a_int_src];
+    1.15 :   19ea:   movss  %xmm1,(%r15,%rcx,4)
+         : 325  arr_y[a_int_dst] = arr_y[a_int_src];
+    0.21 :   19f0:   movss  (%r14,%rsi,4),%xmm1
+    0.10 :   19f6:   movss  %xmm1,(%r14,%rcx,4)
+         : 328  arr_vx[a_int_dst] = arr_vx[a_int_src];
+    0.00 :   19fc:   movss  0x0(%r13,%rsi,4),%xmm1
+    0.00 :   1a03:   movss  %xmm1,0x0(%r13,%rcx,4)
+         : 331  arr_vy[a_int_dst] = arr_vy[a_int_src];
+    0.21 :   1a0a:   movss  (%r10,%rsi,4),%xmm1
+    0.00 :   1a10:   movss  %xmm1,(%r10,%rcx,4)
+         : 334  arr_life[a_int_dst] = arr_life[a_int_src];
+    0.73 :   1a16:   movss  (%rbx,%rsi,4),%xmm1
+    0.42 :   1a1b:   movss  %xmm1,(%rbx,%rcx,4)
+         : 337  arr_life_max[a_int_dst] = arr_life_max[a_int_src];
+    0.31 :   1a20:   movss  (%r9,%rsi,4),%xmm1
+    0.00 :   1a26:   movss  %xmm1,(%r9,%rcx,4)
+         : 340  arr_sprite[a_int_dst] = arr_sprite[a_int_src];
+    0.10 :   1a2c:   mov    %eax,(%r8,%rcx,4)
+         : 342  for (int i = int_begin; i < int_last; )
+    0.10 :   1a30:   cmp    %edx,%edi
+    0.00 :   1a32:   jg     19c0 <soa_update_job+0x340>
+         : 345  }
+         : 346  arr_chunk[a_int_worker].int_live = int_last - int_begin;
+    0.00 :   1a34:   sub    -0x40(%rbp),%edi
+    0.00 :   1a37:   mov    %edi,-0x44(%rbp)
+    0.00 :   1a3a:   mov    %edi,%ebx
+    0.00 :   1a3c:   movslq -0x48(%rbp),%rax
+    0.00 :   1a40:   lea    0x39b9(%rip),%rdx        # 5400 <arr_chunk>
+    0.00 :   1a47:   shl    $0x6,%rax
+    0.00 :   1a4b:   mov    %ebx,(%rdx,%rax,1)
+         : 354  }
+    0.00 :   1a4e:   mov    -0x38(%rbp),%rax
+    0.00 :   1a52:   sub    %fs:0x28,%rax
+    0.00 :   1a5b:   jne    1aae <soa_update_job+0x42e>
+    0.11 :   1a5d:   add    $0x28,%rsp
+    0.00 :   1a61:   pop    %rbx
+    0.00 :   1a62:   pop    %r12
+    0.00 :   1a64:   pop    %r13
+    0.00 :   1a66:   pop    %r14
+    0.00 :   1a68:   pop    %r15
+    0.00 :   1a6a:   pop    %rbp
+    0.00 :   1a6b:   ret
+    0.00 :   1a6c:   nopl   0x0(%rax)
+         : 367  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a70:   pxor   %xmm1,%xmm1
+         : 369  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1a74:   ucomiss 0x16ed(%rip),%xmm0        # 3168 <_IO_stdin_used+0x168>
+    0.00 :   1a7b:   movd   %xmm0,%r11d
+    0.00 :   1a80:   cmova  0x16e0(%rip),%r11d        # 3168 <_IO_stdin_used+0x168>
+         : 373  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a88:   ucomiss %xmm7,%xmm1
+         : 375  x = x > MAX_X ? MAX_X : x;
+    0.00 :   1a8b:   movd   %r11d,%xmm0
+         : 377  y = y < 0.0f ? 0.0f : y;
+    0.00 :   1a90:   jbe    1973 <soa_update_job+0x2f3>
+         : 379  y = y > MAX_Y ? MAX_Y : y;
+    0.00 :   1a96:   pxor   %xmm7,%xmm7
+    0.00 :   1a9a:   jmp    198c <soa_update_job+0x30c>
+    0.00 :   1a9f:   nop
+    0.00 :   1aa0:   mov    -0x44(%rbp),%ebx
+    0.00 :   1aa3:   jmp    1a3c <soa_update_job+0x3bc>
+         : 385  arr_life + int_begin, int_end - int_begin, p_args->dt, p_args->drag);
+    0.00 :   1aa5:   xor    %eax,%eax
+         : 387  for (int i = 0; i < a_int_n; i++)
+    0.00 :   1aa7:   xor    %esi,%esi
+    0.00 :   1aa9:   jmp    1827 <soa_update_job+0x1a7>
+         : 390  }
+    0.00 :   1aae:   call   11c0 <__stack_chk_fail@plt>

@@ -1,0 +1,90 @@
+ Percent |	Source code & Disassembly of bench_particles_scalar for cpu_core/cycles/ (1930 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000001680 <soa_move>:
+         : 6    instruction; one call per chunk costs nothing measurable. */
+         : 7    __attribute__((noinline))
+         : 8    static void soa_move(float *restrict a_x, float *restrict a_y,
+         : 9    float *restrict a_vx, float *restrict a_vy,
+         : 10   float *restrict a_life, int a_int_n, float a_dt, float a_drag)
+         : 11   {
+    0.00 :   1680:   movaps %xmm0,%xmm4
+         : 13   for (int i = 0; i < a_int_n; i++)
+    0.00 :   1683:   test   %r9d,%r9d
+    0.00 :   1686:   jle    1745 <soa_move+0xc5>
+    0.00 :   168c:   movslq %r9d,%r9
+    0.00 :   168f:   movss  0x1971(%rip),%xmm6        # 3008 <_IO_stdin_used+0x8>
+    0.00 :   1697:   xor    %eax,%eax
+         : 19   float vy = a_vy[i] * a_drag;
+         : 20   a_vx[i] = vx;
+         : 21   a_vy[i] = vy;
+         : 22   float x = a_x[i] + vx * a_dt;
+         : 23   float y = a_y[i] + vy * a_dt;
+         : 24   x = x < 0.0f ? 0.0f : x;
+    0.00 :   1699:   pxor   %xmm7,%xmm7
+    0.00 :   169d:   movss  0x1967(%rip),%xmm5        # 300c <_IO_stdin_used+0xc>
+    0.00 :   16a5:   shl    $0x2,%r9
+    0.00 :   16a9:   nopl   0x0(%rax)
+         : 29   float vx = a_vx[i] * a_drag;
+    1.96 :   16b0:   movss  (%rdx,%rax,1),%xmm2
+         : 31   float vy = a_vy[i] * a_drag;
+    3.37 :   16b5:   movss  (%rcx,%rax,1),%xmm0
+         : 33   x = x < 0.0f ? 0.0f : x;
+    1.30 :   16ba:   pxor   %xmm3,%xmm3
+         : 35   float vx = a_vx[i] * a_drag;
+    1.14 :   16be:   mulss  %xmm1,%xmm2
+         : 37   float vy = a_vy[i] * a_drag;
+    3.94 :   16c2:   mulss  %xmm1,%xmm0
+         : 39   a_vx[i] = vx;
+    1.55 :   16c6:   movss  %xmm2,(%rdx,%rax,1)
+         : 41   float x = a_x[i] + vx * a_dt;
+    3.27 :   16cb:   mulss  %xmm4,%xmm2
+    2.49 :   16cf:   addss  (%rdi,%rax,1),%xmm2
+         : 44   a_vy[i] = vy;
+    1.45 :   16d4:   movss  %xmm0,(%rcx,%rax,1)
+         : 46   float y = a_y[i] + vy * a_dt;
+    1.66 :   16d9:   mulss  %xmm4,%xmm0
+    2.07 :   16dd:   addss  (%rsi,%rax,1),%xmm0
+         : 49   x = x < 0.0f ? 0.0f : x;
+    3.52 :   16e2:   comiss %xmm2,%xmm7
+    4.98 :   16e5:   ja     16fe <soa_move+0x7e>
+         : 52   x = x > MAX_X ? MAX_X : x;
+    5.23 :   16e7:   movaps %xmm6,%xmm3
+    3.06 :   16ea:   movaps %xmm6,%xmm8
+    4.40 :   16ee:   cmpltss %xmm2,%xmm3
+    3.63 :   16f3:   andps  %xmm3,%xmm8
+    3.47 :   16f7:   andnps %xmm2,%xmm3
+    1.87 :   16fa:   orps   %xmm8,%xmm3
+         : 59   y = y < 0.0f ? 0.0f : y;
+    2.59 :   16fe:   comiss %xmm0,%xmm7
+    5.96 :   1701:   pxor   %xmm2,%xmm2
+    3.06 :   1705:   ja     171e <soa_move+0x9e>
+         : 63   y = y > MAX_Y ? MAX_Y : y;
+    2.28 :   1707:   movaps %xmm5,%xmm2
+    1.71 :   170a:   movaps %xmm5,%xmm8
+    4.35 :   170e:   cmpltss %xmm0,%xmm2
+    2.70 :   1713:   andps  %xmm2,%xmm8
+    1.87 :   1717:   andnps %xmm0,%xmm2
+    2.33 :   171a:   orps   %xmm8,%xmm2
+         : 70   a_x[i] = x;
+         : 71   a_y[i] = y;
+         : 72   a_life[i] -= a_dt;
+    3.06 :   171e:   movss  (%r8,%rax,1),%xmm0
+         : 74   a_x[i] = x;
+    7.77 :   1724:   movss  %xmm3,(%rdi,%rax,1)
+         : 76   a_y[i] = y;
+    1.71 :   1729:   movss  %xmm2,(%rsi,%rax,1)
+         : 78   a_life[i] -= a_dt;
+    1.55 :   172e:   subss  %xmm4,%xmm0
+    2.07 :   1732:   movss  %xmm0,(%r8,%rax,1)
+         : 81   for (int i = 0; i < a_int_n; i++)
+    1.81 :   1738:   add    $0x4,%rax
+    0.83 :   173c:   cmp    %rax,%r9
+    0.00 :   173f:   jne    16b0 <soa_move+0x30>
+         : 85   }
+         : 86   }
+    0.00 :   1745:   ret

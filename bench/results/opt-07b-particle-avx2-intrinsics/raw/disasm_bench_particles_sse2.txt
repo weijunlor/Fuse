@@ -1,0 +1,178 @@
+0000000000001680 <soa_move>:
+    1680:	test   %r9d,%r9d
+    1683:	jle    1918 <soa_move+0x298>
+    1689:	lea    -0x1(%r9),%eax
+    168d:	movaps %xmm0,%xmm2
+    1690:	cmp    $0x2,%eax
+    1693:	jbe    1921 <soa_move+0x2a1>
+    1699:	mov    %r9d,%r10d
+    169c:	movss  0x1b3c(%rip),%xmm6        # 31e0 <_IO_stdin_used+0x1e0>
+    16a4:	movaps %xmm1,%xmm7
+    16a7:	xor    %eax,%eax
+    16a9:	shr    $0x2,%r10d
+    16ad:	movaps %xmm0,%xmm3
+    16b0:	pxor   %xmm4,%xmm4
+    16b4:	shufps $0x0,%xmm7,%xmm7
+    16b8:	movss  0x1b28(%rip),%xmm5        # 31e8 <_IO_stdin_used+0x1e8>
+    16c0:	shl    $0x4,%r10
+    16c4:	shufps $0x0,%xmm3,%xmm3
+    16c8:	shufps $0x0,%xmm6,%xmm6
+    16cc:	shufps $0x0,%xmm5,%xmm5
+    16d0:	movups (%rdx,%rax,1),%xmm0
+    16d4:	movups (%rcx,%rax,1),%xmm8
+    16d9:	movups (%rsi,%rax,1),%xmm11
+    16de:	mulps  %xmm7,%xmm0
+    16e1:	mulps  %xmm7,%xmm8
+    16e5:	movups %xmm0,(%rdx,%rax,1)
+    16e9:	mulps  %xmm3,%xmm0
+    16ec:	movaps %xmm8,%xmm9
+    16f0:	movups %xmm8,(%rcx,%rax,1)
+    16f5:	movups (%rdi,%rax,1),%xmm8
+    16fa:	mulps  %xmm3,%xmm9
+    16fe:	addps  %xmm0,%xmm8
+    1702:	movaps %xmm6,%xmm0
+    1705:	addps  %xmm9,%xmm11
+    1709:	cmpnltps %xmm8,%xmm0
+    170e:	movaps %xmm8,%xmm10
+    1712:	cmpnltps %xmm4,%xmm10
+    1717:	movaps %xmm11,%xmm13
+    171b:	andps  %xmm0,%xmm8
+    171f:	andnps %xmm6,%xmm0
+    1722:	orps   %xmm8,%xmm0
+    1726:	movaps %xmm11,%xmm8
+    172a:	andps  %xmm10,%xmm0
+    172e:	cmpnltps %xmm4,%xmm8
+    1733:	movups %xmm0,(%rdi,%rax,1)
+    1737:	movaps %xmm5,%xmm0
+    173a:	cmpnltps %xmm11,%xmm0
+    173f:	andps  %xmm0,%xmm13
+    1743:	andnps %xmm5,%xmm0
+    1746:	orps   %xmm13,%xmm0
+    174a:	andps  %xmm8,%xmm0
+    174e:	movups %xmm0,(%rsi,%rax,1)
+    1752:	movups (%r8,%rax,1),%xmm0
+    1757:	subps  %xmm3,%xmm0
+    175a:	movups %xmm0,(%r8,%rax,1)
+    175f:	add    $0x10,%rax
+    1763:	cmp    %r10,%rax
+    1766:	jne    16d0 <soa_move+0x50>
+    176c:	mov    %r9d,%eax
+    176f:	and    $0xfffffffc,%eax
+    1772:	mov    %eax,%r10d
+    1775:	cmp    %eax,%r9d
+    1778:	je     1920 <soa_move+0x2a0>
+    177e:	push   %rbp
+    177f:	sub    %r10d,%r9d
+    1782:	mov    %rsp,%rbp
+    1785:	push   %r13
+    1787:	push   %r12
+    1789:	push   %rbx
+    178a:	cmp    $0x1,%r9d
+    178e:	je     1868 <soa_move+0x1e8>
+    1794:	shl    $0x2,%r10
+    1798:	movaps %xmm1,%xmm0
+    179b:	pxor   %xmm7,%xmm7
+    179f:	movq   0x1a38(%rip),%xmm9        # 31e0 <_IO_stdin_used+0x1e0>
+    17a8:	lea    (%rdx,%r10,1),%r13
+    17ac:	lea    (%rcx,%r10,1),%r12
+    17b0:	shufps $0x0,%xmm0,%xmm0
+    17b4:	movq   0x0(%r13),%xmm3
+    17ba:	movq   (%r12),%xmm4
+    17c0:	lea    (%rdi,%r10,1),%rbx
+    17c4:	lea    (%rsi,%r10,1),%r11
+    17c8:	mulps  %xmm0,%xmm3
+    17cb:	mulps  %xmm4,%xmm0
+    17ce:	movaps %xmm2,%xmm4
+    17d1:	shufps $0x0,%xmm4,%xmm4
+    17d5:	movlps %xmm3,0x0(%r13)
+    17da:	mulps  %xmm4,%xmm3
+    17dd:	movaps %xmm0,%xmm5
+    17e0:	movlps %xmm0,(%r12)
+    17e5:	movq   (%rbx),%xmm0
+    17e9:	mulps  %xmm4,%xmm5
+    17ec:	addps  %xmm0,%xmm3
+    17ef:	movaps %xmm3,%xmm0
+    17f2:	movaps %xmm3,%xmm8
+    17f6:	cmpnltps %xmm7,%xmm0
+    17fa:	movdqa %xmm0,%xmm6
+    17fe:	movaps %xmm9,%xmm0
+    1802:	cmpnltps %xmm3,%xmm0
+    1806:	movq   (%r11),%xmm3
+    180b:	addps  %xmm5,%xmm3
+    180e:	andps  %xmm0,%xmm8
+    1812:	andnps %xmm9,%xmm0
+    1816:	orps   %xmm8,%xmm0
+    181a:	andps  %xmm6,%xmm0
+    181d:	movaps %xmm3,%xmm6
+    1820:	movlps %xmm0,(%rbx)
+    1823:	movaps %xmm3,%xmm0
+    1826:	cmpnltps %xmm7,%xmm0
+    182a:	movq   0x19b6(%rip),%xmm7        # 31e8 <_IO_stdin_used+0x1e8>
+    1832:	movdqa %xmm0,%xmm5
+    1836:	movaps %xmm7,%xmm0
+    1839:	cmpnltps %xmm3,%xmm0
+    183d:	andps  %xmm0,%xmm6
+    1840:	andnps %xmm7,%xmm0
+    1843:	orps   %xmm6,%xmm0
+    1846:	andps  %xmm5,%xmm0
+    1849:	movlps %xmm0,(%r11)
+    184d:	movq   (%r8,%r10,1),%xmm0
+    1853:	subps  %xmm4,%xmm0
+    1856:	movlps %xmm0,(%r8,%r10,1)
+    185b:	test   $0x1,%r9b
+    185f:	je     18df <soa_move+0x25f>
+    1861:	and    $0xfffffffe,%r9d
+    1865:	add    %r9d,%eax
+    1868:	cltq
+    186a:	pxor   %xmm3,%xmm3
+    186e:	shl    $0x2,%rax
+    1872:	movss  (%rdx,%rax,1),%xmm0
+    1877:	add    %rax,%rdi
+    187a:	add    %rax,%rsi
+    187d:	mulss  %xmm1,%xmm0
+    1881:	mulss  (%rcx,%rax,1),%xmm1
+    1886:	movss  %xmm0,(%rdx,%rax,1)
+    188b:	mulss  %xmm2,%xmm0
+    188f:	addss  (%rdi),%xmm0
+    1893:	movss  %xmm1,(%rcx,%rax,1)
+    1898:	mulss  %xmm2,%xmm1
+    189c:	addss  (%rsi),%xmm1
+    18a0:	ucomiss %xmm0,%xmm3
+    18a3:	jbe    18f0 <soa_move+0x270>
+    18a5:	movaps %xmm3,%xmm0
+    18a8:	pxor   %xmm3,%xmm3
+    18ac:	ucomiss %xmm1,%xmm3
+    18af:	ja     190f <soa_move+0x28f>
+    18b1:	ucomiss 0x1930(%rip),%xmm1        # 31e8 <_IO_stdin_used+0x1e8>
+    18b8:	movd   %xmm1,%ebx
+    18bc:	cmova  0x1925(%rip),%ebx        # 31e8 <_IO_stdin_used+0x1e8>
+    18c3:	movd   %ebx,%xmm1
+    18c7:	movss  %xmm0,(%rdi)
+    18cb:	movss  (%r8,%rax,1),%xmm0
+    18d1:	movss  %xmm1,(%rsi)
+    18d5:	subss  %xmm2,%xmm0
+    18d9:	movss  %xmm0,(%r8,%rax,1)
+    18df:	pop    %rbx
+    18e0:	pop    %r12
+    18e2:	pop    %r13
+    18e4:	pop    %rbp
+    18e5:	ret
+    18e6:	cs nopw 0x0(%rax,%rax,1)
+    18f0:	pxor   %xmm3,%xmm3
+    18f4:	ucomiss 0x18e5(%rip),%xmm0        # 31e0 <_IO_stdin_used+0x1e0>
+    18fb:	movd   %xmm0,%ebx
+    18ff:	cmova  0x18da(%rip),%ebx        # 31e0 <_IO_stdin_used+0x1e0>
+    1906:	ucomiss %xmm1,%xmm3
+    1909:	movd   %ebx,%xmm0
+    190d:	jbe    18b1 <soa_move+0x231>
+    190f:	pxor   %xmm1,%xmm1
+    1913:	jmp    18c7 <soa_move+0x247>
+    1915:	nopl   (%rax)
+    1918:	ret
+    1919:	nopl   0x0(%rax)
+    1920:	ret
+    1921:	xor    %r10d,%r10d
+    1924:	xor    %eax,%eax
+    1926:	jmp    177e <soa_move+0xfe>
+    192b:	nopl   0x0(%rax,%rax,1)
+
