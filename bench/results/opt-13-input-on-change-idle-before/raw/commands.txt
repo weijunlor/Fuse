@@ -1,0 +1,13 @@
+# 2026-10-28T11:33:20+00:00  STEPS="stat net" RUNS=5 DURATION=30 CLIENTS=4 MOVE=0 SERVER_ARGS="" CLIENT_ARGS="--input-send every-10ms"
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 316451 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 316449 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 318462 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 318459 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 320491 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 320488 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 322480 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 322478 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 324471 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-idle-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 324468 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-13-input-on-change-idle-before/raw/net_client.txt -p 326535 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-13-input-on-change-idle-before/raw/net_server.txt -p 326532 -- sleep 30

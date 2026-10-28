@@ -1,0 +1,78 @@
+Optimisation #13: send input only when the held keys change (+ a repeat every 100 ms)
+==================================================================================
+
+What changed (2026-10-28, on top of #12)
+- Before (baseline rate, still selectable: client --input-send every-10ms): while
+  any key is held the client sends an Input every 10 ms (~100/s), plus one when
+  the keys are released.
+- After (default, --input-send change): an Input is sent when the held-key
+  bitmask changes, and repeated every 100 ms whether keys are held or not, so a
+  lost Input (Input becomes best-effort with #14) is corrected within 100 ms.
+  The server needs no change: since #12 an Input is "these keys are held" and
+  the 60 Hz tick moves the player, so 1 message per change carries the same
+  information as 100 identical ones.
+- Loop pacing is the same in both modes (the worker reads the keys every 10 ms
+  while a key is held, and busy-polls otherwise, as in the baseline), so the two
+  modes differ only in how many Inputs they write. Replacing the polling is #2.
+- Same binary for before and after (only the client option differs).
+
+How it was measured
+- bench/profile.sh, 4 clients, server on CPUs 0-3, clients on 4-15.
+  Moving (MOVE=1: each client holds right/down/left/up for 1 s in turn),
+  10 x 30 s perf stat + perf lock/trace/record + network sends:
+    before: bench/results/opt-13-input-on-change-before/ (CLIENT_ARGS="--input-send every-10ms")
+    after:  bench/results/opt-13-input-on-change/
+  Idle (no keys held), 5 x 30 s perf stat + network sends:
+    bench/results/opt-13-input-on-change-idle-before/, opt-13-input-on-change-idle/
+- Network sends now count UDP sockets only. The client's GL thread also sends
+  ~120 messages/s to the Wayland compositor over a Unix socket; the first
+  version of the net step counted those too (fixed 2026-10-28; all opt-12 and
+  opt-13 reports rebuilt from their raw files with REPORT_ONLY=1).
+
+Results, moving clients                  before (every 10 ms)   after (on change)
+Client Input messages/s (test listener)  98.8                   10.0
+Client UDP sends/s (perf trace)          100.6                  11.7       8.6x fewer
+Client UDP bytes/s                       12193                  1514       8.1x fewer
+Server UDP receives/s (recvUC recvmsg)   397.8                  41.6       9.6x fewer
+Server CPUs (10 runs)                    2.002                  1.999      unchanged
+Server context switches per 30 s         19364                  8820
+Server instructions per 30 s             290.0 G (sd 47.9)      268.3 G (sd 43.7)  within noise
+Server futex calls/s                     243k                   1.02M      see 3.
+Client CPUs (client #1)                  0.018                  0.015
+Player movement (test listener)          180 px per 1 s phase   180 px per 1 s phase
+
+Results, idle clients
+Client UDP sends/s                       1.7                    11.7       +10/s (the repeats)
+Client UDP bytes/s                       325                    1521
+Client CPUs                              1.010                  1.011      (worker busy-polls)
+
+(Client UDP sends include ~1.7/s of DDS's own housekeeping from the "tev"
+thread in every run.)
+
+What this shows
+1. The network cost of holding a key falls ~9x on both ends: 8.6x fewer sends
+   per client, 9.6x fewer datagrams for the server to receive and process
+   (4 clients x 10 instead of 4 x 100 per second), with identical movement.
+   With #12 the input rate and the movement speed are independent, which is
+   what makes this possible: the baseline needed 100 messages/s to move at all.
+2. The price: an idle client now sends 10 small messages/s (1.2 KB/s) instead
+   of none. That is the repeat that makes a lost key release harmless once
+   Input is best-effort; it doubles as a "still here" signal for leave
+   detection. Holding a key is the common case in play, so the trade is good.
+3. Server CPU does not change (both threads still busy-poll, 2.0 CPUs). With
+   fewer inputs to process each spin of the loop is shorter, so the threads
+   spin faster and lock/unlock the mutex more often: futex calls rise from 243k
+   to 1.02M/s while useful work falls. Futex counts measure the polling, not
+   the work, until #2 replaces the polling; compare them again after #2.
+4. Client CPU is tiny in both moving runs: the render thread is held to the
+   display's refresh by the compositor and draws only a few sprites (~0.008
+   CPUs), and a moving client's worker sleeps 10 ms per pass. An idle client's
+   worker busy-polls at 1.0 CPU. (Correction to the #12 note and an earlier
+   finding: low client CPU in MOVE=1 runs is real, not a switched-off screen.)
+
+Testing
+- Test listener on the Input topic (keep-all reader, so every message is
+  counted) and GameSnapshot topic, with one real auto-moving client: change
+  mode 10.0 Inputs/s, every-10ms mode 98.8/s; in both, each 1 s phase moves the
+  player 180 px and no step between snapshots exceeds 3 px. Idle client: 10.0/s
+  (change) and none (every-10ms). An unknown --input-send value is refused.

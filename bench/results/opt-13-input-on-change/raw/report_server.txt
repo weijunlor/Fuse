@@ -1,0 +1,502 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cpu_core/cycles/'
+# Event count (approx.): 91230662479
+#
+# Overhead  Command  Shared Object         Symbol                                   
+# ........  .......  ....................  .........................................
+#
+    28.75%  server   libc.so.6             [.] pthread_mutex_lock@@GLIBC_2.2.5
+            |          
+            |--14.89%--___pthread_mutex_lock (inlined)
+            |          |          
+            |          |--10.21%--main
+            |          |          __libc_start_call_main
+            |          |          call_init (inlined)
+            |          |          __libc_start_main_impl (inlined)
+            |          |          _start
+            |          |          
+            |          |--1.86%--start_thread
+            |          |          __clone3 (inlined)
+            |          |          
+            |          |--1.12%--lobby_poll
+            |          |          main
+            |          |          __libc_start_call_main
+            |          |          call_init (inlined)
+            |          |          __libc_start_main_impl (inlined)
+            |          |          _start
+            |          |          
+            |           --0.63%--net_server_worker
+            |                     start_thread
+            |                     __clone3 (inlined)
+            |          
+             --13.86%--lll_mutex_lock_optimized (inlined)
+                       ___pthread_mutex_lock (inlined)
+                       |          
+                       |--7.56%--lobby_poll
+                       |          main
+                       |          __libc_start_call_main
+                       |          call_init (inlined)
+                       |          __libc_start_main_impl (inlined)
+                       |          _start
+                       |          
+                       |--3.57%--ddsrt_mutex_lock
+                       |          |          
+                       |          |--1.25%--0x786eeec51af0
+                       |          |          0x786eeec51b88
+                       |          |          0x786eeec5c09c
+                       |          |          dds_take
+                       |          |          net_server_worker
+                       |          |          start_thread
+                       |          |          __clone3 (inlined)
+                       |          |          
+                       |          |--1.17%--dds_handle_unpin
+                       |          |          0x786eeec5c108
+                       |          |          dds_take
+                       |          |          net_server_worker
+                       |          |          start_thread
+                       |          |          __clone3 (inlined)
+                       |          |          
+                       |           --1.14%--0x786eeec4e258
+                       |                     dds_entity_pin_with_origin
+                       |                     0x786eeec5bfc5
+                       |                     dds_take
+                       |                     net_server_worker
+                       |                     start_thread
+                       |                     __clone3 (inlined)
+                       |          
+                       |--2.11%--net_server_worker
+                       |          start_thread
+                       |          __clone3 (inlined)
+                       |          
+                        --0.62%--lobby_take_new_player_id
+                                  net_server_worker
+                                  start_thread
+                                  __clone3 (inlined)
+
+    13.98%  server   libc.so.6             [.] pthread_mutex_unlock@@GLIBC_2.2.5
+            |          
+            |--12.22%--lll_mutex_unlock_optimized (inlined)
+            |          __pthread_mutex_unlock_usercnt (inlined)
+            |          ___pthread_mutex_unlock (inlined)
+            |          |          
+            |          |--6.58%--lobby_poll
+            |          |          main
+            |          |          __libc_start_call_main
+            |          |          call_init (inlined)
+            |          |          __libc_start_main_impl (inlined)
+            |          |          _start
+            |          |          
+            |          |--3.06%--ddsrt_mutex_unlock
+            |          |          |          
+            |          |          |--1.06%--0x786eeec4e2a2
+            |          |          |          dds_entity_pin_with_origin
+            |          |          |          0x786eeec5bfc5
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          start_thread
+            |          |          |          __clone3 (inlined)
+            |          |          |          
+            |          |          |--1.05%--0x786eeec51914
+            |          |          |          0x786eeec51b88
+            |          |          |          0x786eeec5c09c
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          start_thread
+            |          |          |          __clone3 (inlined)
+            |          |          |          
+            |          |           --0.95%--0x786eeec5c108
+            |          |                     dds_take
+            |          |                     net_server_worker
+            |          |                     start_thread
+            |          |                     __clone3 (inlined)
+            |          |          
+            |          |--1.54%--net_server_worker
+            |          |          start_thread
+            |          |          __clone3 (inlined)
+            |          |          
+            |           --1.03%--lobby_take_new_player_id
+            |                     net_server_worker
+            |                     start_thread
+            |                     __clone3 (inlined)
+            |          
+            |--0.91%--___pthread_mutex_unlock (inlined)
+            |          
+             --0.85%--__pthread_mutex_unlock_usercnt (inlined)
+                       ___pthread_mutex_unlock (inlined)
+
+     6.49%  server   [vdso]                [.] 0x0000000000000a09
+            |
+            ---0x786eeecdda09
+               __clock_gettime (inlined)
+               timing_now_ns
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     4.55%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64
+            |
+            ---entry_SYSCALL_64
+               |          
+               |--3.13%--__lll_lock_wake (inlined)
+               |          |          
+               |          |--1.59%--lobby_poll
+               |          |          main
+               |          |          __libc_start_call_main
+               |          |          call_init (inlined)
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |           --0.70%--lobby_take_new_player_id
+               |                     net_server_worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --1.41%--futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                           --0.83%--lobby_take_new_player_id
+                                     net_server_worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     4.06%  server   [kernel.kallsyms]     [k] futex_hash
+            |
+            ---futex_hash
+               |          
+               |--3.39%--futex_wake
+               |          do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __lll_lock_wake (inlined)
+               |          |          
+               |          |--1.95%--lobby_poll
+               |          |          main
+               |          |          __libc_start_call_main
+               |          |          call_init (inlined)
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |          |--0.75%--lobby_take_new_player_id
+               |          |          net_server_worker
+               |          |          start_thread
+               |          |          __clone3 (inlined)
+               |          |          
+               |           --0.69%--net_server_worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --0.61%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     3.87%  server   libc.so.6             [.] __GI___lll_lock_wait
+            |          
+            |--3.19%--__lll_lock_wait (inlined)
+            |          |          
+            |           --2.45%--lobby_take_new_player_id
+            |                     net_server_worker
+            |                     start_thread
+            |                     __clone3 (inlined)
+            |          
+             --0.67%--futex_wait (inlined)
+                       __lll_lock_wait (inlined)
+
+     3.74%  server   [kernel.kallsyms]     [k] futex_wait_setup
+            |
+            ---futex_wait_setup
+               |          
+                --3.71%--__futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                          |--1.88%--lobby_take_new_player_id
+                          |          net_server_worker
+                          |          start_thread
+                          |          __clone3 (inlined)
+                          |          
+                          |--1.31%--lobby_poll
+                          |          main
+                          |          __libc_start_call_main
+                          |          call_init (inlined)
+                          |          __libc_start_main_impl (inlined)
+                          |          _start
+                          |          
+                           --0.53%--net_server_worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     3.45%  server   [kernel.kallsyms]     [k] native_queued_spin_lock_slowpath
+            |
+            ---native_queued_spin_lock_slowpath
+               |          
+                --3.35%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+                          |          
+                          |--1.98%--lobby_poll
+                          |          main
+                          |          __libc_start_call_main
+                          |          call_init (inlined)
+                          |          __libc_start_main_impl (inlined)
+                          |          _start
+                          |          
+                           --0.87%--net_server_worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     1.93%  server   [kernel.kallsyms]     [k] _raw_spin_lock
+            |
+            ---_raw_spin_lock
+               |          
+               |--1.38%--futex_wait_setup
+               |          __futex_wait
+               |          futex_wait
+               |          do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          futex_wait (inlined)
+               |          __lll_lock_wait (inlined)
+               |          |          
+               |           --1.04%--lobby_take_new_player_id
+               |                     net_server_worker
+               |                     start_thread
+               |                     __clone3 (inlined)
+               |          
+                --0.55%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     1.68%  server   libddsc.so.0.10.5     [.] dds_handle_unpin
+            |
+            ---dds_handle_unpin
+               |          
+                --1.63%--0x786eeec5c108
+                          dds_take
+                          net_server_worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.57%  server   [kernel.kallsyms]     [k] futex_q_unlock
+            |
+            ---futex_q_unlock
+               |          
+                --1.56%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                          |--0.70%--lobby_poll
+                          |          main
+                          |          __libc_start_call_main
+                          |          call_init (inlined)
+                          |          __libc_start_main_impl (inlined)
+                          |          _start
+                          |          
+                           --0.66%--lobby_take_new_player_id
+                                     net_server_worker
+                                     start_thread
+                                     __clone3 (inlined)
+
+     1.56%  server   [kernel.kallsyms]     [k] arch_exit_to_user_mode_prepare.isra.0
+            |
+            ---arch_exit_to_user_mode_prepare.isra.0
+               |          
+                --1.35%--do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          |          
+                           --0.95%--__lll_lock_wake (inlined)
+
+     1.19%  server   libc.so.6             [.] __GI___lll_lock_wake
+            |
+            ---__lll_lock_wake (inlined)
+               |          
+                --0.66%--lobby_poll
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.10%  server   [kernel.kallsyms]     [k] get_futex_key
+            |
+            ---get_futex_key
+               |          
+                --0.75%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     1.07%  server   [kernel.kallsyms]     [k] futex_wake
+            |
+            ---futex_wake
+               |          
+                --1.03%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+                          |          
+                           --0.53%--lobby_poll
+                                     main
+                                     __libc_start_call_main
+                                     call_init (inlined)
+                                     __libc_start_main_impl (inlined)
+                                     _start
+
+     1.01%  server   libddsc.so.0.10.5     [.] 0x00000000000b7292
+            |
+            ---0x786eeec4e292
+               dds_entity_pin_with_origin
+               0x786eeec5bfc5
+               dds_take
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.90%  server   libddsc.so.0.10.5     [.] 0x00000000000c505f
+            |
+            ---0x786eeec5c05f
+               dds_take
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.87%  server   server                [.] lobby_poll
+            |
+            ---lobby_poll
+               |          
+                --0.65%--main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.84%  server   [kernel.kallsyms]     [k] futex_q_lock
+            |
+            ---futex_q_lock
+               futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wait (inlined)
+               __lll_lock_wait (inlined)
+               |          
+                --0.55%--lobby_take_new_player_id
+                          net_server_worker
+                          start_thread
+                          __clone3 (inlined)
+
+     0.78%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64_safe_stack
+            |
+            ---entry_SYSCALL_64_safe_stack
+               |          
+                --0.54%--__lll_lock_wake (inlined)
+
+     0.77%  server   [kernel.kallsyms]     [k] futex_ref_get
+            |
+            ---futex_ref_get
+               |          
+                --0.53%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     0.75%  server   [kernel.kallsyms]     [k] entry_SYSRETQ_unsafe_stack
+            |
+            ---entry_SYSRETQ_unsafe_stack
+               |          
+                --0.52%--__lll_lock_wake (inlined)
+
+     0.64%  server   [kernel.kallsyms]     [k] do_syscall_64
+            |
+            ---do_syscall_64
+
+     0.60%  server   [kernel.kallsyms]     [k] futex_hash_put
+            |
+            ---futex_hash_put
+
+     0.58%  server   [kernel.kallsyms]     [k] __futex_hash
+            |
+            ---__futex_hash
+
+     0.57%  server   server                [.] timing_now_ns
+            |
+            ---timing_now_ns
+
+     0.57%  server   [kernel.kallsyms]     [k] __futex_wait
+            |
+            ---__futex_wait
+               |          
+                --0.51%--futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     0.57%  server   [kernel.kallsyms]     [k] futex_wait
+            |
+            ---futex_wait
+               |          
+                --0.56%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

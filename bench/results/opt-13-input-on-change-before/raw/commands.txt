@@ -1,0 +1,33 @@
+# 2026-10-28T11:15:30+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="--input-send every-10ms"
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 259586 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 259584 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 261589 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 261586 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 263586 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 263583 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 265580 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 265578 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 267607 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 267604 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 269609 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 269606 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 271610 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 271607 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 273602 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 273599 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 275596 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 275593 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 277697 -- sleep 30
+perf stat --append -o bench/results/opt-13-input-on-change-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 277694 -- sleep 30
+sudo perf lock record -o bench/results/opt-13-input-on-change-before/raw/lock_server.data -p 279732 -- sleep 30
+perf lock contention -i bench/results/opt-13-input-on-change-before/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-13-input-on-change-before/raw/trace_server.txt -p 281773 -- sleep 30
+sudo perf trace -s -o bench/results/opt-13-input-on-change-before/raw/trace_client.txt -p 281776 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-13-input-on-change-before/raw/record_server.data -p 283822 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-13-input-on-change-before/raw/record_client.data -p 283825 -- sleep 10
+perf script -i bench/results/opt-13-input-on-change-before/raw/record_server.data
+perf report -i bench/results/opt-13-input-on-change-before/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-13-input-on-change-before/raw/record_client.data
+perf report -i bench/results/opt-13-input-on-change-before/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-13-input-on-change-before/raw/net_client.txt -p 285835 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-13-input-on-change-before/raw/net_server.txt -p 285833 -- sleep 30

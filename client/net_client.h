@@ -5,6 +5,7 @@ Client DDS worker thread: sends input, receives snapshots. */
 #define CLIENT_NET_CLIENT_H
 
 #include <pthread.h>
+#include <stdbool.h>
 
 #include "config.h"
 #include "types.h"
@@ -20,10 +21,14 @@ extern Player arr_Players[MAX_PLAYERS];
 // One mutex guards int_player_id, arr_Players and u8_keys (input.h)
 extern pthread_mutex_t mutex;
 
+// #13: true (default) sends an Input only when the held keys change, plus a
+// repeat every 100 ms; false sends one every 10 ms while keys are held (the
+// baseline rate). Set before starting the worker (--input-send in main.c).
+extern bool b_input_on_change;
+
 /* DDS worker thread (start with pthread_create, never returns). Polls in a
 loop: sends a join request every 1 s until joined, then sends the held keys
-every 10 ms while any key is held (and once on release), and copies each
-received GameSnapshot into arr_Players. */
+(see b_input_on_change), and copies each received GameSnapshot into arr_Players. */
 void *net_client_worker(void *arg);
 
 #endif /* CLIENT_NET_CLIENT_H */

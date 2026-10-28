@@ -5,7 +5,12 @@ Since #12 the client receives one GameSnapshot per published server tick
 (every player at once) instead of one Position message per player, and sends
 the keys it holds instead of single steps: every 10 ms while any key is held
 (the baseline's rate), plus once when the last key is released so the server
-stops the player. Sending only on change is #13. */
+stops the player.
+
+#13 (input on change, the default): an Input is sent only when the held keys
+change, and repeated every INPUT_REPEAT_MS in case one was lost (Input will be
+best-effort, #14). A held arrow key then costs ~10 messages per second instead
+of ~100. --input-send every-10ms keeps the old behaviour for measurements. */
 
 #include <stdio.h>
 
@@ -16,6 +21,12 @@ stops the player. Sending only on change is #13. */
 #include "log.h"
 
 int int_player_id = -1;
+
+bool b_input_on_change = true;
+
+// #13: repeat the current keys this often even if they did not change, so a
+// lost Input is corrected within this time
+#define INPUT_REPEAT_MS 100
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
@@ -60,6 +71,8 @@ void *net_client_worker(void *arg)
 	Input input = {0};
 	// Keys in the last input sent, to send one more input when they are released
 	uint8_t u8_sent_keys = 0;
+	// When the last input was sent (#13 repeats it every INPUT_REPEAT_MS)
+	dds_time_t last_input_time = 0;
 
 	/* Initialize sample buffer, by pointing the void pointer within
 	* the buffer array to a valid sample memory location. */
@@ -131,8 +144,25 @@ void *net_client_worker(void *arg)
 			pthread_mutex_lock(&mutex);
 			uint8_t u8_keys_temp = u8_keys;
 			pthread_mutex_unlock(&mutex);
-			// While keys are held, and once more when they are released
-			if (u8_keys_temp != 0 || u8_sent_keys != 0)
+
+			bool b_send;
+			if (b_input_on_change)
+			{
+				// #13: when the keys changed, or INPUT_REPEAT_MS after the
+				// last input (held or not, so a lost release is resent too)
+				dds_time_t now = dds_time();
+				b_send = u8_keys_temp != u8_sent_keys ||
+				         now - last_input_time >= DDS_MSECS(INPUT_REPEAT_MS);
+				if (b_send)
+					last_input_time = now;
+			}
+			else
+			{
+				// Every 10 ms while keys are held, and once more when released
+				b_send = u8_keys_temp != 0 || u8_sent_keys != 0;
+			}
+
+			if (b_send)
 			{
 				input.player_id = (uint8_t)int_player_id;
 				input.seq++;
@@ -145,9 +175,15 @@ void *net_client_worker(void *arg)
 				}
 				LOG_DEBUG("Input sent: keys 0x%02x\n", (unsigned)u8_keys_temp);
 				u8_sent_keys = u8_keys_temp;
-				// Same rate as the baseline: one input per 10 ms while held
-				dds_sleepfor(DDS_MSECS(10));
 			}
+
+			// While a key is held the loop waits 10 ms per pass in both modes,
+			// as the baseline did after each input (keys are read every 10 ms
+			// in both, so the modes differ only in how many inputs they send).
+			// Otherwise it busy-polls, as the baseline did; waiting on DDS and
+			// the keyboard instead of polling is #2.
+			if (u8_keys_temp != 0 || (b_send && !b_input_on_change))
+				dds_sleepfor(DDS_MSECS(10));
 		}
 
 		// Listen for snapshots

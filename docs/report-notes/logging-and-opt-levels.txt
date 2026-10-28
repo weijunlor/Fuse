@@ -61,11 +61,13 @@ no measurable CPU change; the real cost is the busy loop (#1-#3, #12)".
 It is still worth keeping: message rates go up with 60 Hz snapshots, and
 the macros make DEBUG logging free in normal builds.
 
-Caveat: the screen blanked during these runs, so the clients' render loops
-were throttled by the compositor (0.015 CPUs instead of ~1.0). Both builds
-ran under the same condition, so before/after is fair, but these client CPU
-figures are not comparable with the baseline profiles. The logging itself
-runs in the DDS worker thread, which does not depend on rendering.
+Note on client CPU (corrected 2026-10-28): the clients show 0.015 CPUs in
+these runs because they were moving (MOVE=1). A moving client's DDS worker
+sleeps 10 ms after each input, and the render thread is held to the display
+refresh (~0.008 CPUs, perf stat --per-thread). The baseline profiles had idle
+clients, whose worker busy-polls at ~1.0 CPU, so client CPU is only comparable
+between runs with the same MOVE setting. (This caveat first blamed a blanked
+screen; per-thread measurement showed that was wrong.)
 
 Lesson for the report: profile first. The printf calls looked like an obvious
 target; the data shows the syscalls are gone but they were never the cost.

@@ -81,13 +81,18 @@ What this shows
    confirms that the cost is the polling loops, not the messages. This is the
    case for #2 (waitsets / sleeping until the next tick), which should bring
    the server close to 0 CPUs between ticks.
-4. Client: Input sends unchanged (218/s), 9 bytes larger (74 -> 83 B per send)
-   because Input now carries a sequence number and a 16-byte MAC field for the
-   security layer. #13 (send only on change) is the step that cuts these.
-5. Client CPU is not usable in these runs: every client showed ~0.016 CPUs
-   (the compositor stopped frame callbacks; the session was unlocked and not
-   idle, so most likely the display was off). Client CPU for #12 needs a rerun
-   at the machine. The client's DDS receive count above is not affected.
+4. Client: Input sends unchanged (~100 UDP sends/s), larger per send (102 ->
+   121 B) because Input now carries a sequence number and a 16-byte MAC field
+   for the security layer. #13 (send only on change) is the step that cuts
+   these. (Network tables count UDP sockets only; the first version also
+   counted ~120/s Wayland messages from the client's GL thread. Reports
+   rebuilt from the raw files.)
+5. Client CPU is small in all three runs (0.015 -> 0.018 CPUs) and that is
+   real: the render thread is held to the display refresh and draws a few
+   sprites (~0.008 CPUs), and a moving client's DDS worker sleeps 10 ms per
+   pass. (An earlier version of this note blamed a switched-off display; per-
+   thread perf stat showed it is not. Idle clients use 1.0 CPU because their
+   worker busy-polls.)
 
 Testing (before measuring)
 - Headless DDS test driver (joins like a client): snapshots received in 2 s =

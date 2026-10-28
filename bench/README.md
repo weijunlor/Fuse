@@ -32,9 +32,10 @@ MOVE=1 SERVER_ARGS="--snapshot-hz 10" bench/profile.sh opt-12-snapshots-10hz bui
 ```
 
 Options (environment): `RUNS`, `DURATION`, `CLIENTS`, `WARMUP`, `STEPS` (any of `stat lock trace record net`),
-`MOVE=1` (moving clients), `SERVER_ARGS` (extra server options), `SOURCE_REF` (binaries built from another commit,
-recorded in setup.txt). The `net` step (added 2026-10-28 for #12) reports UDP sends/s, bytes/s and bytes per send
-for the server and client #1; earlier result folders do not have it.
+`MOVE=1` (moving clients), `SERVER_ARGS` / `CLIENT_ARGS` (extra server / client options), `SOURCE_REF` (binaries built from another commit,
+recorded in setup.txt), `REPORT_ONLY=1` (rebuild report.txt from the raw files; pass the run's MOVE/RUNS/*_ARGS again). The `net` step (added 2026-10-28 for #12) reports UDP sends/s, bytes/s and bytes per send
+for the server and client #1, counting UDP sockets only (the client's Wayland messages are listed separately);
+earlier result folders do not have it.
 
 perf stat output is saved exactly as `perf stat` prints it on screen (`raw/stat_*.txt`, one block per run,
 each starting with `# started on`). Runs before 2026-10-27 16:30 (`baseline-O0`, `baseline-O2`, `split-modules`,

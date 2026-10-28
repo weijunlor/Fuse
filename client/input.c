@@ -16,7 +16,7 @@ uint8_t u8_keys = 0;
 /* Auto-move (for measurements): with FUSE_AUTO_MOVE=1 in the environment the
 keyboard is ignored and the player holds right, down, left, up for
 AUTO_MOVE_S seconds each, round and round, so profiling runs include the input
-messages a held key sends (~100 per second) without anyone at the keyboard.
+messages a held key sends without anyone at the keyboard.
 Returns true if auto-move is on. */
 static bool auto_move(void)
 {

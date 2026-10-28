@@ -23,7 +23,10 @@ Options (for measurements, see bench/render.sh):
                        soa-intrin or soa-intrin-scan (hand-written AVX2)
   --particle-threads T threads for the particle update (default 1; more only
                        pays off with tens of thousands of particles, see
-                       bench/results/opt-05-particle-threads) */
+                       bench/results/opt-05-particle-threads)
+  --input-send MODE    when input is sent (#13, see net_client.h): change
+                       (default: on change + every 100 ms) or every-10ms
+                       (while a key is held, as the baseline) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,10 +107,14 @@ int main(int argc, char **argv)
             particle_layout = (ParticleLayout)particles_layout_from_name(argv[++i]);
         else if (strcmp(argv[i], "--particle-threads") == 0 && i + 1 < argc)
             int_particle_threads = atoi(argv[++i]);
+        else if (strcmp(argv[i], "--input-send") == 0 && i + 1 < argc &&
+                 (strcmp(argv[i + 1], "change") == 0 || strcmp(argv[i + 1], "every-10ms") == 0))
+            b_input_on_change = strcmp(argv[++i], "change") == 0;
         else
         {
             fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n"
-                            "          [--particles N] [--particle-layout aos|soa|soa-intrin|soa-intrin-scan] [--particle-threads T]\n",
+                            "          [--particles N] [--particle-layout aos|soa|soa-intrin|soa-intrin-scan] [--particle-threads T]\n"
+                            "          [--input-send change|every-10ms]\n",
                     argv[0]);
             return 1;
         }
