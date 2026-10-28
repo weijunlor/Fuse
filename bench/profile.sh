@@ -8,7 +8,7 @@
 #     report.txt   how the profiling was done (scenario, exact perf commands)
 #                  and a summary of the results
 #     raw/         untouched perf output: perf stat text (as printed by perf), perf.data files,
-#                  perf script dumps, perf trace / perf lock output
+#                  perf script dumps, perf trace / perf lock output, network sends
 #
 # Usage: bench/profile.sh <label> <bin_dir>
 #   <bin_dir> contains the programs "server" and "client", e.g.
@@ -18,7 +18,8 @@
 # Settings (environment variables, defaults in brackets):
 #   RUNS [10]  DURATION [30] seconds  CLIENTS [4]  WARMUP [5] seconds
 #   RECORD_DURATION [10] seconds of perf record per process
-#   STEPS ["stat lock trace record"]  sections to run
+#   STEPS ["stat lock trace record net"]  sections to run
+#   SERVER_ARGS [""]  extra server options, e.g. "--snapshot-hz 10"
 #   MOVE [0]  1 = every client moves on its own (FUSE_AUTO_MOVE=1, client/input.c:
 #             holds right, down, left, up for 1 s each, like a held arrow key,
 #             ~100 input messages/s per client); 0 = idle clients
@@ -55,7 +56,8 @@ CLIENTS=${CLIENTS:-4}
 WARMUP=${WARMUP:-5}
 RECORD_DURATION=${RECORD_DURATION:-10}
 RECORD_FREQ=499
-STEPS=${STEPS:-stat lock trace record}
+STEPS=${STEPS:-stat lock trace record net}
+SERVER_ARGS=${SERVER_ARGS:-}
 SUDO=${SUDO-sudo}
 SERVER_CPUS=0-3
 CLIENT_CPUS=4-15
@@ -81,8 +83,8 @@ if grep -qv performance /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; t
     echo "Run first: sudo cpupower frequency-set -g performance" >&2; exit 1
 fi
 mkdir -p "$RAW"
-printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s\n' "$(date -Iseconds)" \
-    "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" >> "$CMDS"
+printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s"\n' "$(date -Iseconds)" \
+    "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" "$SERVER_ARGS" >> "$CMDS"
 
 # True if section $1 was requested in STEPS
 want() { [[ " $STEPS " == *" $1 "* ]]; }
@@ -111,7 +113,9 @@ fi
 
 start_scenario() {
     # stdout goes to /dev/null so terminal printing is not part of the cost
-    taskset -c "$SERVER_CPUS" "$SERVER" > /dev/null &
+    # SERVER_ARGS unquoted on purpose: it may hold several words
+    # shellcheck disable=SC2086
+    taskset -c "$SERVER_CPUS" "$SERVER" $SERVER_ARGS > /dev/null &
     int_server_pid=$!
     arr_client_pids=()
     for _ in $(seq "$CLIENTS"); do
@@ -220,6 +224,25 @@ if want record; then
 fi
 
 # ---------------------------------------------------------------------------
+# 5. Network sends: every send syscall of the server and of client #1, with
+#    its size (the return value), counted at the same time. DDS sends one UDP
+#    datagram per sample per remote reader (unicast on this machine), so this
+#    shows how many messages and bytes each program puts on the network.
+# ---------------------------------------------------------------------------
+if want net; then
+    echo "perf trace: network sends"
+    start_scenario
+    logged $SUDO perf trace -e sendmsg,sendto -o "$RAW/net_server.txt" \
+        -p "$int_server_pid" -- sleep "$DURATION" > /dev/null 2>&1 &
+    int_perf_pid=$!
+    logged $SUDO perf trace -e sendmsg,sendto -o "$RAW/net_client.txt" \
+        -p "${arr_client_pids[0]}" -- sleep "$DURATION" > /dev/null 2>&1 || true
+    wait "$int_perf_pid" || true
+    own_files "$RAW/net_server.txt" "$RAW/net_client.txt"
+    stop_scenario
+fi
+
+# ---------------------------------------------------------------------------
 # report.txt: method + summary, built from the raw files above
 # ---------------------------------------------------------------------------
 # Per-run perf stat table and mean/stddev. A new run starts at each
@@ -261,6 +284,26 @@ stat_table() {
         }' <(stat_normalize "$1")
 }
 
+# Sends per second and bytes per second from a perf trace -e sendmsg,sendto
+# log, per thread and in total. A line looks like
+#   16.666 ( 0.002 ms): server/161310 sendmsg(fd: 6, msg: 0x...)   = 224
+# (thread name/TID, syscall, and the bytes sent after "=")
+net_table() {
+    awk -v dur="$DURATION" '
+        / = [0-9]+$/ {
+            for (i = 1; i <= NF; i++) if ($i ~ /^send(msg|to)\(/) break
+            if (i > NF) next
+            t = $(i - 1); sub(/\/[0-9]+$/, "", t)
+            n[t]++; b[t] += $NF; N++; B += $NF
+        }
+        END {
+            printf "%-16s %10s %12s %10s\n", "thread", "sends/s", "bytes/s", "bytes/send"
+            for (t in n)
+                printf "%-16s %10.1f %12.0f %10.1f\n", t, n[t] / dur, b[t] / dur, b[t] / n[t]
+            if (N) printf "%-16s %10.1f %12.0f %10.1f\n", "total", N / dur, B / dur, B / N
+        }' "$1"
+}
+
 # Per-thread syscall totals from perf trace -s, largest first
 trace_table() {
     awk '
@@ -281,6 +324,7 @@ trace_table() {
     echo
     echo "== 2. Scenario"
     echo "1 server + $CLIENTS clients on one machine, $str_scenario."
+    [ -z "$SERVER_ARGS" ] || echo "Server options: $SERVER_ARGS"
     echo "Server pinned to CPUs $SERVER_CPUS, clients to CPUs"
     echo "$CLIENT_CPUS (P-cores only). Program output goes to /dev/null."
     echo "Every measurement starts fresh processes, waits ${WARMUP} s (joining finishes),"
@@ -303,6 +347,8 @@ trace_table() {
     echo "   perf report -i on this machine), raw/record_*.script.gz (perf script"
     echo "   text, portable; feed to stackcollapse-perf.pl for flame graphs),"
     echo "   raw/report_*.txt (perf report --no-children)."
+    echo "e) perf trace -e sendmsg,sendto: 1 run, ${DURATION} s, server and client #1"
+    echo "   at the same time; every UDP send and its size. Raw: raw/net_*.txt"
     echo
     echo "== 4. Results"
     for name in server client; do
@@ -321,6 +367,13 @@ trace_table() {
         if [ -s "$RAW/trace_$name.txt" ]; then
             echo "-- perf trace -s, $name: top syscalls by call count (${DURATION} s)"
             trace_table "$RAW/trace_$name.txt"
+            echo
+        fi
+    done
+    for name in server client; do
+        if [ -s "$RAW/net_$name.txt" ]; then
+            echo "-- network sends, $name (${DURATION} s; UDP datagrams and bytes per second)"
+            net_table "$RAW/net_$name.txt"
             echo
         fi
     done

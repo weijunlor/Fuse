@@ -1,0 +1,6 @@
+ contended   total wait     max wait     avg wait          pid   comm
+
+         6     18.93 us      5.09 us      3.15 us       212429   server
+         3      9.81 us      4.32 us      3.27 us       212431   server
+         2      2.36 us      1.36 us      1.18 us       212438   dq.builtins
+         1      1.75 us      1.75 us      1.75 us       212442   recvUC

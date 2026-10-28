@@ -1,0 +1,100 @@
+Optimisation #12: one GameSnapshot per tick instead of one Position per player
+(with the fixed 60 Hz server tick and held-key input it needs)
+=============================================================================
+
+What changed (step 1 of the switch to idl/fuse.idl, 2026-10-28)
+- Messages: idl/fuse.idl replaces the baseline IDL. GameSnapshot (132-byte
+  payload: tick, phase, bomb holder, timer, 5 x PlayerState with short x/y/vx/vy
+  and bit flags, 4 pickups, 4 explosions) replaces Position (12 bytes, one
+  player). Input carries a KEY_* bitmask of held keys (+ seq and a MAC field
+  for the security layer) instead of one direction char.
+- Fixed tick: the server's main thread runs game_tick() 60 times per second
+  (absolute schedule, start + n/60 s). Each tick moves every player by its held
+  keys at PLAYER_SPEED = 180 px/s (3 px per tick) and builds the snapshot.
+  Baseline: a player moved 1 px per Input message, so speed depended on the
+  message rate.
+- Publishing: the DDS worker writes the newest snapshot once (every tick, or
+  every TICK_HZ / H ticks with --snapshot-hz H). Baseline: every 0.1 s it wrote
+  one Position per active player and slept 20 ms after each one.
+- Client: copies all 5 players from each snapshot in one locked section (the
+  baseline updated one player per message, so a frame could mix old and new
+  positions). Sends held keys every 10 ms while any key is held (baseline rate)
+  plus once on release.
+- Kept as in the baseline on purpose, so they can be measured as their own
+  steps: both server threads still busy-poll (#2), the worker writes while
+  holding the mutex (#1), input is still sent every 10 ms (#13 sends on
+  change), default QoS (#14).
+- Also fixed: game_set_keys() ignores player IDs outside 1..5 (the baseline
+  wrote arr_Players[id-1] for any id). Join nonce and leave come later.
+
+How it was measured
+- bench/profile.sh with MOVE=1 (4 clients, each holding right/down/left/up for
+  1 s in turn), server pinned to CPUs 0-3, clients to 4-15, 10 x 30 s perf stat
+  plus perf trace. New "net" step: perf trace -e sendmsg,sendto logs every UDP
+  send and its size (DDS sends one datagram per sample per remote reader here).
+- before = f884941 (HEAD before the change, built in a worktree):
+  bench/results/opt-12-snapshots-before/
+  after, 60 Hz snapshots: bench/results/opt-12-snapshots/
+  after, 10 Hz snapshots (--snapshot-hz 10): bench/results/opt-12-snapshots-10hz/
+- All three runs: 2026-10-28, same machine and session.
+
+Results (4 moving clients)
+                                         before      snap 60 Hz   snap 10 Hz
+State updates seen by each client        5.4/s per   60/s, all    10/s, all
+                                         player, one players at   players at
+                                         at a time   once         once
+Client DDS receives (recvUC recvmsg/s)   21.6        61.6         11.6
+Server UDP sends/s                       80.0        239.9        40.0
+Server bytes/s                           8317        53738        8960
+Bytes per send                           104         224          224
+Server sends per player position         0.93        0.25         0.25
+  delivered to a client
+Server bytes per player position         96          56           56
+  delivered to a client
+Server CPUs (perf stat mean, 10 runs)    1.158       2.002        2.002
+  per run                                9 x 1.199,  all 2.002    all 2.002
+                                         1 x 0.798
+Server futex calls/s (perf trace -s)     652k        1.10M        1.08M
+Server instructions per 30 s run         173.5 G     345.7 G      308.7 G
+
+(per player position = sends/s / (updates/s per player x 4 players x 4 clients))
+
+What this shows
+1. Network: one datagram now carries every player, so the server sends
+   1/players as many datagrams per position delivered (4x fewer with 4 players,
+   5x with 5) and 1.7x fewer bytes per position (56 vs 96 B; 45 B with 5
+   players), because the per-datagram RTPS header (~90 B) is paid once
+   instead of once per player and the fields are short instead of long.
+2. At 10 Hz the server sends half the datagrams of the baseline (40 vs 80/s)
+   for about the same bytes (8960 vs 8317 B/s), yet every client gets the whole
+   game state 10 times per second instead of each player ~5.4 times per second,
+   staggered. At 60 Hz it sends 3x the datagrams of the baseline, but 11x the
+   update rate: the rate is now a choice (--snapshot-hz) instead of a side
+   effect of the 20 ms sleeps. #15 (client interpolation) is what lets the rate
+   go down without the movement looking jerky.
+3. Server CPU went UP, 1.16 -> 2.00 CPUs, and futex calls rose 1.7x. Not
+   because of the snapshots: the baseline worker slept 20 ms after every
+   Position (600 clock_nanosleep calls = 12 s asleep per 30 s, visible in
+   raw/trace_server.txt of the before run). With one snapshot per tick there is
+   no per-player sleep, so both server threads now busy-poll all the time
+   (2.002 CPUs on every run, sd 4 ms of 60 s). The same CPU at 60 Hz and 10 Hz
+   confirms that the cost is the polling loops, not the messages. This is the
+   case for #2 (waitsets / sleeping until the next tick), which should bring
+   the server close to 0 CPUs between ticks.
+4. Client: Input sends unchanged (218/s), 9 bytes larger (74 -> 83 B per send)
+   because Input now carries a sequence number and a 16-byte MAC field for the
+   security layer. #13 (send only on change) is the step that cuts these.
+5. Client CPU is not usable in these runs: every client showed ~0.016 CPUs
+   (the compositor stopped frame callbacks; the session was unlocked and not
+   idle, so most likely the display was off). Client CPU for #12 needs a rerun
+   at the machine. The client's DDS receive count above is not affected.
+
+Testing (before measuring)
+- Headless DDS test driver (joins like a client): snapshots received in 2 s =
+  120 at 60 Hz and 20 at 10 Hz; ~120 server ticks in 2 s; RIGHT held 1.0 s
+  moves 183 px (expected 180); player stops after release (vx 0); DOWN+RIGHT
+  moves diagonally at (180, 180) px/s; inputs with player ID 0 and 200 are
+  ignored and the server keeps publishing. --snapshot-hz 7 is refused.
+- Server + 2 real clients: both join, each sees both players (screenshot).
+- ThreadSanitizer: server clean under the test driver and a moving client;
+  client run: 105 reports, all inside glib/driver threads, none in FUSE code.

@@ -5,7 +5,7 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 
 #include "net.h"
 #include "log.h"
-#include "messages.h"
+#include "fuse.h"
 
 void net_create_topics(NetTopics *a_p_net)
 {
@@ -28,9 +28,9 @@ void net_create_topics(NetTopics *a_p_net)
     a_p_net->response_topic = dds_create_topic(a_p_net->participant,
         &JoinResponse_desc, "JoinResponse", NULL, NULL);
 
-    a_p_net->position_topic = dds_create_topic(a_p_net->participant,
-        &Position_desc, "Position", NULL, NULL);
-
     a_p_net->input_topic = dds_create_topic(a_p_net->participant,
         &Input_desc, "Input", NULL, NULL);
+
+    a_p_net->snapshot_topic = dds_create_topic(a_p_net->participant,
+        &GameSnapshot_desc, "GameSnapshot", NULL, NULL);
 }

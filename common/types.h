@@ -14,8 +14,8 @@ typedef struct
     int y;
 } Player;
 
-/* Constants for the fields of idl/fuse.idl (not used until the server
-switches to snapshots). Bit flags are powers of two so they combine with |. */
+/* Constants for the fields of idl/fuse.idl. Bit flags are powers of two so
+they combine with |. */
 
 // Input.keys: keys held right now
 #define KEY_UP    0x01

@@ -5,9 +5,10 @@ Keyboard polling to key bitmask; send on change. */
 
 #include "input.h"
 #include "net_client.h"
+#include "types.h"
 
-// Direction - n means no direction
-char ch_dir = 'n';
+// Keys held (KEY_* bitmask); 0 means none
+uint8_t u8_keys = 0;
 
 // Seconds each direction is held in auto-move mode
 #define AUTO_MOVE_S 1.0
@@ -28,10 +29,10 @@ static bool auto_move(void)
 	if (!int_auto)
 		return false;
 
-	static const char arr_dirs[4] = { 'r', 'd', 'l', 'u' };
-	char ch_new = arr_dirs[(int)(glfwGetTime() / AUTO_MOVE_S) % 4];
+	static const uint8_t arr_u8_dirs[4] = { KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_UP };
+	uint8_t u8_new = arr_u8_dirs[(int)(glfwGetTime() / AUTO_MOVE_S) % 4];
 	pthread_mutex_lock(&mutex);
-	ch_dir = ch_new;
+	u8_keys = u8_new;
 	pthread_mutex_unlock(&mutex);
 	return true;
 }
@@ -41,39 +42,18 @@ void input_poll(GLFWwindow *a_p_window)
 	if (auto_move())
 		return;
 
-	/* Non-blocking keyboard input */
+	/* Non-blocking keyboard input: one bit per held arrow key */
+	uint8_t u8_new = 0;
 	if (glfwGetKey(a_p_window, GLFW_KEY_UP) == GLFW_PRESS)
-	{
-		pthread_mutex_lock(&mutex);
-		ch_dir = 'u';
-		pthread_mutex_unlock(&mutex);
-	}
+		u8_new |= KEY_UP;
+	if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		u8_new |= KEY_DOWN;
+	if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		u8_new |= KEY_LEFT;
+	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		u8_new |= KEY_RIGHT;
 
-	else if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS)
-	{
-		pthread_mutex_lock(&mutex);
-		ch_dir = 'd';
-		pthread_mutex_unlock(&mutex);
-	}
-
-	else if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS)
-	{
-		pthread_mutex_lock(&mutex);
-		ch_dir = 'l';
-		pthread_mutex_unlock(&mutex);
-	}
-
-	else if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-	{
-		pthread_mutex_lock(&mutex);
-		ch_dir = 'r';
-		pthread_mutex_unlock(&mutex);
-	}
-
-	else
-	{
-		pthread_mutex_lock(&mutex);
-		ch_dir = 'n';
-		pthread_mutex_unlock(&mutex);
-	}
+	pthread_mutex_lock(&mutex);
+	u8_keys = u8_new;
+	pthread_mutex_unlock(&mutex);
 }

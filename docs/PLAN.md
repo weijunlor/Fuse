@@ -42,7 +42,7 @@ Bomb pulses faster as the fuse burns down, explosion particle bursts, spark trai
 ### Message definitions (decided v1, 2026-10-27)
 
 The full IDL with field comments is `idl/fuse.idl`; field constants are in `common/types.h`.
-It replaces `idl/messages.idl` when the server switches to the fixed tick and snapshots.
+It replaced the baseline's `idl/messages.idl` on 2026-10-28, when the server switched to the fixed tick and snapshots (optimisation #12); the baseline build keeps its own copy in `baseline/messages.idl`.
 
 | Topic | Direction | Content | QoS |
 |---|---|---|---|
@@ -72,7 +72,7 @@ Decisions:
 Fuse/
 ├── Makefile              # all / baseline / profile / debug (TSan) / bench / clean
 ├── README.md             # build, run, controls, team, AI declaration
-├── idl/messages.idl      # all DDS types
+├── idl/fuse.idl          # all DDS types (v1 message set, section 2)
 ├── generated/            # idlc output — never edit, gitignored
 ├── common/               # shared by server and client
 │   ├── config.h          #   constants: window size, MAX_PLAYERS, tick rate
@@ -148,7 +148,7 @@ Fuse/
 | 9 | Branchless overlap test (`&`), `fminf`/`fmaxf` clamps, key → velocity lookup table | `server/collision.c`, `server/game.c` | **Branch** / ILP | `branch-misses` % |
 | 10 | Multiple accumulators in reductions; constants hoisted out of loops | `server/game.c`, `bench/bench_reduce.c` | **ILP** / data dependency | IPC (instructions ÷ cycles) |
 | 11 | Pad variables written by different threads onto separate cache lines (`_Alignas(64)`) | `common/spsc_ring.h`, worker pool | Cache (false sharing) | `perf c2c` HITM count |
-| 12 | One `GameSnapshot` instead of N `Position` messages; compact `short` fields and bitflags | `idl/messages.idl`, `server/net_server.c` | Network + cache | Messages/s, bytes/s |
+| 12 | One `GameSnapshot` instead of N `Position` messages; compact `short` fields and bitflags | `idl/fuse.idl`, `server/game.c`, `server/net_server.c` | Network + cache | Messages/s, bytes/s |
 | 13 | Send input only when keys change, as a bitmask | `client/input.c` | Network | Input messages/s |
 | 14 | Per-topic QoS; take several samples per `dds_take` | `common/net.c` | Network / latency | Latency, message counters |
 | 15 | Client interpolation so snapshots can drop to 20–30 Hz | `client/interp.c` | Network | Bandwidth vs smoothness |

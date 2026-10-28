@@ -23,7 +23,8 @@ LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
 LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
 # Add -lcrypto (OpenSSL) or -lsodium here once common/crypto.c uses it
 
-GEN     := generated/messages.c
+# DDS message types (idl/fuse.idl, v1 message set; see docs/PLAN.md section 2)
+GEN     := generated/fuse.c
 COMMON  := $(wildcard common/*.c) $(GEN)
 BENCHES := $(patsubst bench/%.c,build/%,$(wildcard bench/bench_*.c))
 # Particle update (#7, SIMD): optimised and vectorised for this machine's
@@ -35,9 +36,11 @@ SIMD_FLAGS ?= -O3 -march=native -fno-trapping-math
 
 all: build/server build/client
 
-# Regenerate DDS type code whenever the IDL changes
-$(GEN): idl/messages.idl
-	mkdir -p generated && cd generated && idlc -l c ../idl/messages.idl
+# Regenerate DDS type code whenever the IDL changes. -x final: every struct is
+# "final" (fixed layout, no XTypes extension header), which is what idlc picks
+# by default today; saying so silences its warning that the default may change.
+$(GEN): idl/fuse.idl
+	mkdir -p generated && cd generated && idlc -x final -l c ../idl/fuse.idl
 
 build/server: $(wildcard server/*.c) $(COMMON)
 	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
@@ -108,7 +111,7 @@ debug: LDDDS += -fsanitize=thread
 debug: clean all
 
 clean:
-	rm -rf build generated/messages.c generated/messages.h
+	rm -rf build generated/fuse.c generated/fuse.h generated/messages.c generated/messages.h
 
 # Keep pattern-built baseline binaries (make would delete them as intermediates)
 .PRECIOUS: build/baseline-O%/server build/baseline-O%/client

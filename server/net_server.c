@@ -1,11 +1,17 @@
 /* server/net_server.c
-Server DDS worker thread: takes inputs, publishes snapshots. */
+Server DDS worker thread: takes inputs, publishes snapshots.
+
+Since #12 the worker publishes one GameSnapshot per published tick (built by
+game_tick() on the main thread) instead of one Position message per player,
+and an Input carries the held keys, which game_tick() applies. The worker
+still busy-polls and still writes while holding the mutex, as the baseline
+did: those are optimisations #2 and #1, measured separately. */
 
 #include <stdio.h>
 
 #include "net_server.h"
 #include "net.h"
-#include "messages.h"
+#include "fuse.h"
 #include "game.h"
 #include "lobby.h"
 #include "log.h"
@@ -17,7 +23,7 @@ void *net_server_worker(void *arg)
 	NetTopics net;
 	dds_entity_t join_reader;
 	dds_entity_t response_writer;
-	dds_entity_t position_writer;
+	dds_entity_t snapshot_writer;
 	dds_entity_t input_reader;
 
 	//Pointer to unknown type
@@ -41,21 +47,20 @@ void *net_server_worker(void *arg)
 	/* Create writers                                        */
 	/* ----------------------------------------------------- */
 	response_writer = dds_create_writer(net.participant, net.response_topic, NULL, NULL);
-	position_writer = dds_create_writer(net.participant, net.position_topic, NULL, NULL);
+	snapshot_writer = dds_create_writer(net.participant, net.snapshot_topic, NULL, NULL);
 
 	/* Initialize sample buffer, by pointing the void pointer within
 	* the buffer array to a valid sample memory location. */
 	samples_join[0] = JoinRequest__alloc();
 	samples_input[0] = Input__alloc();
 
-	// Create a Join Response
-	JoinResponse response;
+	// Create a Join Response (nonce and session key stay 0 until the join
+	// nonce and login are added)
+	JoinResponse response = {0};
 
-	// Create a Position
-	Position position;
+	// Copy of the latest snapshot, taken from game.c
+	GameSnapshot snapshot;
 
-	// Record the time now
-	uint64_t last_time = dds_time();
 	/* Poll until data has been read. */
 	while (1)
 	{
@@ -76,8 +81,9 @@ void *net_server_worker(void *arg)
 		int int_new_player_id_temp = lobby_take_new_player_id();
 		if (int_new_player_id_temp != -1)
 		{
-			// The player ID can be 0, ie invalid
-			response.int_player_id = int_new_player_id_temp;
+			// The player ID can be 0, ie invalid (game full)
+			response.player_id = (uint8_t)int_new_player_id_temp;
+			response.status = int_new_player_id_temp == 0 ? JOIN_FULL : JOIN_OK;
 
 			rc = dds_write(response_writer, &response);
 			if (rc != DDS_RETCODE_OK)
@@ -89,36 +95,20 @@ void *net_server_worker(void *arg)
 			dds_sleepfor (DDS_MSECS (20));
 		}
 
-		// Get the current time
-		uint64_t curr_time = dds_time();
-		// Get the time difference
-		if (curr_time - last_time > DDS_SECS(0.1))
+		// Publish the latest snapshot once (game_tick() on the main thread
+		// makes a new one every int_snapshot_every ticks). The write happens
+		// while holding the mutex, as the baseline's Position writes did (#1).
+		pthread_mutex_lock(&mutex);
+		if (game_take_snapshot(&snapshot))
 		{
-			// Update the last time
-			last_time = curr_time;
-
-			// Loop through the players list
-			for(int i = 0; i < MAX_PLAYERS; i++)
+			rc = dds_write(snapshot_writer, &snapshot);
+			if (rc != DDS_RETCODE_OK)
 			{
-				pthread_mutex_lock(&mutex);
-				// If player is active
-				if(arr_Players[i].b_active == true)
-				{
-					position.int_player_id = i+1;
-					position.int_x = arr_Players[i].x;
-					position.int_y = arr_Players[i].y;
-					rc = dds_write(position_writer, &position);
-					if (rc != DDS_RETCODE_OK)
-					{
-						DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
-					}
-					LOG_DEBUG("Position sent\n");
-					/* Polling sleep. */
-					dds_sleepfor (DDS_MSECS (20));
-				}
-				pthread_mutex_unlock(&mutex);
+				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
+			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
 		}
+		pthread_mutex_unlock(&mutex);
 
 		// Listen for input
 		rc = dds_take(input_reader, samples_input, infos_input, MAX_SAMPLES, MAX_SAMPLES);
@@ -131,8 +121,8 @@ void *net_server_worker(void *arg)
 		{
 			LOG_DEBUG("Input received\n");
 			Input *input = (Input *) samples_input[0];
-			// Move the player in the input direction
-			game_apply_input(input->int_player_id, input->ch_direction);
+			// Remember the held keys; the next tick moves the player
+			game_set_keys(input->player_id, input->keys);
 		}
 	}
 }
