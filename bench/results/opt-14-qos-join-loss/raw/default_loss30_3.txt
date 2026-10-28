@@ -1,0 +1,8 @@
+DDS QoS: Cyclone defaults
+joined=1 id=1 join_ms=2 requests=1 active=4 snapshots=341
+DDS QoS: Cyclone defaults
+joined=1 id=2 join_ms=2 requests=1 active=4 snapshots=279
+DDS QoS: Cyclone defaults
+joined=1 id=4 join_ms=5007 requests=6 active=4 snapshots=206
+DDS QoS: Cyclone defaults
+joined=1 id=3 join_ms=1003 requests=2 active=4 snapshots=302

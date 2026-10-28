@@ -1,0 +1,5 @@
+ contended   total wait     max wait     avg wait          pid   comm
+
+        10     24.21 us      4.42 us      2.42 us       384184   server
+         2     10.77 us      6.62 us      5.39 us       384197   recvUC
+         2      3.80 us      2.79 us      1.90 us       384186   server

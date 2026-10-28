@@ -1,0 +1,8 @@
+DDS QoS: per topic (#14)
+joined=1 id=1 join_ms=1003 requests=2 active=4 snapshots=364
+DDS QoS: per topic (#14)
+joined=1 id=2 join_ms=2004 requests=3 active=4 snapshots=350
+DDS QoS: per topic (#14)
+joined=1 id=3 join_ms=2004 requests=3 active=4 snapshots=291
+DDS QoS: per topic (#14)
+joined=1 id=3 join_ms=2 requests=1 active=4 snapshots=396

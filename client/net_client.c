@@ -9,7 +9,7 @@ stops the player.
 
 #13 (input on change, the default): an Input is sent only when the held keys
 change, and repeated every INPUT_REPEAT_MS in case one was lost (Input will be
-best-effort, #14). A held arrow key then costs ~10 messages per second instead
+best-effort, #14 in common/net.h). A held arrow key then costs ~10 messages per second instead
 of ~100. --input-send every-10ms keeps the old behaviour for measurements. */
 
 #include <stdio.h>
@@ -55,14 +55,14 @@ void *net_client_worker(void *arg)
 	/* ----------------------------------------------------- */
 	/* Create writers                                        */
 	/* ----------------------------------------------------- */
-	join_writer = dds_create_writer(net.participant, net.join_topic, NULL, NULL);
-	input_writer = dds_create_writer(net.participant, net.input_topic, NULL, NULL);
+	join_writer = net_create_writer(&net, net.join_topic, NET_RELIABLE_ALL);
+	input_writer = net_create_writer(&net, net.input_topic, NET_BEST_EFFORT);
 
 	/* ----------------------------------------------------- */
 	/* Create readers                                        */
 	/* ----------------------------------------------------- */
-	response_reader = dds_create_reader(net.participant, net.response_topic, NULL, NULL);
-	snapshot_reader = dds_create_reader(net.participant, net.snapshot_topic, NULL, NULL);
+	response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
+	snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
 
 	// Nonce, name and proof stay empty until the join nonce and login are added
 	JoinRequest request = {0};

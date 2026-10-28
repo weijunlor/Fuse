@@ -1,0 +1,16 @@
+#14 joining under packet loss (bench/join_loss.sh)
+10 trials x 4 headless clients per cell, each staying 10 s;
+loss = share of all loopback packets dropped by netem (both directions)
+
+QoS      loss   joined join_ms p50    p90    max requests  ghosts dup_ids snaps/s
+default    0%    40/40           2      2      2     1.00       0       0    59.8
+default   10%    40/40           2   1004   3006     1.18       1       4    48.0
+default   30%    38/40        1501   3506   5008     2.47       9       7    26.5
+
+tuned      0%    40/40           2      2      2     1.00       0       0    59.8
+tuned     10%    40/40           2    201   1003     1.02       0       2    53.2
+tuned     30%    40/40         306   2004   3005     1.52       3       9    38.0
+
+ghosts: slots the server filled that no client holds (summed over trials)
+dup_ids: clients holding an ID another client also holds (fixed by the join nonce, not by QoS)
+snaps/s: includes the time before joining, so slightly under the received rate

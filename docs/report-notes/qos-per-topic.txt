@@ -1,0 +1,97 @@
+Optimisation #14: QoS per topic, several inputs per dds_take
+==========================================================
+
+What Cyclone does by default (checked with dds_get_qos on a reader and a
+writer created with NULL QoS, Cyclone DDS 0.10.5)
+- writer: RELIABLE (max blocking 100 ms), KEEP_LAST 1
+- reader: BEST_EFFORT, KEEP_LAST 1
+A reliable writer serving a best-effort reader delivers best-effort. So every
+topic in the game, the join handshake included, was best-effort with a history
+of one: a lost JoinResponse is gone, and two JoinRequests arriving together
+overwrite each other.
+
+What changed (2026-10-28, on top of #13; common/net.c, net_create_reader/writer)
+- JoinRequest, JoinResponse: RELIABLE + KEEP_ALL on both sides. Lost messages
+  are resent; queued requests are not overwritten.
+- Input, GameSnapshot: BEST_EFFORT + KEEP_LAST 1 on both sides (Input is keyed
+  by player, so that is the newest input per player). A newer one follows
+  within 100 ms (Input repeat, #13) or one tick (snapshot), so resending an old
+  one would only waste bandwidth and delay the new one.
+- The server takes up to INPUT_TAKE = 8 inputs per dds_take (baseline: 1 per
+  pass of the worker loop).
+- FUSE_QOS=default in the environment keeps Cyclone's defaults and 1 input per
+  take, in server and clients alike (the "before"; same binaries).
+
+Measurement 1: joining under packet loss (bench/join_loss.sh)
+- Loopback made to drop 0, 10 or 30 % of all packets (tc netem, removed after
+  each trial). Per trial: server + 4 headless clients (bench/dds_joiner.c, the
+  client's join code and QoS) started 1.5 s apart, each staying 10 s.
+  10 trials per cell. Results: bench/results/opt-14-qos-join-loss/
+
+QoS      loss   joined join_ms p50    p90    max requests  ghosts dup_ids snaps/s
+default    0%    40/40           2      2      2     1.00       0       0    59.8
+default   10%    40/40           2   1004   3006     1.18       1       4    48.0
+default   30%    38/40        1501   3506   5008     2.47       9       7    26.5
+tuned      0%    40/40           2      2      2     1.00       0       0    59.8
+tuned     10%    40/40           2    201   1003     1.02       0       2    53.2
+tuned     30%    40/40         306   2004   3005     1.52       3       9    38.0
+
+(join_ms: first JoinRequest to accepted JoinResponse; requests: per joined
+client; ghosts: slots the server filled that no client holds, over 10 trials;
+dup_ids: clients sharing an ID; snaps/s: snapshots received per second.)
+
+- Without loss both settings are identical (2 ms, one request).
+- At 10 % loss, reliable joins cut the slow tail 5x (p90 1004 -> 201 ms; the
+  default has to wait for the client's 1 s retry, reliable resends in ~200 ms)
+  and leave no ghost slots.
+- At 30 % loss, every client joined with reliable QoS (2 of 40 failed with the
+  default), median join time fell 1501 -> 306 ms, requests per client
+  2.47 -> 1.52, and ghost slots 9 -> 3.
+- Ghosts are what makes lost responses dangerous: the server already gave the
+  client a slot, the client hears nothing and asks again, and gets a second
+  slot. With 5 slots, a few ghosts fill the game. Reliable delivery removes
+  most of them; the remaining 3 at 30 % happen when the response is still
+  being resent after the client's 1 s retry (or before discovery has matched
+  the client's reader). The join nonce step removes the rest: the server will
+  answer a repeated nonce with the same slot.
+- dup_ids are not a QoS problem: every waiting client takes the first response
+  it sees. Also fixed by the join nonce.
+- snaps/s: with loss, best-effort snapshots are simply missed (expected ~54/s
+  at 10 %, ~42/s at 30 %); the next one arrives 16 ms later. The default
+  setting received fewer than expected (48.0, 26.5); the cause is not verified.
+
+Measurement 2: normal play (bench/profile.sh, MOVE=1, 4 clients, 10 x 30 s)
+- before: bench/results/opt-14-qos-before/ (FUSE_QOS=default)
+  after:  bench/results/opt-14-qos/
+
+                                   before (default)   after (per topic)
+Server UDP sends/s                 240.0              240.0
+Server bytes per snapshot send     224                192       -32 B
+Server UDP bytes/s                 53760              46080     -14 %
+Client bytes per Input send        120                88        -32 B
+Client UDP bytes/s (inputs)        1204               877       -27 %
+Server DDS "tev" thread futex/30 s 1058               48
+Server CPUs                        2.000              2.000     (busy loops, #2)
+Client CPUs                        0.016              0.015
+
+- Every data packet is 32 bytes smaller. Packet captures
+  (bench/results/opt-14-qos/packets/) show why: with a reliable writer, each
+  DATA submessage is followed by a 32-byte HEARTBEAT ("sent up to sequence N,
+  tell me what is missing"), although no reader is reliable and nobody ever
+  answers. A best-effort writer sends DATA only.
+- The DDS timed-event thread ("tev") wakes 22x less (futex calls 1058 -> 48 per
+  30 s): it no longer schedules heartbeats for the snapshot and input writers.
+- CPU unchanged: both server threads still busy-poll (#2).
+- Several inputs per take: with 4 clients at 10 inputs/s the queue rarely holds
+  more than one, so this does not show in the counters; it matters when inputs
+  arrive in bursts (more players, a stall), where one call empties the queue.
+
+Testing
+- dds_get_qos check of the defaults (above).
+- Test driver (join, movement, snapshot rate, bad IDs) passes with both QoS
+  settings; input listener: 10.0 inputs/s and 180 px per 1 s phase in both.
+- QoS mismatch found while testing: a reliable reader does not match a
+  best-effort writer (the first input listener received nothing), so writer
+  and reader QoS are set together in common/net.c.
+- netem checked with ping before use (10 % per direction -> 18 % round trip
+  loss) and confirmed removed after the runs (tc qdisc show dev lo: noqueue).

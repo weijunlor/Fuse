@@ -99,3 +99,15 @@ bench/particles.sh opt-05-particle-threads threads
 
 The client uses the same code: `--particles N` keeps N particles alive on screen, `--particle-layout aos|soa|soa-intrin|soa-intrin-scan`,
 `--particle-threads T`.
+
+## Joining under packet loss: `join_loss.sh` (#14)
+
+`bench/join_loss.sh <label>` makes the loopback drop packets (`sudo tc qdisc add dev lo root netem loss L%`,
+removed after every trial and on exit), then starts the server and 4 headless clients per trial
+(`build/dds_joiner`, `make build/dds_joiner`: the client's join code and QoS, no window), with Cyclone's default
+QoS (`FUSE_QOS=default`) and with the game's per-topic QoS. Report: clients joined, join time (p50/p90/max),
+requests per client, ghost slots, duplicate IDs, snapshots received per second.
+Settings: `LOSSES` ["0 10 30"], `TRIALS` [10], `JOINERS` [4], `STAGGER` [1.5] s, `STAY` [10] s.
+
+`FUSE_QOS=default` in the environment of `profile.sh` (or of the game) gives the "before" for #14; it is recorded
+in `raw/commands.txt` and the report.
