@@ -1,0 +1,31 @@
+# 2026-10-28T09:24:19+00:00  STEPS="stat lock trace record" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 80832 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 80830 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 82923 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 82920 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84971 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84969 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86963 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86961 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88990 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88987 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 91051 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 91048 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 93043 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 93040 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 95045 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 95042 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 97074 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 97071 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 99142 -- sleep 30
+perf stat --append -o bench/results/opt-17-log-macros/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 99140 -- sleep 30
+sudo perf lock record -o bench/results/opt-17-log-macros/raw/lock_server.data -p 101159 -- sleep 30
+perf lock contention -i bench/results/opt-17-log-macros/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-17-log-macros/raw/trace_server.txt -p 103203 -- sleep 30
+sudo perf trace -s -o bench/results/opt-17-log-macros/raw/trace_client.txt -p 103205 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-17-log-macros/raw/record_server.data -p 105318 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-17-log-macros/raw/record_client.data -p 105320 -- sleep 10
+perf script -i bench/results/opt-17-log-macros/raw/record_server.data
+perf report -i bench/results/opt-17-log-macros/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-17-log-macros/raw/record_client.data
+perf report -i bench/results/opt-17-log-macros/raw/record_client.data --stdio --no-children --percent-limit 0.5

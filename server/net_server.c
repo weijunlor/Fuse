@@ -8,6 +8,7 @@ Server DDS worker thread: takes inputs, publishes snapshots. */
 #include "messages.h"
 #include "game.h"
 #include "lobby.h"
+#include "log.h"
 
 void *net_server_worker(void *arg)
 {
@@ -67,7 +68,7 @@ void *net_server_worker(void *arg)
 		// Check for valid join request
 		if ((rc > 0) && (infos_join[0].valid_data))
 		{
-			printf("Join request received\n");
+			LOG_INFO("Join request received\n");
 			lobby_signal_join();
 		}
 
@@ -83,7 +84,7 @@ void *net_server_worker(void *arg)
 			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
-			printf("Join response sent\n");
+			LOG_INFO("Join response sent\n");
 			/* Polling sleep. */
 			dds_sleepfor (DDS_MSECS (20));
 		}
@@ -111,7 +112,7 @@ void *net_server_worker(void *arg)
 					{
 						DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 					}
-					printf("Position sent\n");
+					LOG_DEBUG("Position sent\n");
 					/* Polling sleep. */
 					dds_sleepfor (DDS_MSECS (20));
 				}
@@ -128,7 +129,7 @@ void *net_server_worker(void *arg)
 		// Check if we read some data and it is valid.
 		if ((rc > 0) && (infos_input[0].valid_data))
 		{
-			printf("Input received\n");
+			LOG_DEBUG("Input received\n");
 			Input *input = (Input *) samples_input[0];
 			// Move the player in the input direction
 			game_apply_input(input->int_player_id, input->ch_direction);

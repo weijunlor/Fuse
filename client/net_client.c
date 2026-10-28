@@ -7,6 +7,7 @@ Client DDS worker thread: sends input, receives snapshots. */
 #include "net.h"
 #include "messages.h"
 #include "input.h"
+#include "log.h"
 
 int int_player_id = -1;
 
@@ -74,12 +75,12 @@ void *net_client_worker(void *arg)
 			/* Check if we read some data and it is valid. */
 			if ((rc > 0) && (infos_response[0].valid_data))
 			{
-				printf("Join response received\n");
+				LOG_INFO("Join response received\n");
 				JoinResponse *response = (JoinResponse *) samples_response[0];
 				int int_resp_player_id = response->int_player_id;
 				// If server responded with an invalid player ID
 				if (int_resp_player_id == 0)
-					printf("Unable to join\n");
+					LOG_WARN("Unable to join\n");
 				else
 				{
 					pthread_mutex_lock(&mutex);
@@ -105,7 +106,7 @@ void *net_client_worker(void *arg)
 
 				// Send join request
 				rc = dds_write(join_writer, &request);
-				printf("Join request sent\n");
+				LOG_INFO("Join request sent\n");
 				if (rc != DDS_RETCODE_OK)
 				{
 					DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
@@ -134,7 +135,7 @@ void *net_client_worker(void *arg)
 				{
 					DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 				}
-				printf("Input sent\n");
+				LOG_DEBUG("Input sent\n");
 				// Need to slow down how often input gets sent, otherwise,
 				//the player will move to the window limits immediately
 				dds_sleepfor(DDS_MSECS(10));
@@ -150,7 +151,7 @@ void *net_client_worker(void *arg)
 		// Check if we read some data and it is valid.
 		if ((rc > 0) && (infos_position[0].valid_data))
 		{
-			printf("Position received\n");
+			LOG_DEBUG("Position received\n");
 			Position *position = (Position *) samples_position[0];
 			// Get the player ID
 			int int_position_player_id = position->int_player_id;

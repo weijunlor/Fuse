@@ -1,0 +1,154 @@
+Particles: AoS vs SoA (#6) and the worker pool (#5)
+Notes for the final report (weijun, 2026-10-28). SIMD (#7) is in simd-intrinsics.txt.
+=====================================================================
+
+Data: bench/results/opt-06-particle-soa/report.txt      (#6 AoS vs SoA)
+      bench/results/opt-05-particle-threads/report.txt  (#5 thread scaling)
+      bench/results/opt-07-particle-simd/,
+      bench/results/opt-07b-particle-avx2-intrinsics/   (#7)
+Code: client/particles.c (both layouts), common/worker_pool.c/.h
+Tag:  opt-05-06-07-particles (commit b5ed828)
+
+Every version computes the same particles: same random numbers, same
+arithmetic; checksums equal in every run (bit-identical hashes for the
+SIMD variants).
+
+
+1. Which kind of optimisation is which
+--------------------------------------
+                       What runs in parallel / what changes      Hardware used
+ #6 SoA                data layout (data-aware, cache-aware)     caches, prefetcher
+ #7 SIMD   = DLP       one instruction on 8 particles            SIMD unit in one core (AVX2)
+ #5 pool   = TLP       several instruction streams at once       several cores
+
+The worker pool is TLP, not DLP. They multiply: each thread runs the AVX2
+loop on its own chunk, so 8 threads x 8 lanes = 64 particles in flight.
+How the pool splits the work is data-aware (section 3).
+#6 is what makes #7 and #5 possible: contiguous arrays can be loaded 8 at a
+time (#7) and cut into clean, cache-line-aligned chunks (#5).
+
+
+2. AoS vs SoA (#6): data-aware layout
+-------------------------------------
+Layouts in memory:
+
+  AoS (array of structs), 32 bytes per particle, the naive first version:
+  | x y vx vy life life_max sprite alive | x y vx vy life ... | ...
+   '------------- particle 0 ------------' '-- particle 1 ...
+
+  SoA (struct of arrays), one array per field:
+  x:    | x0 x1 x2 x3 x4 x5 ... |
+  y:    | y0 y1 y2 ...          |
+  vx, vy, life                     <- hot: read and written every tick
+  life_max, sprite                 <- cold: only for spawning and drawing
+
+Why SoA is faster:
+
+ 1) Every byte loaded is used (cache efficiency).
+    The CPU always loads a whole 64-byte cache line, never one value.
+    AoS: one line = 2 particles; the update uses 5 of the 8 fields, so 12 of
+    every 32 bytes (life_max, sprite, alive) are loaded for nothing.
+    SoA: one line of x[] = 16 x values, all needed. The cold arrays are
+    never touched by the update, so they do not take cache space.
+
+ 2) No holes and no alive test (fewer branches, less memory walked).
+    AoS: a dead particle leaves a hole. Every tick walks the whole capacity
+    and tests "if (!alive) continue" per slot: a random branch, often
+    mispredicted (~15-20 cycles lost each time). Spawning searches for a
+    free hole.
+    SoA: live particles packed in [0, count). A dead one is replaced by a
+    live one from the end (swap-remove). The loop runs exactly count times
+    with no alive test; spawning appends at count.
+
+ 3) Prefetching. SoA streams a few arrays from start to end, which the
+    hardware prefetcher handles perfectly (it loads the next lines before
+    they are needed).
+
+ 4) It enables SIMD (the biggest effect). _mm256_load_ps(x + i) loads 8
+    consecutive floats in one instruction; in AoS the x values are 32 bytes
+    apart. GCC's report: aos loop "not vectorized: unsupported control
+    flow", soa loop "vectorized using 32 byte vectors".
+
+Measured (no SIMD: bench_particles_scalar, 1 thread, ns per particle update):
+                                     N=1000   N=10000  N=100000  N=1000000
+  AoS, pool full                      2.85     3.03     3.13      4.27
+  AoS, pool 25% full (sized for peak) 3.95     4.31     5.29      7.79
+  SoA (full or 25%: same)             2.13     2.20     2.44      2.46
+
+  - AoS slows down as N grows; SoA stays flat.
+  - At 1M, pool 25% full: 740 vs 1 last-level-cache misses per 1000 updates;
+    SoA 3.2x faster. Branch misses per update 0.53 vs 0.11.
+  - Pool full and in cache: SoA alone only 1.3x faster (no holes or misses
+    for the layout to remove).
+  - Its main value is enabling #7 and #5: AoS -> SoA + AVX2 + 8 threads at
+    1M particles: 4.27 -> 0.22 ns, 19.6x (36x against the 25%-full pool).
+
+
+3. Worker pool (#5): TLP with a data-aware split
+------------------------------------------------
+How it works (common/worker_pool.c, soa_update_job in particles.c):
+
+  tick:  main thread                       workers 1..7
+         post job --> barrier_start <---   (sleeping there)
+         update chunk 0                    update chunks 1..7   <- parallel
+         barrier_done <-------------------- done
+         close gaps (serial, small)
+         respawn (serial)
+
+  - Threads are created once and sleep at a barrier between ticks; creating
+    and joining threads every tick would cost more than the work.
+  - The main thread is worker 0 and does a share. With 1 thread the pool
+    calls the job directly: the 1-thread "before" has no synchronisation.
+  - Each worker owns one contiguous range of particles, so no locks.
+
+Data-aware parts of the design:
+  1) Chunk boundaries fall on 64-byte cache lines (multiples of 16 floats).
+     Caches work in whole lines; two threads writing different particles in
+     one line would bounce it between their cores (false sharing).
+  2) Each worker's result counter has its own cache line
+     (_Alignas(64) int int_live), for the same reason.
+  3) Each worker removes the dead particles of its own chunk, which it has
+     just updated, so the data is still in its own L1/L2 cache.
+     First version: removal done serially by the main thread afterwards. It
+     had to pull those cache lines out of the other cores' caches, so it got
+     slower as threads were added (informal timing harness, not saved in
+     bench/results):
+         serial removal, ns/particle   1 thread   8 threads
+         N = 10000                     0.06       0.77   (parallel part 0.96)
+         N = 1000000                   0.24       0.50   (parallel part 0.25)
+     At 1M with 8 threads the serial removal took twice as long as all the
+     parallel work, so threads barely helped. Now: removal inside each chunk
+     in parallel; the main thread only fills the few gaps between chunks
+     with contiguous memcpy, moving about as many particles as died
+     (~1 in 75 per tick).
+
+Measured (soa AVX2 build, one thread per physical P-core, ns per particle):
+                  1 thr    2 thr    4 thr    6 thr    8 thr
+  N=1000          0.72     7.28     9.52     10.0     11.2     (8 thr: 15x SLOWER)
+  N=10000         0.74     1.10     1.18     1.20     1.30     (slower)
+  N=100000        0.79     0.51     0.36     0.31     0.29     (8 thr: 2.7x)
+  N=1000000       0.97     0.55     0.33     0.25     0.22     (8 thr: 4.4x)
+
+  - Crossover between 10k and 100k particles: each tick costs ~6-10 us of
+    barrier synchronisation; at 1000 particles the whole update is ~0.7 us.
+    The game has hundreds of particles, so the client default is 1 thread
+    (--particle-threads T to change it).
+  - Not 8x on 8 cores: respawning and gap closing are serial (Amdahl's
+    law), and all cores share L3 and memory bandwidth.
+  - Instructions per particle grow with threads at small N (1000: 10.5 with
+    1 thread -> 118 with 8): the extra instructions are synchronisation.
+  - Correctness: ThreadSanitizer clean (2, 4, 8 threads); checksums equal
+    for every thread count.
+
+
+4. One-line summary for the slides
+----------------------------------
+ #6 SoA:         data-aware layout: store data the way the hot loop reads it,
+                 so caches, the prefetcher and SIMD can all work well.
+ #7 SIMD:        DLP: 8 particles per instruction inside one core.
+ #5 Worker pool: TLP: 8 cores, each running #7 on its own chunk; splitting
+                 the data on cache-line boundaries keeps the cores from
+                 slowing each other down.
+ What limits speed at each step: AoS = cache misses and branches;
+ SoA scalar = computation; SIMD = memory bandwidth; threads = synchronisation
+ (small N) or bandwidth and the serial parts (large N).

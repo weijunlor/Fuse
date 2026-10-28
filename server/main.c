@@ -19,6 +19,7 @@ thread does all network I/O (net_server.c). */
 
 #include "net_server.h"
 #include "lobby.h"
+#include "log.h"
 
 int main(void)
 {
@@ -33,7 +34,7 @@ int main(void)
 		return 1;
 	}
 
-	printf("Waiting...\n");
+	LOG_INFO("Waiting...\n");
 	// Busy loop: handle join requests as soon as the worker flags them
 	while (1)
 	{

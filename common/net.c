@@ -4,6 +4,7 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include <stdio.h>
 
 #include "net.h"
+#include "log.h"
 #include "messages.h"
 
 void net_create_topics(NetTopics *a_p_net)
@@ -15,7 +16,7 @@ void net_create_topics(NetTopics *a_p_net)
 
     if (a_p_net->participant < 0)
     {
-        printf("Failed to create participant\n");
+        LOG_ERROR("Failed to create participant\n");
     }
 
     /* ----------------------------------------------------- */

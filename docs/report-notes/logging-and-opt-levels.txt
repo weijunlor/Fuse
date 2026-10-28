@@ -1,0 +1,99 @@
+Optimisation #17: logging compiled out, and -O0 vs -O2
+=====================================================
+
+What was done
+-------------
+common/log.h adds four levels: LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG.
+The build picks the level (make = INFO, make LOG=debug = DEBUG). A message
+above that level becomes
+
+    do { if (0) printf(...); } while (0)
+
+so the compiler still checks the format string and arguments but generates
+no call, no formatting and no string. Verified: the default server binary
+does not contain the string "Position sent" (count 0); the LOG=debug build
+does (count 1).
+
+The baseline's per-message printf calls ("Position sent", "Input received",
+"Input sent", "Position received") are now LOG_DEBUG. One-off events (join
+request/response) are LOG_INFO, and "Unable to join" is LOG_WARN, which goes to
+stderr.
+
+Tested: server + 2 clients, 3 runs on the new build and 2 on the previous
+commit. Every run: both join requests received, both clients joined, and
+both players drawn in the screenshot.
+
+Before/after measurement (2026-10-28, players moving)
+---------------------------------------------------
+Before = the last commit with printf (06e1fac) plus only the auto-move input
+change; after = log macros. Both built with make profile (-O2, -g).
+Clients move on their own (FUSE_AUTO_MOVE=1, client/input.c: right, down,
+left, up for 1 s each, ~100 input messages/s per client), so every hot-path
+log line fires: "Position sent/received" (10 Hz per player) and
+"Input sent/received" (~100 Hz per client). 1 server + 4 clients.
+
+a) bench/profile.sh, output to /dev/null (block-buffered), 10 x 30 s:
+   bench/results/opt-17-log-macros-before/ and opt-17-log-macros/
+                      before            after
+   server CPUs        1.199 (all 10)    1.199 (8 runs), 0.80 (2 runs)
+   server Ginstr/run  168.5             168.5
+   server ctx-sw/run  16466             16644
+   server write()     29 in 30 s        0
+   client CPUs        0.015             0.015
+   The two 0.80 runs are the server's known bimodal behaviour (baseline
+   too), not an effect of #17: the same build gives 1.199 in the other runs.
+
+b) bench/log_tty.sh, output to a terminal (line-buffered: one write() per
+   line, the worst case), 10 interleaved before/after pairs x 30 s:
+   bench/results/opt-17-log-macros/tty/report.txt
+                      before            after
+   server write()/s   266.5             0
+   client write()/s   118.9             0.1
+   server CPUs        1.198 (sd 0.000)  1.199 in 8 runs, 0.80 in 2
+   client CPUs        0.015             0.014
+
+Result: #17 removes every logging syscall (266 writes/s on the server and
+119/s per client on a terminal; all of them with output to a file), but CPU
+use and instruction counts do not change measurably. The server's time is in
+its busy loop and mutexes (~2.5 million futex calls/s), so 266 short writes
+per second are lost in it. #17 is reported as "logging syscalls removed,
+no measurable CPU change; the real cost is the busy loop (#1-#3, #12)".
+It is still worth keeping: message rates go up with 60 Hz snapshots, and
+the macros make DEBUG logging free in normal builds.
+
+Caveat: the screen blanked during these runs, so the clients' render loops
+were throttled by the compositor (0.015 CPUs instead of ~1.0). Both builds
+ran under the same condition, so before/after is fair, but these client CPU
+figures are not comparable with the baseline profiles. The logging itself
+runs in the DDS worker thread, which does not depend on rendering.
+
+Lesson for the report: profile first. The printf calls looked like an obvious
+target; the data shows the syscalls are gone but they were never the cost.
+
+-O0 vs -O2 on the baseline (same machine, 10 x 30 s runs each)
+--------------------------------------------------------------
+                    -O0                 -O2
+server CPUs         1.194               1.193
+server Ginstr/run   142.2 (sd 13.6)     138.3 (sd 6.6)
+server IPC          0.93                0.92
+client CPUs         1.009               1.009
+client Ginstr/run   270.7               266.7
+client IPC          1.93                1.92
+(bench/results/baseline-O0/report.txt, baseline-O2/report.txt)
+
+The compiler optimisation level makes no difference: instructions per run
+differ by 1.5-3% and CPU use not at all. The baseline's CPU time is not spent
+in its own code. It goes into:
+- busy-polling loops (the DDS workers spin on dds_take, and the client renders
+  without vsync), which use a whole core whatever the code quality;
+- pthread mutex lock/unlock and futex syscalls (~50% of samples; ~600k futex
+  calls/s on the server);
+- the Cyclone DDS and Mesa libraries, which are prebuilt and not affected by
+  our -O flag.
+So -O2 can only speed up the small part of the time spent in our own code,
+and the busy-loops just spin faster. This is why the plan targets the design
+(blocking waits/fixed tick #12, lock removal #1-#3, data layout #6, SIMD #7,
+threads #5) and not compiler flags. The particle benchmark shows the opposite
+case: for compute-bound code the flags matter a lot (-O2 scalar SoA
+2.1-2.5 ns/particle vs -O3 -march=native auto-vectorised 0.73-1.0 ns, see
+simd-intrinsics.txt).

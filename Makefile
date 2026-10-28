@@ -4,12 +4,21 @@
 #   make baseline-O0  baseline at -O0 (or -O2, ...) with -g and frame pointers, for perf
 #   make profile    -O2 with debug symbols and frame pointers, for perf
 #   make debug      -O0 with ThreadSanitizer, for data-race checks
+#   make LOG=debug  also print one line per network message (common/log.h, #17)
 #   make bench      build every bench/bench_*.c (bench_particles in three builds, see below)
 #   make clean      remove build/ and generated DDS code
 
 CC      := gcc
 CFLAGS  := -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party \
            $(shell pkg-config --cflags CycloneDDS glfw3 stb)
+# Log level (#17, common/log.h): per-message debug lines are compiled out
+# unless LOG=debug
+LOG     ?= info
+ifeq ($(LOG),debug)
+CFLAGS  += -DLOG_LEVEL=LOG_LEVEL_DEBUG
+else
+CFLAGS  += -DLOG_LEVEL=LOG_LEVEL_INFO
+endif
 LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
 LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
 # Add -lcrypto (OpenSSL) or -lsodium here once common/crypto.c uses it

@@ -1,0 +1,12 @@
+# started on Wed Oct 28 09:37:51 2026
+
+
+ Performance counter stats for process id '123752':
+
+            442.70 msec task-clock                                                            
+            16,406      context-switches                                                      
+             3,566      syscalls:sys_enter_write                                              
+            21,450      syscalls:sys_enter_futex                                              
+
+      30.003536816 seconds time elapsed
+

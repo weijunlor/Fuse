@@ -19,11 +19,14 @@
 #   RUNS [10]  DURATION [30] seconds  CLIENTS [4]  WARMUP [5] seconds
 #   RECORD_DURATION [10] seconds of perf record per process
 #   STEPS ["stat lock trace record"]  sections to run
+#   MOVE [0]  1 = every client moves on its own (FUSE_AUTO_MOVE=1, client/input.c:
+#             holds right, down, left, up for 1 s each, like a held arrow key,
+#             ~100 input messages/s per client); 0 = idle clients
 #   SUDO ["sudo"]  perf lock/trace read root-only tracepoint files, so they
 #                  run as root; the game itself always runs as you
 #
 # Scenario: 1 server + CLIENTS clients on this machine, idle (clients join on
-# their own and send no input). Every measurement starts fresh processes,
+# their own and send no input) or moving (MOVE=1). Every measurement starts fresh processes,
 # waits WARMUP seconds, then attaches perf by PID, so only the steady state is
 # measured. perf stat -r is not used: a client that already joined never
 # rejoins a new server, so the server cannot be restarted on its own.
@@ -78,8 +81,8 @@ if grep -qv performance /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; t
     echo "Run first: sudo cpupower frequency-set -g performance" >&2; exit 1
 fi
 mkdir -p "$RAW"
-printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s\n' "$(date -Iseconds)" \
-    "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" >> "$CMDS"
+printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s\n' "$(date -Iseconds)" \
+    "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" >> "$CMDS"
 
 # True if section $1 was requested in STEPS
 want() { [[ " $STEPS " == *" $1 "* ]]; }
@@ -96,6 +99,15 @@ logged() {
 # ---------------------------------------------------------------------------
 arr_client_pids=()
 int_server_pid=0
+MOVE=${MOVE:-0}
+if [ "$MOVE" = 1 ]; then
+    export FUSE_AUTO_MOVE=1     # inherited by every client started below
+    str_scenario="moving: every client holds right, down, left, up for 1 s each (FUSE_AUTO_MOVE=1),
+sending ~100 input messages/s like a held arrow key"
+else
+    str_scenario="idle: clients join on their own
+and send no input"
+fi
 
 start_scenario() {
     # stdout goes to /dev/null so terminal printing is not part of the cost
@@ -268,8 +280,8 @@ trace_table() {
     echo "Server: $SERVER   Client: $CLIENT   Level: ${str_level:-unknown}"
     echo
     echo "== 2. Scenario"
-    echo "1 server + $CLIENTS clients on one machine, idle: clients join on their own"
-    echo "and send no input. Server pinned to CPUs $SERVER_CPUS, clients to CPUs"
+    echo "1 server + $CLIENTS clients on one machine, $str_scenario."
+    echo "Server pinned to CPUs $SERVER_CPUS, clients to CPUs"
     echo "$CLIENT_CPUS (P-cores only). Program output goes to /dev/null."
     echo "Every measurement starts fresh processes, waits ${WARMUP} s (joining finishes),"
     echo "attaches perf to the process by PID, then kills everything."
