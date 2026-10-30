@@ -22,6 +22,7 @@ write_setup() {
     echo "Recorded: $(date -Iseconds)"
     echo "DDS security: ${FUSE_DDS_SECURITY:-on}"
     echo "Application authentication: ${FUSE_AUTH:-on}"
+    echo "Thread handoff: ${FUSE_HANDOFF:-spsc}"
     echo
     echo "== Build"
     for bin in "$@"; do

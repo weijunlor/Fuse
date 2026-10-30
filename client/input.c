@@ -7,9 +7,6 @@ Keyboard polling to key bitmask; send on change. */
 #include "net_client.h"
 #include "types.h"
 
-// Keys held (KEY_* bitmask); 0 means none
-uint8_t u8_keys = 0;
-
 // Seconds each direction is held in auto-move mode
 #define AUTO_MOVE_S 1.0
 
@@ -31,9 +28,7 @@ static bool auto_move(void)
 
 	static const uint8_t arr_u8_dirs[4] = { KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_UP };
 	uint8_t u8_new = arr_u8_dirs[(int)(glfwGetTime() / AUTO_MOVE_S) % 4];
-	pthread_mutex_lock(&mutex);
-	u8_keys = u8_new;
-	pthread_mutex_unlock(&mutex);
+	net_client_set_keys(u8_new);
 	return true;
 }
 
@@ -53,7 +48,5 @@ void input_poll(GLFWwindow *a_p_window)
 	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 		u8_new |= KEY_RIGHT;
 
-	pthread_mutex_lock(&mutex);
-	u8_keys = u8_new;
-	pthread_mutex_unlock(&mutex);
+	net_client_set_keys(u8_new);
 }

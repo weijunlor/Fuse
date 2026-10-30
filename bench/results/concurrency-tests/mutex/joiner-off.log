@@ -1,0 +1,5 @@
+DDS security: OFF (explicit plaintext comparison)
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+joined=0 id=0 join_ms=-1 requests=0 active=0 snapshots=15

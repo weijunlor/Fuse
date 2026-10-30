@@ -23,6 +23,7 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     metadata = {"kernel": os.uname().release,
+                "handoff": os.environ.get("FUSE_HANDOFF", "spsc"),
                 "openssl": subprocess.check_output(["openssl", "version"], text=True).strip(),
                 "cyclonedds": subprocess.check_output(["pkg-config", "--modversion", "CycloneDDS"], text=True).strip(),
                 "binaries": {name: hashlib.sha256((ROOT / "build" / name).read_bytes()).hexdigest()

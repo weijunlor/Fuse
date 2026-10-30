@@ -97,9 +97,9 @@ else
     fi
 fi
 mkdir -p "$RAW"
-[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s"\n' \
+[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s" FUSE_HANDOFF="%s"\n' \
     "$(date -Iseconds)" "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" "$SERVER_ARGS" "$CLIENT_ARGS" \
-    "${FUSE_QOS:-}" >> "$CMDS"
+    "${FUSE_QOS:-}" "${FUSE_HANDOFF:-spsc}" >> "$CMDS"
 
 # True if section $1 was requested in STEPS
 want() { [[ " $STEPS " == *" $1 "* ]]; }
@@ -383,6 +383,7 @@ trace_table() {
     [ -z "$SERVER_ARGS" ] || echo "Server options: $SERVER_ARGS"
     [ -z "$CLIENT_ARGS" ] || echo "Client options: $CLIENT_ARGS"
     [ -z "${FUSE_QOS:-}" ] || echo "Environment: FUSE_QOS=$FUSE_QOS"
+    echo "Thread handoff: ${FUSE_HANDOFF:-spsc}"
     echo "Server pinned to CPUs $SERVER_CPUS, clients to CPUs"
     echo "$CLIENT_CPUS (P-cores only). Program output goes to /dev/null."
     echo "Every measurement starts fresh processes, waits ${WARMUP} s (joining finishes),"

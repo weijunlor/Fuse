@@ -30,6 +30,10 @@ in [security/README.md](security/README.md).
 Application login setup, custom accounts and authentication tests are in
 [security/AUTH.md](security/AUTH.md).
 
+Concurrency uses SPSC command queues and double-buffered snapshots by default.
+Set `FUSE_HANDOFF=mutex` on both server and clients for the comparison path.
+Both modes fix the player-ID race. See [concurrency checks and profiling](docs/CONCURRENCY.md).
+
 ## Layout
 
 | Folder | Contents |

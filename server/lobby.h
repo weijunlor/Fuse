@@ -17,10 +17,11 @@ Player slots: join (nonce), leave, liveliness timeout. */
    non-colliding position, or answers "full". Each answer is queued.
 3. DDS worker collects the answers with lobby_take_result() and sends each in
    a JoinResponse carrying the request's nonce.
-Queues and slot nonces are guarded by the mutex in game.h.
+SPSC mode copies requests/results across bounded rings; slot state is owned
+by the main thread. The mutex comparison retains the original queues.
 
-Leaving (net_leave() in common/net.h): the DDS worker authenticates and queues
-each Leave with lobby_receive_leave(); lobby_poll() frees those slots. The main
+Leaving (net_leave() in common/net.h): the DDS worker submits copied Leave
+samples; lobby_poll() authenticates them and frees those slots. The main
 thread also calls lobby_check_timeouts() once per tick, which frees the slot
 of any player that sent no Input for int_player_timeout_s seconds. A freed
 slot erases its session key and can be given to the next client that joins.
@@ -33,6 +34,7 @@ a repeated request from a new client (see net_join_nonce() in common/net.h). */
 // Requests (and answers) that can wait between two passes of the threads;
 // more than that are dropped, and the client asks again 1 s later
 #define JOIN_QUEUE 16
+#define INPUT_QUEUE 256
 
 // One answer to a JoinRequest, for the DDS worker to send
 typedef JoinResponse JoinResult;
@@ -53,6 +55,14 @@ extern int int_player_timeout_s;
 // unauthenticated sample may move a player, refresh its timeout, or free it.
 bool lobby_receive_input(const Input *a_input);
 bool lobby_receive_leave(const Leave *a_leave);
+
+// Network entry points: SPSC mode copies into a bounded ring, and the MAIN
+// thread authenticates on consumption. A true result means queued, not yet
+// authenticated. Full queues return false without changing auth state. Input
+// repeats recover dropped updates; a dropped Leave is recovered by timeout.
+// Mutex comparison mode validates/applies immediately as before.
+bool lobby_submit_input(const Input *a_input);
+bool lobby_submit_leave(const Leave *a_leave);
 
 // Called repeatedly by the main thread: handles every pending leave, then
 // every pending join request

@@ -1,0 +1,59 @@
+==================
+WARNING: ThreadSanitizer: data race (pid=548)
+  Write of size 8 at 0x7b5400000000 by thread T2:
+    #0 free ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:711 (libtsan.so.0+0x37ab8)
+    #1 ddsrt_free /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/heap/posix/heap.c:89 (libddsc.so.0+0x1e59dc)
+    #2 gc_buckets_cb /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/ddsi_entity_index.c:225 (libddsc.so.0+0x7e659)
+    #3 gcreq_queue_thread /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_gc.c:183 (libddsc.so.0+0x10b9fe)
+    #4 create_thread_wrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:257 (libddsc.so.0+0x14215e)
+    #5 os_startRoutineWrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/threads/posix/threads.c:175 (libddsc.so.0+0x1e761f)
+
+  Previous read of size 4 at 0x7b5400000000 by thread T3:
+    #0 ddsrt_chh_lookup /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/hopscotch.c:416 (libddsc.so.0+0x1d96d5)
+    #1 entidx_lookup_guid_untyped /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/ddsi_entity_index.c:300 (libddsc.so.0+0x7ebbb)
+    #2 handle_spdp_alive /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_ddsi_discovery.c:776 (libddsc.so.0+0xfeb60)
+    #3 handle_spdp /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_ddsi_discovery.c:993 (libddsc.so.0+0x100527)
+    #4 builtins_dqueue_handler /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_ddsi_discovery.c:2101 (libddsc.so.0+0x106ef1)
+    #5 dqueue_thread /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_radmin.c:2552 (libddsc.so.0+0x128a49)
+    #6 create_thread_wrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:257 (libddsc.so.0+0x14215e)
+    #7 os_startRoutineWrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/threads/posix/threads.c:175 (libddsc.so.0+0x1e761f)
+
+  As if synchronized via sleep:
+    #0 nanosleep ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:366 (libtsan.so.0+0x6696c)
+    #1 dds_sleepfor /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/time.c:34 (libddsc.so.0+0x1e3baa)
+    #2 gcreq_queue_thread /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_gc.c:173 (libddsc.so.0+0x10b93d)
+    #3 create_thread_wrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:257 (libddsc.so.0+0x14215e)
+    #4 os_startRoutineWrapper /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/threads/posix/threads.c:175 (libddsc.so.0+0x1e761f)
+
+  Thread T2 'gc' (tid=551, running) created by thread T1 at:
+    #0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:969 (libtsan.so.0+0x605b8)
+    #1 ddsrt_thread_create /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/threads/posix/threads.c:326 (libddsc.so.0+0x1e7cd7)
+    #2 create_thread_int /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:337 (libddsc.so.0+0x1427b1)
+    #3 create_thread /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:360 (libddsc.so.0+0x14293f)
+    #4 gcreq_queue_start /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_gc.c:212 (libddsc.so.0+0x10bc24)
+    #5 rtps_start /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_init.c:1981 (libddsc.so.0+0x1165ab)
+    #6 dds_domain_init /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:176 (libddsc.so.0+0x197455)
+    #7 dds_domain_create_internal_xml_or_raw /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:250 (libddsc.so.0+0x1978e5)
+    #8 dds_domain_create_internal /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:274 (libddsc.so.0+0x197a2a)
+    #9 dds_create_participant /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_participant.c:112 (libddsc.so.0+0x17fd77)
+    #10 dds_security_create_participant common/dds_security.c:183 (server+0x407c3f)
+    #11 net_create_topics common/net.c:37 (server+0x408478)
+    #12 net_server_worker server/net_server.c:55 (server+0x405ed9)
+
+  Thread T3 'dq.builtins' (tid=552, running) created by thread T1 at:
+    #0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:969 (libtsan.so.0+0x605b8)
+    #1 ddsrt_thread_create /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/threads/posix/threads.c:326 (libddsc.so.0+0x1e7cd7)
+    #2 create_thread_int /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:337 (libddsc.so.0+0x1427b1)
+    #3 create_thread /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_thread.c:360 (libddsc.so.0+0x14293f)
+    #4 nn_dqueue_start /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_radmin.c:2641 (libddsc.so.0+0x128f0e)
+    #5 rtps_start /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsi/src/q_init.c:1983 (libddsc.so.0+0x1165d6)
+    #6 dds_domain_init /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:176 (libddsc.so.0+0x197455)
+    #7 dds_domain_create_internal_xml_or_raw /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:250 (libddsc.so.0+0x1978e5)
+    #8 dds_domain_create_internal /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_domain.c:274 (libddsc.so.0+0x197a2a)
+    #9 dds_create_participant /home/sy/.cache/fuse/cyclonedds-0.10.5/src/core/ddsc/src/dds_participant.c:112 (libddsc.so.0+0x17fd77)
+    #10 dds_security_create_participant common/dds_security.c:183 (server+0x407c3f)
+    #11 net_create_topics common/net.c:37 (server+0x408478)
+    #12 net_server_worker server/net_server.c:55 (server+0x405ed9)
+
+SUMMARY: ThreadSanitizer: data race /home/sy/.cache/fuse/cyclonedds-0.10.5/src/ddsrt/src/heap/posix/heap.c:89 in ddsrt_free
+==================

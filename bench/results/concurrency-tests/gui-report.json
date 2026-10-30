@@ -1,0 +1,26 @@
+[
+  {
+    "check": "invalid-handoff-rejected",
+    "passed": true
+  },
+  {
+    "check": "gui-server-started",
+    "passed": true
+  },
+  {
+    "check": "gui-two-clients-joined",
+    "passed": true
+  },
+  {
+    "check": "gui-client-1-render-close-leave",
+    "passed": true
+  },
+  {
+    "check": "gui-client-2-render-close-leave",
+    "passed": true
+  },
+  {
+    "check": "gui-server-freed-both-slots",
+    "passed": true
+  }
+]

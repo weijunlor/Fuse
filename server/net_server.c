@@ -4,8 +4,9 @@ Server DDS worker thread: takes inputs, publishes snapshots.
 Since #12 the worker publishes one GameSnapshot per published tick (built by
 game_tick() on the main thread) instead of one Position message per player,
 and an Input carries the held keys, which game_tick() applies. The worker
-still busy-polls and still writes while holding the mutex, as the baseline
-did: those are optimisations #2 and #1, measured separately.
+still busy-polls (#2). With #3 it exchanges snapshots/commands through
+nonblocking buffers/rings. FUSE_HANDOFF=mutex keeps the earlier handoff and
+publish-under-mutex path for comparison (#1 remains a separate change).
 
 #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
 and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
@@ -15,9 +16,9 @@ Join nonce (lobby.h, net_join_nonce() in common/net.h): every JoinRequest
 taken is queued for the main thread with its nonce, and every answer is sent
 back with that nonce, so only the client that asked accepts it.
 
-Leave (lobby.h, net_leave() in common/net.h): every Leave is authenticated
-before queueing removal. Inputs and Leave are checked against the slot's
-session under the same mutex as the state update. */
+Leave (lobby.h, net_leave() in common/net.h): Input/Leave samples are copied
+before DDS reuses them, then authenticated by the main thread against the
+current slot/session. Queue admission alone never authenticates a message. */
 
 #include <stdio.h>
 
@@ -27,6 +28,7 @@ session under the same mutex as the state update. */
 #include "game.h"
 #include "lobby.h"
 #include "log.h"
+#include "handoff.h"
 
 void *net_server_worker(void *arg)
 {
@@ -121,9 +123,11 @@ void *net_server_worker(void *arg)
 			dds_sleepfor (DDS_MSECS (20));
 
 		// Publish the latest snapshot once (game_tick() on the main thread
-		// makes a new one every int_snapshot_every ticks). The write happens
-		// while holding the mutex, as the baseline's Position writes did (#1).
-		pthread_mutex_lock(&mutex);
+		// makes a new one every int_snapshot_every ticks).
+		// #3: take a complete snapshot without sharing the state mutex.
+		// The comparison retains publish-under-mutex (#1 stays separate).
+		if (!handoff_spsc())
+			pthread_mutex_lock(&mutex);
 		if (game_take_snapshot(&snapshot))
 		{
 			rc = dds_write(snapshot_writer, &snapshot);
@@ -133,7 +137,8 @@ void *net_server_worker(void *arg)
 			}
 			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
 		}
-		pthread_mutex_unlock(&mutex);
+		if (!handoff_spsc())
+			pthread_mutex_unlock(&mutex);
 
 		// Listen for input
 		rc = dds_take(input_reader, samples_input, infos_input,
@@ -151,7 +156,7 @@ void *net_server_worker(void *arg)
 			LOG_DEBUG("Input received\n");
 			Input *input = (Input *) samples_input[i];
 			// Remember the held keys; the next tick moves the player
-			if (!lobby_receive_input(input))
+			if (!lobby_submit_input(input))
 				LOG_DEBUG("Input rejected\n");
 		}
 
@@ -167,8 +172,8 @@ void *net_server_worker(void *arg)
 			if (!infos_leave[i].valid_data)
 				continue;
 			const Leave *p_leave = samples_leave[i];
-			if (lobby_receive_leave(p_leave))
-				LOG_INFO("Leave accepted from player %d\n", (int)p_leave->player_id);
+			if (lobby_submit_leave(p_leave))
+				LOG_INFO("Leave submitted from player %d\n", (int)p_leave->player_id);
 			else
 				LOG_DEBUG("Leave rejected\n");
 		}

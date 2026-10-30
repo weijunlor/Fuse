@@ -34,6 +34,7 @@ Options:
 #include "log.h"
 #include "dds_security.h"
 #include "auth.h"
+#include "handoff.h"
 
 // Nanoseconds per tick
 #define TICK_NS (1000000000ull / TICK_HZ)
@@ -64,6 +65,8 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (!handoff_init())
+		return EXIT_FAILURE;
 	dds_security_prepare();
 	if (!auth_init())
 		return EXIT_FAILURE;

@@ -8,8 +8,6 @@
 #include "net_client.h"
 #include "types.h"
 
-uint8_t u8_keys;
-
 int main(void)
 {
     if (!net_client_prepare()) return 2;
@@ -19,19 +17,20 @@ int main(void)
     bool b_moved = false;
     bool b_rejoin_test = getenv("FUSE_TEST_REJOIN") != NULL, b_paused = false;
     int int_after_resume = 0;
+    ClientFrame frame = { .int_player_id = -1 };
     for (int i = 0; i < 1000; i++)
     {
         usleep(10000);
-        pthread_mutex_lock(&mutex);
-        int_id = int_player_id;
-        if (int_id >= 1 && int_id <= MAX_PLAYERS && arr_Players[int_id - 1].b_active)
+        net_client_read_frame(&frame);
+        int_id = frame.int_player_id;
+        if (int_id >= 1 && int_id <= MAX_PLAYERS &&
+            (frame.snapshot.players[int_id - 1].flags & PF_ACTIVE))
         {
-            int_last_x = arr_Players[int_id - 1].x;
+            int_last_x = frame.snapshot.players[int_id - 1].x;
             if (int_first_x < 0) int_first_x = int_last_x;
-            u8_keys = int_first_x > 400 ? KEY_LEFT : KEY_RIGHT;
+            net_client_set_keys(int_first_x > 400 ? KEY_LEFT : KEY_RIGHT);
             if (int_last_x != int_first_x) b_moved = true;
         }
-        pthread_mutex_unlock(&mutex);
         if (b_moved && b_rejoin_test && !b_paused)
         {
             b_paused = true;

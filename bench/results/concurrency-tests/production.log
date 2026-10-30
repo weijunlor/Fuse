@@ -1,0 +1,11 @@
+PASS invalid-handoff-rejected
+PASS tsan-server-spsc-started
+FAIL tsan-worker-spsc-movement-leave
+Traceback (most recent call last):
+  File "/mnt/c/Users/sy/Desktop/Fuse/bench/check_concurrency.py", line 133, in <module>
+    main()
+  File "/mnt/c/Users/sy/Desktop/Fuse/bench/check_concurrency.py", line 80, in main
+    record(f"tsan-worker-{mode}-movement-leave", worker.returncode == 0 and "moved=1" in worker.stdout)
+  File "/mnt/c/Users/sy/Desktop/Fuse/bench/check_concurrency.py", line 40, in record
+    raise RuntimeError(f"inspect {output}")
+RuntimeError: inspect /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests

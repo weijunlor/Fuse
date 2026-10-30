@@ -11,6 +11,11 @@ player by PLAYER_SPEED / TICK_HZ pixels per tick, TICK_HZ times per second. */
 #include "game.h"
 #include "collision.h"
 #include "timing.h"
+#include "handoff.h"
+#include "double_buffer.h"
+
+DOUBLE_BUFFER_DEFINE(SnapshotBuffer, GameSnapshot)
+static SnapshotBuffer snapshot_buffer;
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
@@ -132,12 +137,19 @@ void game_tick(void)
 
 	// Publish every int_snapshot_every-th tick (all of them at 60 Hz)
 	if (u_tick % (uint32_t)int_snapshot_every == 0)
-		b_snapshot_ready = true;
+	{
+		if (handoff_spsc())
+			SnapshotBuffer_publish(&snapshot_buffer, &snapshot);
+		else
+			b_snapshot_ready = true;
+	}
 	pthread_mutex_unlock(&mutex);
 }
 
 bool game_take_snapshot(GameSnapshot *a_p_out)
 {
+	if (handoff_spsc())
+		return SnapshotBuffer_take(&snapshot_buffer, a_p_out);
 	if (!b_snapshot_ready)
 		return false;
 	*a_p_out = snapshot;

@@ -9,6 +9,7 @@
 #include "game.h"
 #include "lobby.h"
 #include "timing.h"
+#include "handoff.h"
 
 static int int_checks;
 #define CHECK(condition) do { int_checks++; if (!(condition)) { \
@@ -30,6 +31,7 @@ static JoinResponse join_request(const JoinRequest *a_request)
 
 int main(void)
 {
+    CHECK(handoff_init());
     unsetenv("FUSE_AUTH");
     uint8_t arr_key[32], arr_result[32], arr_session[16];
     char arr_hex[65];
@@ -87,6 +89,7 @@ int main(void)
     uint64_t u64_before = game_last_input_ns(0);
     Input forged = input; forged.seq = UINT32_MAX;
     CHECK(!lobby_receive_input(&forged));
+
     CHECK(game_last_input_ns(0) == u64_before);
     forged = input; forged.player_id = 2;
     CHECK(!lobby_receive_input(&forged));
@@ -104,6 +107,35 @@ int main(void)
     CHECK(app_client_response(&client, &request, &retry));
     CHECK(client.u32_seq == u32_before_retry); // duplicate response cannot reset client seq either
     CHECK(!lobby_receive_input(&input)); // retry did not reset replay watermark
+
+    if (handoff_spsc())
+    {
+        // Queue admission must not mutate auth/game state. Invalid samples
+        // may fill a ring but cannot consume the valid sender's sequence.
+        uint64_t u64_before_queue = game_last_input_ns(0);
+        input.keys = KEY_RIGHT;
+        CHECK(app_client_input(&client, &input));
+        CHECK(lobby_submit_input(&input));
+        CHECK(game_last_input_ns(0) == u64_before_queue);
+        lobby_poll();
+        CHECK(game_last_input_ns(0) >= u64_before_queue);
+        CHECK(!lobby_receive_input(&input)); // consumer already accepted it
+        Input invalid = input; invalid.player_id = 0;
+        for (unsigned i = 0; i < INPUT_QUEUE; i++) CHECK(lobby_submit_input(&invalid));
+        CHECK(app_client_input(&client, &input));
+        CHECK(!lobby_submit_input(&input)); // overflow leaves seq untouched
+        CHECK(lobby_receive_input(&input));
+        uint64_t u64_after_valid = game_last_input_ns(0);
+        lobby_poll();
+        CHECK(game_last_input_ns(0) == u64_after_valid);
+        // Reuse DDS storage immediately after submission: queue owns a copy.
+        CHECK(app_client_input(&client, &input));
+        CHECK(lobby_submit_input(&input));
+        input.mac[0] ^= 1;
+        lobby_poll();
+        input.mac[0] ^= 1;
+        CHECK(!lobby_receive_input(&input));
+    }
 
     // Input and Leave share the sequence, but have distinct MAC domains.
     Leave leave = {.player_id = 1, .seq = input.seq};
@@ -148,6 +180,34 @@ int main(void)
     CHECK(!arr_Players[0].b_active && !arr_Players[1].b_active);
     CHECK(!lobby_receive_input(&forged));
     CHECK(join_request(&second_request).status == JOIN_BAD_LOGIN);
+
+    // A sample delayed in the handoff must never authenticate against a new
+    // occupant of the same player slot, or refresh that occupant's timeout.
+    if (handoff_spsc())
+    {
+        CHECK(app_client_request(&client, &request));
+        response = join_request(&request);
+        CHECK(response.status == JOIN_OK && response.player_id == 1);
+        CHECK(app_client_response(&client, &request, &response));
+        Input stale = { .player_id = 1, .keys = KEY_LEFT };
+        CHECK(app_client_input(&client, &stale));
+        CHECK(lobby_submit_input(&stale));
+        lobby_check_timeouts(timing_now_ns() + 2000000000ull);
+        CHECK(!arr_Players[0].b_active);
+        lobby_poll(); // no active session: reject the delayed sample
+        CHECK(app_client_request(&client, &request));
+        response = join_request(&request);
+        CHECK(app_client_response(&client, &request, &response));
+        CHECK(lobby_submit_input(&stale));
+        uint64_t u64_new_session = game_last_input_ns(0);
+        lobby_poll();
+        CHECK(game_last_input_ns(0) == u64_new_session);
+        Leave queued_leave = { .player_id = 1 };
+        CHECK(app_client_leave(&client, &queued_leave));
+        CHECK(lobby_submit_leave(&queued_leave));
+        CHECK(arr_Players[0].b_active); // only the main consumer removes it
+        lobby_poll(); CHECK(!arr_Players[0].b_active);
+    }
 
     // Full games do not consume a nonce; the same authenticated request can
     // succeed when a slot opens. Out-of-order seq and sequence zero are rejected.
@@ -212,6 +272,52 @@ int main(void)
     CHECK(unlink(arr_path) == 0); CHECK(!auth_init());
     client.u32_seq = UINT32_MAX; CHECK(!app_client_input(&client, &input));
     CHECK(!app_client_leave(&client, &leave));
+
+    if (handoff_spsc())
+    {
+        // Backpressure: a full answer ring must retain pending requests.
+        // No request may be silently removed or answered out of order.
+        JoinRequest queued = {0};
+        for (unsigned batch = 0; batch < 2; batch++)
+        {
+            for (unsigned i = 0; i < JOIN_QUEUE; i++)
+            {
+                queued.nonce = 10000 + batch * JOIN_QUEUE + i;
+                CHECK(lobby_signal_join(&queued));
+            }
+            CHECK(!lobby_signal_join(&queued));
+            lobby_poll();
+        }
+        for (unsigned batch = 0; batch < 2; batch++)
+        {
+            for (unsigned i = 0; i < JOIN_QUEUE; i++)
+            {
+                CHECK(lobby_take_result(&response));
+                CHECK(response.nonce == 10000 + batch * JOIN_QUEUE + i);
+            }
+            CHECK(!lobby_take_result(&response));
+            lobby_poll();
+        }
+    }
+    // Both snapshot paths honour --snapshot-hz and return each tick once.
+    int_snapshot_every = 6;
+    unsigned u_snapshots = 0;
+    uint32_t u32_last_tick = 0;
+    for (unsigned i = 0; i < 12; i++)
+    {
+        game_tick();
+        GameSnapshot snapshot;
+        if (!handoff_spsc()) pthread_mutex_lock(&mutex);
+        if (game_take_snapshot(&snapshot))
+        {
+            CHECK(snapshot.tick > u32_last_tick && snapshot.tick % 6 == 0);
+            u32_last_tick = snapshot.tick;
+            u_snapshots++;
+        }
+        CHECK(!game_take_snapshot(&snapshot));
+        if (!handoff_spsc()) pthread_mutex_unlock(&mutex);
+    }
+    CHECK(u_snapshots == 2);
     printf("PASS authentication unit/lifecycle checks=%d\n", int_checks);
     return 0;
 }

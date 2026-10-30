@@ -15,8 +15,9 @@ Server simulation tick: movement, bomb/fuse, rounds, pickups, win state. */
 // Table to track clients. Player ID is the array index plus 1.
 extern Player arr_Players[MAX_PLAYERS];
 
-// One mutex guards the player table, the held keys, the latest snapshot and
-// the lobby flags (lobby.h), shared by the main thread and the DDS worker thread
+// State mutex: shared with the DDS worker only in the mutex comparison mode.
+// In SPSC mode the main thread owns players/keys/auth/lobby state, and the
+// worker sees copies through rings and a pinned snapshot buffer.
 extern pthread_mutex_t mutex;
 
 // Snapshots are published every this many ticks (TICK_HZ / --snapshot-hz)
@@ -47,7 +48,8 @@ void game_tick(void);
 
 // Copy the latest snapshot to *a_p_out if one is waiting to be published,
 // and mark it taken. Returns false if there is nothing new.
-// The caller must hold the mutex.
+// SPSC: DDS worker copies from a pinned double buffer without taking mutex.
+// Mutex comparison: the caller must hold mutex, as in the original path.
 bool game_take_snapshot(GameSnapshot *a_p_out);
 
 #endif /* SERVER_GAME_H */

@@ -253,6 +253,10 @@ void render_resize(int a_int_w, int a_int_h)
 
 void render_frame(void)
 {
+    // One immutable copy drives players, labels and the banner for this
+    // entire frame. A busy writer leaves our previous complete frame intact.
+    static ClientFrame frame = { .int_player_id = -1 };
+    net_client_read_frame(&frame);
     double d_time_s = glfwGetTime();
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -289,14 +293,13 @@ void render_frame(void)
     // Players: the sprite is the same size as the SQ_WIDTH hitbox
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        pthread_mutex_lock(&mutex);
-        if(arr_Players[i].b_active == true)
+        const PlayerState *p_state = &frame.snapshot.players[i];
+        if (p_state->flags & PF_ACTIVE)
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
-            render_sprite(int_sprite, arr_Players[i].x, arr_Players[i].y);
+            render_sprite(int_sprite, p_state->x, p_state->y);
         }
-        pthread_mutex_unlock(&mutex);
     }
 
     // Batched mode: everything above is drawn here, in one call
@@ -309,24 +312,23 @@ void render_frame(void)
     glColor3f(0.15f, 0.15f, 0.2f);
 
     char str_banner[100] = "Waiting for server ...";
-    if (int_player_id != -1)
+    if (frame.int_player_id != -1)
     {
-        snprintf(str_banner, sizeof(str_banner), "Player %d", int_player_id);
+        snprintf(str_banner, sizeof(str_banner), "Player %d", frame.int_player_id);
     }
     ui_draw_text(320, 20, 3.0f, str_banner);
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        pthread_mutex_lock(&mutex);
-        if(arr_Players[i].b_active == true)
+        const PlayerState *p_state = &frame.snapshot.players[i];
+        if (p_state->flags & PF_ACTIVE)
         {
             // Label the player ID above the sprite
             char str_player[2] = "";
             snprintf(str_player, sizeof(str_player), "%d", i+1);
-            ui_draw_text(arr_Players[i].x + SQ_WIDTH / 2 - 7, arr_Players[i].y - 30,
+            ui_draw_text(p_state->x + SQ_WIDTH / 2 - 7, p_state->y - 30,
                          3.0f, str_player);
         }
-        pthread_mutex_unlock(&mutex);
     }
 }
 

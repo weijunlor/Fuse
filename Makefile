@@ -104,8 +104,8 @@ build/dds_security_probe: bench/dds_security_probe.c common/net.c common/dds_sec
 build/dds_security_probe_baseline: bench/dds_security_probe.c common/dds_security.c build/baseline/messages.c common/dds_security.h
 	mkdir -p build && $(CC) $(CFLAGS) -Ibuild/baseline -DFUSE_PROBE_BASELINE $(filter %.c,$^) -o $@ $(LDDDS)
 
-AUTH_TEST_SRC := bench/test_auth.c server/auth.c server/lobby.c server/game.c server/collision.c common/crypto.c common/app_client.c common/net.c common/dds_security.c common/timing.c $(GEN)
-build/test_auth: $(AUTH_TEST_SRC) common/crypto.h common/app_client.h server/auth.h
+AUTH_TEST_SRC := bench/test_auth.c server/auth.c server/lobby.c server/game.c server/collision.c common/crypto.c common/app_client.c common/net.c common/dds_security.c common/timing.c common/handoff.c $(GEN)
+build/test_auth: $(AUTH_TEST_SRC) $(GAME_HEADERS)
 	mkdir -p build && $(CC) $(CFLAGS) -Iserver $(AUTH_TEST_SRC) -o $@ $(LDDDS)
 
 test-auth: build/test_auth
@@ -114,8 +114,50 @@ test-auth: build/test_auth
 build/auth_probe: bench/auth_probe.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
 	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
 
-build/auth_worker: bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
-	mkdir -p build && $(CC) $(CFLAGS) -Iclient $^ -o $@ $(LDDDS)
+AUTH_WORKER_SRC := bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c common/handoff.c $(APP_CLIENT_SRC) $(GEN)
+build/auth_worker: $(AUTH_WORKER_SRC) $(GAME_HEADERS)
+	mkdir -p build && $(CC) $(CFLAGS) -Iclient $(AUTH_WORKER_SRC) -o $@ $(LDDDS)
+
+# Header-only queue/buffer stress tests, independent of DDS and graphics.
+build/test_concurrency: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread
+
+test-concurrency: build/test_concurrency build/test_auth
+	./build/test_concurrency
+	FUSE_HANDOFF=spsc ./build/test_auth
+	FUSE_HANDOFF=mutex ./build/test_auth
+
+TSAN_FLAGS := $(filter-out -O2,$(CFLAGS)) -O1 -g -fno-omit-frame-pointer -fsanitize=thread -fno-pie -no-pie
+build/test_concurrency_tsan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+	mkdir -p build && $(CC) $(TSAN_FLAGS) $< -o $@ -pthread
+
+ASAN_FLAGS := $(filter-out -O2,$(CFLAGS)) -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-pie -no-pie
+build/test_concurrency_asan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+	mkdir -p build && $(CC) $(ASAN_FLAGS) $< -o $@ -pthread
+
+build/test_auth_asan: $(AUTH_TEST_SRC) $(GAME_HEADERS)
+	mkdir -p build && $(CC) $(ASAN_FLAGS) -Iserver $(AUTH_TEST_SRC) -o $@ $(LDDDS)
+
+build/concurrency-tsan/server: $(wildcard server/*.c) $(COMMON) $(GAME_HEADERS)
+	mkdir -p $(@D) && $(CC) $(TSAN_FLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
+
+build/concurrency-tsan/auth_worker: $(AUTH_WORKER_SRC) $(GAME_HEADERS)
+	mkdir -p $(@D) && $(CC) $(TSAN_FLAGS) -Iclient $(AUTH_WORKER_SRC) -o $@ $(LDDDS)
+
+# Instrument DDS as well: its custom atomics are invisible to TSan otherwise.
+# Uses the pinned source already cached by security/scripts/setup_wsl.sh.
+DDS_TSAN_SOURCE ?= $(HOME)/.cache/fuse/cyclonedds-0.10.5
+concurrency-tsan-dds:
+	cmake -S "$(DDS_TSAN_SOURCE)" -B build/tsan-dds -DCMAKE_BUILD_TYPE=Debug \
+	    -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" \
+	    -DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=thread -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread -no-pie" \
+	    -DBUILD_SHARED_LIBS=ON -DENABLE_SECURITY=ON -DENABLE_SSL=ON -DENABLE_SHM=OFF \
+	    -DBUILD_IDLC=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+	cmake --build build/tsan-dds --target ddsc dds_security_auth dds_security_ac dds_security_crypto --parallel 4
+
+test-concurrency-integration: all build/auth_worker build/auth_probe build/dds_joiner build/dds_security_probe build/test_auth
+	FUSE_HANDOFF=spsc python3 security/scripts/test_auth.py --output bench/results/concurrency-tests/spsc
+	FUSE_HANDOFF=mutex python3 security/scripts/test_auth.py --output bench/results/concurrency-tests/mutex
 
 test-auth-integration: all build/test_auth build/auth_probe build/auth_worker build/dds_joiner build/dds_security_probe
 	python3 security/scripts/test_auth.py
@@ -157,4 +199,4 @@ clean:
 # Keep pattern-built baseline binaries (make would delete them as intermediates)
 .PRECIOUS: build/baseline-O%/server build/baseline-O%/client
 
-.PHONY: all baseline bench profile debug clean test-auth test-auth-integration
+.PHONY: all baseline bench profile debug clean test-auth test-auth-integration test-concurrency test-concurrency-integration concurrency-tsan-dds

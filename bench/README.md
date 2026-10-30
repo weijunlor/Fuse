@@ -16,6 +16,13 @@ so both can be measured on the same machine with the same build flags.
 Done: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads; see below).
 Planned: bench_collision (branchy vs branchless), bench_false_share (padded vs unpadded), bench_reduce (1 vs 4 accumulators).
 
+Concurrency #3/#4: `make test-concurrency` checks the ring/buffer under real
+threads and authentication lifecycle in both handoff modes.
+`make test-concurrency-integration` runs real-DDS acceptance checks in both modes.
+Use `FUSE_HANDOFF=mutex` or `spsc` consistently on server and clients when
+profiling; setup.txt records the selected mode. Full procedure and sanitizer
+commands: [docs/CONCURRENCY.md](../docs/CONCURRENCY.md).
+
 Results go in `results/` as CSV (`perf stat -x, -r 10 -o results/<name>.csv ...`).
 
 ## Profiling the game: `profile.sh`
