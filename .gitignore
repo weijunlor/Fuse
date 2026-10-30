@@ -9,3 +9,4 @@ users.db
 perf.data*
 screenshot.png
 __pycache__/
+.vscode/

@@ -100,7 +100,7 @@ build/baseline-O%/client: baseline/client.c build/baseline/messages.c
 	mkdir -p $(@D) && $(CC) -O$* -g -fno-omit-frame-pointer -Ibuild/baseline -Ithird_party $^ -o $@ \
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
-bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner
+bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner build/dds_players
 
 # Headless client for the join tests of #14 (bench/join_loss.sh): uses the
 # game's DDS code (common/net.c) so it joins with exactly the client's QoS
@@ -125,7 +125,7 @@ test-auth: build/test_auth
 build/auth_probe: bench/auth_probe.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
 	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
 
-AUTH_WORKER_SRC := bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c common/handoff.c $(APP_CLIENT_SRC) $(GEN)
+AUTH_WORKER_SRC := bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c common/handoff.c common/timing.c $(APP_CLIENT_SRC) $(GEN)
 build/auth_worker: $(AUTH_WORKER_SRC) $(GAME_HEADERS)
 	mkdir -p build && $(CC) $(CFLAGS) -Iclient $(AUTH_WORKER_SRC) -o $@ $(LDDDS)
 
@@ -172,6 +172,10 @@ test-concurrency-integration: all build/auth_worker build/auth_probe build/dds_j
 
 test-auth-integration: all build/test_auth build/auth_probe build/auth_worker build/dds_joiner build/dds_security_probe
 	python3 security/scripts/test_auth.py
+
+# Headless test players for #2 and the game rules: snapshot gaps, phases
+build/dds_players: bench/dds_players.c common/net.c common/net.h common/dds_security.c $(APP_CLIENT_SRC) $(GEN) $(GAME_HEADERS)
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS) -lm
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm
@@ -231,7 +235,7 @@ $(PADDING_STAMP): FORCE_PADDING
 PADDING_TARGETS := build/server build/client build/particles.o $(BENCHES) \
     build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner \
     build/dds_security_probe build/dds_security_probe_baseline build/auth_probe \
-    build/auth_worker build/test_auth build/test_auth_asan build/test_concurrency \
+    build/auth_worker build/dds_players build/test_auth build/test_auth_asan build/test_concurrency \
     build/test_concurrency_tsan build/test_concurrency_asan \
     build/concurrency-tsan/server build/concurrency-tsan/auth_worker
 $(PADDING_TARGETS): $(PADDING_STAMP) common/cache_padding.h

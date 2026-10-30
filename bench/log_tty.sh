@@ -64,7 +64,8 @@ start_on_tty()
         export CYCLONEDDS_URI
         CYCLONEDDS_URI=$(python3 security/scripts/security.py config "$str_identity")
     fi
-    script -qfec "exec taskset -c $str_cpus $str_bin" /dev/null > /dev/null 2>&1 &
+    FUSE_USERNAME=${FUSE_USERNAME:-$str_identity} \
+        script -qfec "exec taskset -c $str_cpus $str_bin" /dev/null > /dev/null 2>&1 &
     arr_tty_pids+=($!)
 }
 

@@ -218,6 +218,17 @@ void particles_free(void)
     int_count = 0;
 }
 
+void particles_clear(void)
+{
+    if (layout == PARTICLES_AOS)
+    {
+		for (int i = 0; i < int_capacity; i++)
+			arr_aos[i].b_alive = false;
+		int_aos_cursor = 0;
+    }
+    int_count = 0;
+}
+
 /* ----------------------------------------------------- */
 /* Spawning                                              */
 /* ----------------------------------------------------- */

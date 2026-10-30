@@ -7,8 +7,8 @@ Keyboard polling to key bitmask; send on change. */
 #include <stdint.h>
 #include <GLFW/glfw3.h>
 
-// Read the arrow keys and publish their bitmask with net_client_set_keys(). Several keys can be
-// held at once (diagonal movement); opposite keys cancel out on the server.
+// Read arrows/WASD and Space/Shift, then publish the held-key bitmask with
+// net_client_set_keys(). Opposite directions cancel out on the server.
 void input_poll(GLFWwindow *a_p_window);
 
 #endif /* CLIENT_INPUT_H */

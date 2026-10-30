@@ -11,7 +11,8 @@ The DDS worker copies JoinRequest, Input and Leave samples before DDS reuses
 their storage. The main thread consumes them, authenticates against the
 current session and changes the player table. Join responses travel back on
 a separate ring. The state mutex is retained around lifecycle/validation
-operations, but the network thread does not acquire it in SPSC mode.
+operations; the network thread does not acquire it in SPSC mode unless the
+locked-write comparison is explicitly enabled.
 
 Queue capacities: 256 inputs, 16 joins, 16 leaves and 16 join responses.
 The main thread consumes a bounded batch per pass so an input flood cannot
@@ -35,6 +36,9 @@ snapshot. The renderer takes one immutable copy for sprites, labels and the
 banner; it keeps the previous complete frame if nothing new is available.
 The main thread sends held keys and shutdown through independent atomic
 scalars. There is no publicly shared, unprotected `int_player_id` (#4).
+Snapshot arrival times travel with each copied frame. The render thread owns
+interpolation history and calls both `interp_push` and `interp_sample`, so
+interpolation does not share a mutable buffer with the network worker.
 Network options now use `pthread_once`: the production TSan check exposed
 a separate first-access race in the former lazy `net_leave()` cache.
 
@@ -129,12 +133,14 @@ ID ownership, atomic keys/shutdown and rendering one consistent frame apply
 to both modes. Use the previous commit or unchanged baseline for historical
 comparisons, and never label its known race as an intentional live option.
 
-SPSC snapshot publication necessarily removes the server's state mutex from
-that path; comparison mode retains publish-under-mutex. A direct mode
-comparison therefore overlaps the snapshot portion of #1. Coordinate the
-order of #1/#3 with Weijun before claiming isolated speedups. Waitsets/sleep
-(#2) remain separate: these application loops still busy-poll. No hardware
-counter or speedup claim is made from the WSL correctness runs.
+After integration with main, both handoff modes publish outside the state
+mutex by default (#1). `FUSE_WRITE_UNDER_LOCK=on` retains the locked-write
+comparison in either mode. SPSC takes snapshots through its pinned buffer;
+mutex mode locks only to copy. Server tick sleeping and DDS waitsets (#2)
+remain enabled in both modes; `FUSE_SERVER_WAIT=spin` and
+`FUSE_CLIENT_WAIT=spin` retain their polling comparisons. Atomic key changes
+and shutdown wake the client waitset. Keep these switches equal when comparing
+handoff modes. No hardware-counter or speedup claim is made from WSL checks.
 
 ## Cache-line padding (#11)
 

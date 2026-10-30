@@ -25,10 +25,14 @@ Text is still drawn per string (ui.c) in every mode. */
 #include "net_client.h"
 #include "ui.h"
 #include "particles.h"
+#include "interp.h"
+#include "timing.h"
 
 // Seconds each animation frame is shown
 #define PLAYER_FRAME_S 0.4
 #define STRESS_FRAME_S 0.1
+// Seconds per explosion frame; the animation plays once (6 x 0.08 = 0.48 s)
+#define EXPLOSION_FRAME_S 0.08
 
 // Floor tiles needed to cover the window (the tile size divides the window
 // size exactly, so this is 16 x 12)
@@ -75,6 +79,9 @@ static int int_batch_cap;   // vertices allocated
 
 static StressSprite *arr_stress;
 static int int_num_stress;
+static unsigned long arr_u32_seen_explosions[4] = {0};
+static unsigned long u32_last_snapshot_tick = 0;
+static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
 
 // Immediate path: one sprite = one glBegin/glEnd
 static void sprite_immediate(int a_int_sprite, float x, float y)
@@ -253,11 +260,29 @@ void render_resize(int a_int_w, int a_int_h)
 
 void render_frame(void)
 {
-    // One immutable copy drives players, labels and the banner for this
-    // entire frame. A busy writer leaves our previous complete frame intact.
-    static ClientFrame frame = { .int_player_id = -1 };
-    net_client_read_frame(&frame);
     double d_time_s = glfwGetTime();
+    // The state to draw: interpolated between the last snapshots (#15,
+    // interp.h), or the newest snapshot with --interp off
+    static ClientFrame received = { .int_player_id = -1 };
+    if (net_client_read_frame(&received) && received.u64_received_ns != 0)
+        interp_push(&received.snapshot, received.u64_received_ns);
+    InterpFrame frame;
+    interp_sample(timing_now_ns(), &frame);
+    if (b_interp_stats)
+        interp_stats_frame(&frame, timing_now_ns());
+    const GameSnapshot *p_game = &frame.snapshot;
+
+    bool b_new_server = p_game->tick < u32_last_snapshot_tick;
+    bool b_new_round = p_game->phase == PHASE_COUNTDOWN &&
+                       u8_last_snapshot_phase != PHASE_COUNTDOWN;
+    if (b_new_server || b_new_round)
+    {
+        particles_clear();
+        memset(arr_u32_seen_explosions, 0, sizeof arr_u32_seen_explosions);
+    }
+    if (p_game->tick != 0)
+        u32_last_snapshot_tick = p_game->tick;
+    u8_last_snapshot_phase = p_game->phase;
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -288,17 +313,63 @@ void render_frame(void)
     }
 
     // Particles (explosion sparks and embers), under the players
+    for (int i = 0; i < 4; i++)
+    {
+        const Explosion *p_explosion = &p_game->explosions[i];
+        if (p_explosion->tick == 0)
+            continue;
+        /* Age from server ticks (the explosion's tick and the snapshot's tick
+        are both server tick numbers, TICK_HZ per second), so every client
+        shows the same frame. The server keeps sending the explosion until the
+        next round, but the animation plays once: an explosion older than the
+        animation is not drawn, and does not spawn particles in a client
+        that only sees it then (e.g. one that joined late). */
+        double d_age_s = (double)(p_game->tick - p_explosion->tick) / TICK_HZ;
+        bool b_playing = d_age_s < EXPLOSION_FRAMES * EXPLOSION_FRAME_S;
+        if (arr_u32_seen_explosions[i] != p_explosion->tick)
+        {
+            if (b_playing)
+                particles_burst((float)p_explosion->x - SQ_WIDTH / 2.0f,
+                                (float)p_explosion->y - SQ_WIDTH / 2.0f, 48);
+            arr_u32_seen_explosions[i] = p_explosion->tick;
+        }
+        if (!b_playing)
+            continue;
+        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES, 1,
+                                     d_age_s, EXPLOSION_FRAME_S);
+        render_sprite(int_sprite, p_explosion->x - SQ_WIDTH / 2.0f,
+                      p_explosion->y - SQ_WIDTH / 2.0f);
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        const Pickup *p_pickup = &p_game->pickups[i];
+        int int_sprite = p_pickup->type == PICKUP_SPEED ? SPR_PICKUP_SPEED :
+                         p_pickup->type == PICKUP_SHIELD ? SPR_PICKUP_SHIELD :
+                         p_pickup->type == PICKUP_FUSE_RESET ? SPR_PICKUP_FUSE : -1;
+        if (int_sprite >= 0)
+            render_sprite(int_sprite, p_pickup->x, p_pickup->y);
+    }
     particles_draw(render_sprite);
 
     // Players: the sprite is the same size as the SQ_WIDTH hitbox
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        const PlayerState *p_state = &frame.snapshot.players[i];
-        if (p_state->flags & PF_ACTIVE)
+        const PlayerState *p_state = &p_game->players[i];
+        if((p_state->flags & PF_ACTIVE) != 0)
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
-            render_sprite(int_sprite, p_state->x, p_state->y);
+            // Interpolated position (#15), between whole pixels
+            float f_x = frame.arr_f_x[i], f_y = frame.arr_f_y[i];
+            render_sprite(int_sprite, f_x, f_y);
+            if ((p_state->flags & PF_SHIELD) != 0)
+                render_sprite(SPR_SHIELD_BUBBLE, f_x, f_y);
+            if (p_game->bomb_holder == i + 1)
+            {
+                int int_bomb = atlas_frame(SPR_BOMB, BOMB_FRAMES, 1,
+                                            d_time_s, 0.12);
+                render_sprite(int_bomb, f_x, f_y - SQ_WIDTH);
+            }
         }
     }
 
@@ -311,23 +382,33 @@ void render_frame(void)
     glDisable(GL_TEXTURE_2D);
     glColor3f(0.15f, 0.15f, 0.2f);
 
-    char str_banner[100] = "Waiting for server ...";
-    if (frame.int_player_id != -1)
+    char str_banner[160] = "Waiting for server ...";
+    if (received.int_player_id != -1)
     {
-        snprintf(str_banner, sizeof(str_banner), "Player %d", frame.int_player_id);
+        const char *str_phase = p_game->phase == PHASE_COUNTDOWN ? "Starting" :
+                                p_game->phase == PHASE_PLAYING ? "Playing" :
+                                p_game->phase == PHASE_ROUND_OVER ? "Round over" :
+                                p_game->phase == PHASE_GAME_OVER ? "Game over" :
+                                "Waiting";
+
+        // Use %02u and add "/ 10" to the final argument
+        snprintf(str_banner, sizeof(str_banner), "Player %d %s %u.%02us",
+                 received.int_player_id, str_phase,
+                 (unsigned)(p_game->timer_ms / 1000),
+                 (unsigned)((p_game->timer_ms % 1000) / 10));
     }
-    ui_draw_text(320, 20, 3.0f, str_banner);
+    ui_draw_text(230, 20, 3.0f, str_banner);
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        const PlayerState *p_state = &frame.snapshot.players[i];
-        if (p_state->flags & PF_ACTIVE)
+        const PlayerState *p_state = &p_game->players[i];
+        if((p_state->flags & PF_ACTIVE) != 0)
         {
-            // Label the player ID above the sprite
-            char str_player[2] = "";
-            snprintf(str_player, sizeof(str_player), "%d", i+1);
-            ui_draw_text(p_state->x + SQ_WIDTH / 2 - 7, p_state->y - 30,
-                         3.0f, str_player);
+            char str_player[32];
+            snprintf(str_player, sizeof(str_player), "%d L:%u", i + 1,
+                     (unsigned)p_state->lives);
+            ui_draw_text(frame.arr_f_x[i] + SQ_WIDTH / 2 - 20, frame.arr_f_y[i] - 30,
+                         2.0f, str_player);
         }
     }
 }

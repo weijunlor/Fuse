@@ -26,7 +26,14 @@ Options (for measurements, see bench/render.sh):
                        bench/results/opt-05-particle-threads)
   --input-send MODE    when input is sent (#13, see net_client.h): change
                        (default: on change + every 100 ms) or every-10ms
-                       (while a key is held, as the baseline) */
+                       (while a key is held, as the baseline)
+  --interp on|off      draw positions interpolated between snapshots (#15,
+                       default on) or the newest snapshot as received
+  --smooth-stats S     after S seconds print smoothness statistics of the
+                       players' on-screen movement (interp.h) and quit
+
+Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
+                                    did instead of waiting (#2) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +49,7 @@ Options (for measurements, see bench/render.sh):
 #include "render.h"
 #include "particles.h"
 #include "dds_security.h"
+#include "interp.h"
 
 // qsort comparison for frame times
 static int compare_u64(const void *a, const void *b)
@@ -93,6 +101,7 @@ int main(int argc, char **argv)
     int int_particles = 0;
     ParticleLayout particle_layout = PARTICLES_SOA;
     int int_particle_threads = 1;
+    double d_smooth_stats_s = 0;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
@@ -112,11 +121,19 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "--input-send") == 0 && i + 1 < argc &&
                  (strcmp(argv[i + 1], "change") == 0 || strcmp(argv[i + 1], "every-10ms") == 0))
             b_input_on_change = strcmp(argv[++i], "change") == 0;
+        else if (strcmp(argv[i], "--interp") == 0 && i + 1 < argc &&
+                 (strcmp(argv[i + 1], "on") == 0 || strcmp(argv[i + 1], "off") == 0))
+            b_interp = strcmp(argv[++i], "on") == 0;
+        else if (strcmp(argv[i], "--smooth-stats") == 0 && i + 1 < argc)
+        {
+            d_smooth_stats_s = atof(argv[++i]);
+            b_interp_stats = d_smooth_stats_s > 0;
+        }
         else
         {
             fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n"
                             "          [--particles N] [--particle-layout aos|soa|soa-intrin|soa-intrin-scan] [--particle-threads T]\n"
-                            "          [--input-send change|every-10ms]\n",
+                            "          [--input-send change|every-10ms] [--interp on|off] [--smooth-stats S]\n",
                     argv[0]);
             return 1;
         }
@@ -230,6 +247,13 @@ int main(int argc, char **argv)
         {
             render_save_screenshot(str_auto_shot);
             str_auto_shot = NULL;
+        }
+
+        // --smooth-stats: print and quit (closing sends a Leave as usual)
+        if (b_interp_stats && glfwGetTime() > d_smooth_stats_s)
+        {
+            interp_stats_print();
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
 
         glfwSwapBuffers(window);

@@ -15,7 +15,8 @@ Server simulation tick: movement, bomb/fuse, rounds, pickups, win state. */
 // Table to track clients. Player ID is the array index plus 1.
 extern Player arr_Players[MAX_PLAYERS];
 
-// State mutex: shared with the DDS worker only in the mutex comparison mode.
+// State mutex: shared with DDS for mutex handoff, or the optional locked-write
+// comparison. Default SPSC publication does not acquire it.
 // In SPSC mode the main thread owns players/keys/auth/lobby state, and the
 // worker sees copies through rings and a pinned snapshot buffer.
 extern pthread_mutex_t mutex;

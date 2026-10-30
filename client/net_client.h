@@ -16,6 +16,7 @@ Client DDS worker thread: sends input, receives snapshots. */
 typedef struct
 {
     int int_player_id; // -1 until joined
+    uint64_t u64_received_ns; // snapshot arrival time for render-thread interpolation
     GameSnapshot snapshot;
 } ClientFrame;
 
@@ -31,12 +32,16 @@ void net_client_set_keys(uint8_t a_u8_keys);
 // baseline rate). Set before starting the worker (--input-send in main.c).
 extern bool b_input_on_change;
 
-// Load login material before spawning the worker; no password on the command line.
+// #2: waitset by default, or FUSE_CLIENT_WAIT=spin for comparison.
+extern bool b_client_wait;
+void net_client_init(void);
+void net_client_wake(void);
+
+// Prepare login, frame handoff and the waitset guard before starting the worker.
 bool net_client_prepare(void);
 
-/* DDS worker thread (start with pthread_create). Polls in a loop: sends a
-join request every 1 s until joined, then sends the held keys (see
-b_input_on_change), and publishes each received GameSnapshot as a ClientFrame.
+/* DDS worker sends authenticated inputs and publishes copied ClientFrames.
+Waits for DDS, changed keys, shutdown or the next timed message.
 Runs until net_client_stop() is called. */
 void *net_client_worker(void *arg);
 
