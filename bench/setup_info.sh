@@ -29,6 +29,7 @@ write_setup() {
         echo "$bin:"
         echo "  Optimisation level: $(opt_level "$bin" | grep . || echo 'unknown (no debug info in binary)')"
         echo "  Compiler flags (DW_AT_producer): $(build_flags "$bin" | grep . || echo 'unknown (build with -g)')"
+        echo "  Cache padding (compiled): $(strings "$bin" | grep -x 'FUSE_CACHE_PADDING=[01]' | sort -u || echo 'unknown (no build marker)')"
         echo "  sha256: $(sha256sum "$bin" | cut -d' ' -f1)"
     done
     # SOURCE_REF: set when the binaries were built from another commit or tag

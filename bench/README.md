@@ -1,5 +1,32 @@
 # Benchmarks
 
+## Cache-line padding: `padding.sh` (#11)
+
+`make PADDING=0` builds compact shared fields; `make PADDING=1` (default)
+enables 64-byte separation in SPSC queues, snapshot buffers and per-worker
+particle results. Switching flags rebuilds affected files automatically.
+
+`make bench-padding` builds `build/bench_false_share_0` and
+`build/bench_false_share_1` side by side. They run the same synthetic independent
+atomic counters or actual SPSC ring with only the layout changed. Both check
+their results and print padding, footprint, offsets, timing and checksums.
+
+```bash
+source security/scripts/env.sh
+make bench-padding
+lscpu -e=CPU,CORE,SOCKET
+# Choose two CPUs on separate physical cores (replace 0 2):
+RUNS=10 ITERATIONS=10000000 bash bench/padding.sh opt-11-padding 0 2
+```
+
+The script warms both layouts and alternates their order each run. Results,
+commands, setup/hashes and raw perf-stat CSV go to `bench/results/<label>/`.
+`PERF=0` skips perf for a WSL timing-only smoke check. Native cache-to-cache
+and full-game profiling instructions are in
+[the concurrency guide](../docs/CONCURRENCY.md#cache-line-padding-11).
+
+## Other benchmarks
+
 DDS security defaults to on. First provision credentials and source
 `security/scripts/env.sh` (see [security setup](../security/README.md)). Launchers
 assign a distinct client identity and record the security mode in setup.txt.

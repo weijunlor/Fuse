@@ -5,6 +5,7 @@
 #   make profile    -O2 with debug symbols and frame pointers, for perf
 #   make debug      -O0 with ThreadSanitizer, for data-race checks
 #   make LOG=debug  also print one line per network message (common/log.h, #17)
+#   make PADDING=0 compact shared fields; PADDING=1 (default) adds cache-line separation (#11)
 #   make bench      build every bench/bench_*.c (bench_particles in three builds, see below)
 #   make clean      remove build/ and generated DDS code
 
@@ -19,6 +20,16 @@ CFLAGS  += -DLOG_LEVEL=LOG_LEVEL_DEBUG
 else
 CFLAGS  += -DLOG_LEVEL=LOG_LEVEL_INFO
 endif
+# Layout is a build-time choice shared by every translation unit. A content
+# stamp below makes switching it rebuild existing targets, including particles.o.
+PADDING ?= 1
+ifneq ($(PADDING),0)
+ifneq ($(PADDING),1)
+$(error PADDING must be 0 or 1)
+endif
+endif
+override CFLAGS += -DFUSE_CACHE_PADDING=$(PADDING)
+PADDING_STAMP := build/.cache-padding
 LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
 # Packaged Ubuntu plugins may live one directory below libddsc; source builds
 # install them alongside it. Bake in the detected path, with a runtime override.
@@ -112,14 +123,14 @@ test-auth: build/test_auth
 	./build/test_auth
 
 build/auth_probe: bench/auth_probe.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
-	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
 
 AUTH_WORKER_SRC := bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c common/handoff.c $(APP_CLIENT_SRC) $(GEN)
 build/auth_worker: $(AUTH_WORKER_SRC) $(GAME_HEADERS)
 	mkdir -p build && $(CC) $(CFLAGS) -Iclient $(AUTH_WORKER_SRC) -o $@ $(LDDDS)
 
 # Header-only queue/buffer stress tests, independent of DDS and graphics.
-build/test_concurrency: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+build/test_concurrency: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h common/worker_pool.h
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread
 
 test-concurrency: build/test_concurrency build/test_auth
@@ -128,11 +139,11 @@ test-concurrency: build/test_concurrency build/test_auth
 	FUSE_HANDOFF=mutex ./build/test_auth
 
 TSAN_FLAGS := $(filter-out -O2,$(CFLAGS)) -O1 -g -fno-omit-frame-pointer -fsanitize=thread -fno-pie -no-pie
-build/test_concurrency_tsan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+build/test_concurrency_tsan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h common/worker_pool.h
 	mkdir -p build && $(CC) $(TSAN_FLAGS) $< -o $@ -pthread
 
 ASAN_FLAGS := $(filter-out -O2,$(CFLAGS)) -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-pie -no-pie
-build/test_concurrency_asan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h
+build/test_concurrency_asan: bench/test_concurrency.c common/spsc_ring.h common/double_buffer.h common/worker_pool.h
 	mkdir -p build && $(CC) $(ASAN_FLAGS) $< -o $@ -pthread
 
 build/test_auth_asan: $(AUTH_TEST_SRC) $(GAME_HEADERS)
@@ -164,6 +175,16 @@ test-auth-integration: all build/test_auth build/auth_probe build/auth_worker bu
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm
+
+# Keep both false-sharing binaries side by side, with identical flags except #11.
+# Filter out the global setting so these targets never depend on PADDING's value.
+build/bench_false_share: bench/bench_false_share.c common/cache_padding.h common/spsc_ring.h
+	mkdir -p build && $(CC) $(CFLAGS) -g -fno-omit-frame-pointer $< -o $@ -pthread
+
+build/bench_false_share_0 build/bench_false_share_1: build/bench_false_share_%: bench/bench_false_share.c common/cache_padding.h common/spsc_ring.h
+	mkdir -p build && $(CC) $(filter-out -DFUSE_CACHE_PADDING=%,$(CFLAGS)) -DFUSE_CACHE_PADDING=$* -g -fno-omit-frame-pointer $< -o $@ -pthread
+
+bench-padding: build/bench_false_share_0 build/bench_false_share_1
 
 # bench_particles runs the client's particle code (client/particles.c), built
 # three ways so each step of #7 is measured from the same source:
@@ -199,4 +220,20 @@ clean:
 # Keep pattern-built baseline binaries (make would delete them as intermediates)
 .PRECIOUS: build/baseline-O%/server build/baseline-O%/client
 
-.PHONY: all baseline bench profile debug clean test-auth test-auth-integration test-concurrency test-concurrency-integration concurrency-tsan-dds
+# Only touch this stamp when the selected layout changes. A no-op rebuild stays
+# a no-op; switching 1 -> 0 -> 1 invalidates every object containing shared types.
+$(PADDING_STAMP): FORCE_PADDING
+	@mkdir -p build
+	@printf '%s\n' '$(PADDING)' > $@.tmp
+	@cmp -s $@.tmp $@ || cp $@.tmp $@
+	@rm -f $@.tmp
+
+PADDING_TARGETS := build/server build/client build/particles.o $(BENCHES) \
+    build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner \
+    build/dds_security_probe build/dds_security_probe_baseline build/auth_probe \
+    build/auth_worker build/test_auth build/test_auth_asan build/test_concurrency \
+    build/test_concurrency_tsan build/test_concurrency_asan \
+    build/concurrency-tsan/server build/concurrency-tsan/auth_worker
+$(PADDING_TARGETS): $(PADDING_STAMP) common/cache_padding.h
+
+.PHONY: all baseline bench bench-padding profile debug clean test-auth test-auth-integration test-concurrency test-concurrency-integration concurrency-tsan-dds FORCE_PADDING

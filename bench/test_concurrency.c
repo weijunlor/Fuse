@@ -2,10 +2,12 @@
 #include <limits.h>
 #include <pthread.h>
 #include <sched.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "spsc_ring.h"
 #include "double_buffer.h"
+#include "worker_pool.h"
 
 #define CHECK(condition) do { if (!(condition)) {                              \
     fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #condition); abort(); \
@@ -96,6 +98,23 @@ static void *buffer_reader(void *a_unused)
 
 int main(void)
 {
+    // Check real addresses/array strides, not just member alignment annotations.
+#if FUSE_CACHE_PADDING
+    CHECK((uintptr_t)&ring % FUSE_CACHE_LINE_SIZE == 0);
+    CHECK(offsetof(TestRing, u_tail) >= FUSE_CACHE_LINE_SIZE);
+    CHECK(offsetof(TestRing, arr_values) - offsetof(TestRing, u_tail) >= FUSE_CACHE_LINE_SIZE);
+    CHECK(offsetof(TestBuffer, u64_written) == FUSE_CACHE_LINE_SIZE);
+    CHECK(offsetof(TestBuffer, u64_seen) == 2 * FUSE_CACHE_LINE_SIZE);
+    CHECK(offsetof(TestBuffer, arr_slots) == 3 * FUSE_CACHE_LINE_SIZE);
+    CHECK((uintptr_t)&buffer.arr_slots[1] % FUSE_CACHE_LINE_SIZE == 0);
+    CHECK(sizeof(PoolChunkResult) == FUSE_CACHE_LINE_SIZE);
+#else
+    CHECK(offsetof(TestRing, u_tail) == sizeof(atomic_uint));
+    CHECK(offsetof(TestBuffer, u64_written) < FUSE_CACHE_LINE_SIZE);
+    CHECK(sizeof(PoolChunkResult) == sizeof(int));
+#endif
+    printf("PASS layout padding=%d ring_bytes=%zu buffer_bytes=%zu worker_result_stride=%zu\n",
+           FUSE_CACHE_PADDING, sizeof(ring), sizeof(buffer), sizeof(PoolChunkResult));
     TestRing_init(&ring);
     CHECK(atomic_is_lock_free(&ring.u_head) && atomic_is_lock_free(&ring.u_tail));
     Value value = make_value(999), out = value;

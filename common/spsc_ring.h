@@ -6,6 +6,7 @@ Lock-free single-producer/single-consumer ring buffer (C11 atomics). */
 
 #include <stdbool.h>
 #include <stdatomic.h>
+#include "cache_padding.h"
 
 /* Exactly one producer calls push/space, and one consumer calls pop. Values
 are copied into the ring; never enqueue pointers into DDS loaned storage.
@@ -14,16 +15,19 @@ across that wrap, and every slot is usable (no sentinel slot).
 
 The head release publishes a complete value. The tail release tells the
 producer when it may reuse that slot. Neither side waits: full/empty returns
-false, leaving both the queue and the caller's output unchanged. No padding
-yet: cache-line separation is a separately measured optimisation (#11). */
+false, leaving both the queue and the caller's output unchanged.
+
+With PADDING=1, head, tail and the payload start on separate 64-byte lines.
+PADDING=0 keeps the original compact layout; algorithms and memory orders are
+identical. Head/tail are still read by both threads (true sharing remains). */
 #define SPSC_RING_DEFINE(name, type, capacity)                                  \
     _Static_assert((capacity) > 0 &&                                           \
                    ((capacity) & ((capacity) - 1)) == 0,                       \
                    "SPSC capacity must be a power of two");                   \
     typedef struct {                                                          \
-        atomic_uint u_head;                                                   \
-        atomic_uint u_tail;                                                   \
-        type arr_values[capacity];                                            \
+        FUSE_CACHE_ALIGN atomic_uint u_head;                                  \
+        FUSE_CACHE_ALIGN atomic_uint u_tail;                                  \
+        FUSE_CACHE_ALIGN type arr_values[capacity];                           \
     } name;                                                                   \
     static inline void name##_init(name *a_ring)                               \
     {                                                                         \

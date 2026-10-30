@@ -7,6 +7,7 @@ Nonblocking SPSC latest-value handoff with two buffers. */
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include "cache_padding.h"
 
 /* Bit 0 is the published slot; bits 1/2 pin slots 0/1 while the consumer
 copies. A producer only writes the OTHER slot, and skips that publication if
@@ -21,13 +22,19 @@ is an atomic RMW, preserving release sequences between the two threads.
 
 There is one producer and one consumer, each using its own version counter.
 Intermediate versions may be coalesced; neither thread spins or blocks.
-Initialise before starting threads. Do not reset a live buffer. */
+Initialise before starting threads. Do not reset a live buffer.
+PADDING=1 separates the shared state, the two thread-owned counters and the
+two slots. The shared state still requires true cache-line sharing. */
 #define DOUBLE_BUFFER_DEFINE(name, type)                                       \
     typedef struct {                                                          \
-        atomic_uint u_state;                                                  \
-        uint64_t u64_written;                                                 \
-        uint64_t u64_seen;                                                    \
-        struct { uint64_t u64_version; type value; } arr_slots[2];              \
+        FUSE_CACHE_ALIGN uint64_t u64_version;                                \
+        type value;                                                           \
+    } name##_Slot;                                                            \
+    typedef struct {                                                          \
+        FUSE_CACHE_ALIGN atomic_uint u_state;                                 \
+        FUSE_CACHE_ALIGN uint64_t u64_written;                                \
+        FUSE_CACHE_ALIGN uint64_t u64_seen;                                   \
+        name##_Slot arr_slots[2];                                             \
     } name;                                                                   \
     static inline void name##_init(name *a_buffer)                             \
     {                                                                         \

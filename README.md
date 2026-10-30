@@ -34,6 +34,12 @@ Concurrency uses SPSC command queues and double-buffered snapshots by default.
 Set `FUSE_HANDOFF=mutex` on both server and clients for the comparison path.
 Both modes fix the player-ID race. See [concurrency checks and profiling](docs/CONCURRENCY.md).
 
+Cache-line padding (#11) is a compile-time choice: `make PADDING=1` (default)
+separates queue/buffer fields and particle worker results; `make PADDING=0`
+uses compact fields. Switching the setting rebuilds affected targets without
+requiring a clean. `make bench-padding` keeps both benchmark binaries side by
+side. See [padding checks and measurements](docs/CONCURRENCY.md#cache-line-padding-11).
+
 ## Layout
 
 | Folder | Contents |

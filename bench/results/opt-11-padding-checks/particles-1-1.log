@@ -1,0 +1,1 @@
+layout=soa threads=1 particles=10003 capacity=10003 ticks=60 ns_per_particle=8.2966 us_per_tick=82.99 checksum=1.234420e+07

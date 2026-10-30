@@ -60,7 +60,8 @@ See [GCC's memory-order descriptions](https://gcc.gnu.org/onlinedocs/gcc/_005f_0
 Initialise automatic instances before starting threads; production server
 instances have static zero initialisation. Each ring/buffer must have exactly
 one producer and one consumer. Do not reset or change modes while live.
-No cache-line padding is applied: #11 remains a separate experiment.
+Cache-line separation is independently selectable at compile time (#11),
+as described below. Both layouts use the same handoff algorithms/memory orders.
 
 ## Build and checks
 
@@ -134,3 +135,81 @@ comparison therefore overlaps the snapshot portion of #1. Coordinate the
 order of #1/#3 with Weijun before claiming isolated speedups. Waitsets/sleep
 (#2) remain separate: these application loops still busy-poll. No hardware
 counter or speedup claim is made from the WSL correctness runs.
+
+## Cache-line padding (#11)
+
+`make PADDING=1` (default) defines `FUSE_CACHE_PADDING=1`. `PADDING=0` keeps
+compact fields. `common/cache_padding.h` applies `_Alignas(64)` only in the
+padded build; no runtime branch is added. The flag covers:
+
+- SPSC head, tail and payload, each starting on its own line.
+- Double-buffer shared state, producer/consumer version counters and slots.
+  Slot sizes round up to whole lines so the two slots cannot share an edge.
+- Particle worker live-count results, one line per worker instead of adjacent
+  ints. Particle arrays/chunk boundaries keep their existing SIMD alignment.
+
+The 64-byte size targets the team's x86-64 machines. Padding increases memory
+use and does not remove true sharing: both threads still read queue counters,
+and both modify the double-buffer state. Measure the effect on the workload.
+Static/automatic instances honour the type alignment. Future heap instances
+must use an aligned allocator. Read-only worker-start records are unchanged.
+
+The Makefile tracks the setting in `build/.cache-padding`. Switching 0/1
+rebuilds affected game, benchmark, test and sanitizer targets, including
+`particles.o`; repeating the same setting does not recompile. Do not run
+two separate make processes with different settings against the same build
+directory. Invalid values are rejected.
+
+```bash
+source security/scripts/env.sh
+make -j4 PADDING=0 all test-concurrency
+make -j4 PADDING=1 all test-concurrency
+make bench-padding
+# Dedicated compact/padded binaries coexist regardless of the game's setting:
+./build/bench_false_share_0 counters 10000000
+./build/bench_false_share_1 counters 10000000
+./build/bench_false_share_0 ring 10000000
+./build/bench_false_share_1 ring 10000000
+```
+
+The primitive tests check alignment, offsets and array stride, as well as the
+same FIFO/wrap/coherent-snapshot checks in both builds. The benchmark checks
+the final counters or every FIFO value/checksum, and reports the compiled flag,
+layout sizes, offsets and elapsed time. `counters` is a synthetic pair of
+independent relaxed atomic increments; `ring` uses the production queue.
+One counters iteration is one increment per worker; one ring iteration is
+one complete producer/consumer transfer. Do not compare rates across modes.
+Thread creation and CPU-affinity setup are outside the timing window.
+
+For native measurements, choose CPUs on different physical cores using
+`lscpu -e=CPU,CORE,SOCKET`, then run (replace `0 2` with those CPU IDs):
+
+```bash
+RUNS=10 ITERATIONS=10000000 bash bench/padding.sh opt-11-padding 0 2
+# Optional cache-to-cache evidence; use the same CPU IDs and iterations:
+perf c2c record -o build/padding-0.data -- ./build/bench_false_share_0 counters 10000000 0 2
+perf c2c report -i build/padding-0.data
+perf c2c record -o build/padding-1.data -- ./build/bench_false_share_1 counters 10000000 0 2
+perf c2c report -i build/padding-1.data
+```
+
+The script warms both binaries and interleaves 10 runs per layout/workload,
+alternating which layout runs first. `bench/results/<label>/` contains setup,
+binary hashes, commands, per-run timing/checksums in `results.csv`, and raw
+perf-stat CSV. `PERF=0` permits a timing-only WSL smoke run; WSL timings do not
+establish native cache/false-sharing speedups. `bench/setup_info.sh` reads the
+compiled padding marker from each binary rather than the environment.
+
+For the real game, keep security, handoff mode and all scenario settings equal:
+
+```bash
+make PADDING=0 profile
+FUSE_HANDOFF=spsc MOVE=1 bash bench/profile.sh opt-11-game-compact build
+make PADDING=1 profile
+FUSE_HANDOFF=spsc MOVE=1 bash bench/profile.sh opt-11-game-padded build
+```
+
+The earlier particle implementation already padded worker results; the new
+flag makes that choice measurable too. For an isolated historical #3
+comparison, use the same padding flag in both handoff modes and account for
+that pre-existing particle layout. #11 comparisons keep `FUSE_HANDOFF` fixed.
