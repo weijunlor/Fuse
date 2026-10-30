@@ -1,5 +1,12 @@
 # Benchmarks
 
+DDS security defaults to on. First provision credentials and source
+`security/scripts/env.sh` (see [security setup](../security/README.md)). Launchers
+assign a distinct client identity and record the security mode in setup.txt.
+Use `FUSE_DDS_SECURITY=off` explicitly for historical plaintext comparisons;
+keep the same mode before and after an optimisation. Security acceptance tests
+are run with `python3 security/scripts/test_security.py` after building both probes.
+
 Each `bench_<name>.c` is a standalone program built to `build/bench_<name>` by `make bench`.
 Each one implements the naive and optimised version of one technique, selected by a command-line argument,
 so both can be measured on the same machine with the same build flags.

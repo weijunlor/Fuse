@@ -32,6 +32,7 @@ Options:
 #include "game.h"
 #include "timing.h"
 #include "log.h"
+#include "dds_security.h"
 
 // Nanoseconds per tick
 #define TICK_NS (1000000000ull / TICK_HZ)
@@ -62,6 +63,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+	dds_security_prepare();
 	// Seed rand(), so that the random numbers are different for each run
 	srand((unsigned int)time(NULL));
 

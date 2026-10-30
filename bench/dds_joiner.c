@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     // Same entities and QoS as client/net_client.c
     NetTopics net;
-    net_create_topics(&net);
+    net_create_topics(&net, NET_ROLE_CLIENT);
     dds_entity_t join_writer = net_create_writer(&net, net.join_topic, NET_RELIABLE_ALL);
     dds_entity_t response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
     dds_entity_t snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);

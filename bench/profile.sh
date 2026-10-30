@@ -68,6 +68,8 @@ SUDO=${SUDO-sudo}
 SERVER_CPUS=0-3
 CLIENT_CPUS=4-15
 EVENTS=task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses
+source bench/security_env.sh
+dds_check_clients "$CLIENTS"
 
 OUT=bench/results/$LABEL
 RAW=$OUT/raw
@@ -128,12 +130,12 @@ start_scenario() {
     # stdout goes to /dev/null so terminal printing is not part of the cost
     # SERVER_ARGS unquoted on purpose: it may hold several words
     # shellcheck disable=SC2086
-    taskset -c "$SERVER_CPUS" "$SERVER" $SERVER_ARGS > /dev/null &
+    dds_run server taskset -c "$SERVER_CPUS" "$SERVER" $SERVER_ARGS > /dev/null &
     int_server_pid=$!
     arr_client_pids=()
-    for _ in $(seq "$CLIENTS"); do
+    for int_client in $(seq "$CLIENTS"); do
         # shellcheck disable=SC2086
-        taskset -c "$CLIENT_CPUS" "$CLIENT" $CLIENT_ARGS > /dev/null &
+        dds_run "client-$int_client" taskset -c "$CLIENT_CPUS" "$CLIENT" $CLIENT_ARGS > /dev/null &
         arr_client_pids+=($!)
     done
     sleep "$WARMUP"

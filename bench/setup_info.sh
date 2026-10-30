@@ -20,6 +20,7 @@ write_setup() {
     local label=$1; shift
     echo "Profiling setup: $label"
     echo "Recorded: $(date -Iseconds)"
+    echo "DDS security: ${FUSE_DDS_SECURITY:-on}"
     echo
     echo "== Build"
     for bin in "$@"; do

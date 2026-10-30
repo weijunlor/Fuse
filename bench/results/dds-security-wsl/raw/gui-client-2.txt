@@ -1,0 +1,9 @@
+DDS security: ON, identity client-2, domain 0
+DDS QoS: per topic (#14)
+Join nonce: on
+Join request sent
+Join response received
+Leave and timeout: on
+Screenshot saved to /mnt/c/Users/sy/Desktop/Fuse/bench/results/dds-security-wsl/raw/client-2.png (800x600)
+frames=6000 stress=0 mode=short fps=184.59 elapsed_s=34.491 render_us_mean=1001.3 render_us_p50=858.1 render_us_p99=3216.9 render_us_max=32558.8 gl_renderer="D3D12 (AMD Radeon(TM) Graphics)"
+Left the game

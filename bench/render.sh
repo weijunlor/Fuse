@@ -43,6 +43,13 @@ fi
 LABEL=$1
 BIN_DIR=${2:-build}
 CLIENT=$BIN_DIR/client
+source bench/security_env.sh
+# Render benchmarks start one client, so it always uses client-1.
+if [ "$FUSE_DDS_SECURITY" = on ]; then
+    export FUSE_DDS_IDENTITY=client-1
+    export CYCLONEDDS_URI
+    CYCLONEDDS_URI=$(python3 security/scripts/security.py config client-1)
+fi
 
 RUNS=${RUNS:-5}
 FRAMES=${FRAMES:-1200}

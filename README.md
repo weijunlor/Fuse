@@ -7,7 +7,10 @@ Project plan, architecture and optimisation list: [docs/PLAN.md](docs/PLAN.md).
 ## Build (WSL / Ubuntu)
 
 ```bash
-sudo apt install -y pkg-config libgl1-mesa-dev libglfw3-dev libstb-dev cyclonedds-dev cyclonedds-tools
+bash security/scripts/setup_wsl.sh
+source security/scripts/env.sh
+bash security/scripts/make_ca.sh
+bash security/scripts/make_certs.sh
 make            # build/server, build/client
 make baseline   # build/baseline_server, build/baseline_client (original programs)
 ```
@@ -15,9 +18,14 @@ make baseline   # build/baseline_server, build/baseline_client (original program
 ## Run
 
 ```bash
-./build/server
-./build/client   # start one per player, max 5
+source security/scripts/env.sh
+bash security/scripts/run_secure.sh server ./build/server
+bash security/scripts/run_secure.sh client-1 ./build/client   # use client-2..5 for others
 ```
+
+DDS security is on by default. First-time certificate setup, the pinned WSL
+dependency build, security tests and explicit plaintext comparisons are documented
+in [security/README.md](security/README.md).
 
 ## Layout
 

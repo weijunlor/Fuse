@@ -49,7 +49,7 @@ void *net_server_worker(void *arg)
 	dds_return_t rc;
 
 	// Participant and topics
-	net_create_topics(&net);
+	net_create_topics(&net, NET_ROLE_SERVER);
 
 	/* ----------------------------------------------------- */
 	/* Create readers                                        */

@@ -1,0 +1,29 @@
+{
+  "recorded_utc": "2026-10-30T08:07:56.863394+00:00",
+  "cyclonedds": "0.10.5",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "packet_source": "Cyclone DDS built-in UDP capture; synthetic IP/UDP headers",
+  "binaries": {
+    "server": "5438888d670535671d95b780649b7bfc8c7b524ca10a1f5f9f8ca73be5115f23",
+    "client": "ac631e267589a21291f1147ee95ff7f54b6ae2a74611077334680d806eb13144",
+    "baseline_server": "ed422d70ecb574529fb029a5297e256a7333806c7f257732815e0a8ca7f8869b",
+    "baseline_client": "b0f4d4d15091cd73ca2a6adb2e539be33a3b56e82f4bad9dd425e4b27e2075e0",
+    "dds_security_probe": "397862e10d1e7a3d428c812424b0a4b163ba97c4399407bbad1913bfee33b165"
+  },
+  "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+  "openssl": "OpenSSL 3.0.2 15 Mar 2022 (Library: OpenSSL 3.0.2 15 Mar 2022)",
+  "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+  "dds_libdir": "/home/sy/.local/opt/cyclonedds-0.10.5/lib",
+  "plugin_dir": "/home/sy/.local/opt/cyclonedds-0.10.5/lib",
+  "dds_build_options": {
+    "ENABLE_SECURITY": "ON",
+    "ENABLE_SSL": "ON",
+    "ENABLE_SHM": "OFF"
+  },
+  "credential_regeneration_preserved": true,
+  "pcap_sha256": {
+    "baseline-plaintext.pcap": "a6b145ac31670db74777095a38162dc4d5479be9ce05e9a709a5b82be2326bad",
+    "baseline-secure.pcap": "67c8947a30d4c57e4a99a7a58a8bf7c10fe7e3d0140e63812937f6c4598bc742",
+    "fuse-secure.pcap": "6f61e50ed2aa243635e160974244eb158064fec4ccdb64d5d10d5cbcbde6c3a2"
+  }
+}

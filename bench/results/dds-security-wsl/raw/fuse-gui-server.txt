@@ -1,0 +1,13 @@
+Waiting... (60 ticks/s, a snapshot every 1 ticks)
+Leave and timeout: on
+DDS security: ON, identity server, domain 0
+DDS QoS: per topic (#14)
+Join request received (nonce 23cd1790a043acb9)
+Join nonce: on
+Join response sent: player 1
+Join request received (nonce 3994846154b10199)
+Join response sent: player 2
+Leave received from player 1
+Player 1 left
+Leave received from player 2
+Player 2 left

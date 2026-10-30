@@ -10,17 +10,12 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include "log.h"
 #include "fuse.h"
 
-void net_create_topics(NetTopics *a_p_net)
+void net_create_topics(NetTopics *a_p_net, NetRole a_role)
 {
     /* ----------------------------------------------------- */
     /* Create participant                                    */
     /* ----------------------------------------------------- */
-    a_p_net->participant = dds_create_participant(DDS_DOMAIN_DEFAULT, NULL, NULL);
-
-    if (a_p_net->participant < 0)
-    {
-        LOG_ERROR("Failed to create participant\n");
-    }
+    a_p_net->participant = dds_security_create_participant(a_role);
 
     /* ----------------------------------------------------- */
     /* Create topics                                         */
@@ -39,6 +34,16 @@ void net_create_topics(NetTopics *a_p_net)
 
     a_p_net->leave_topic = dds_create_topic(a_p_net->participant,
         &Leave_desc, "Leave", NULL, NULL);
+
+    // A failed entity must never flow into a reader/writer or the game loop.
+    const dds_entity_t arr_topics[] = {a_p_net->join_topic, a_p_net->response_topic,
+        a_p_net->input_topic, a_p_net->snapshot_topic, a_p_net->leave_topic};
+    for (size_t i = 0; i < sizeof arr_topics / sizeof arr_topics[0]; i++)
+        if (arr_topics[i] < 0)
+        {
+            LOG_ERROR("DDS topic creation failed: %s\n", dds_strretcode(-arr_topics[i]));
+            exit(EXIT_FAILURE);
+        }
 }
 
 bool net_qos_tuned(void)

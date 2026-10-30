@@ -10,7 +10,7 @@
 
 CC      := gcc
 CFLAGS  := -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party \
-           $(shell pkg-config --cflags CycloneDDS glfw3 stb)
+           $(shell pkg-config --cflags CycloneDDS glfw3 stb libcrypto)
 # Log level (#17, common/log.h): per-message debug lines are compiled out
 # unless LOG=debug
 LOG     ?= info
@@ -20,8 +20,15 @@ else
 CFLAGS  += -DLOG_LEVEL=LOG_LEVEL_INFO
 endif
 LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
+# Packaged Ubuntu plugins may live one directory below libddsc; source builds
+# install them alongside it. Bake in the detected path, with a runtime override.
+DDS_LIBDIR := $(shell pkg-config --variable=libdir CycloneDDS)
+DDS_PLUGIN_DIR := $(shell if test -f "$(DDS_LIBDIR)/libddsc0debian/libdds_security_auth.so"; then printf '%s' "$(DDS_LIBDIR)/libddsc0debian"; else printf '%s' "$(DDS_LIBDIR)"; fi)
+CFLAGS += -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"$(DDS_PLUGIN_DIR)"'
+LDDDS += -Wl,-rpath,$(DDS_LIBDIR)
 LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
-# Add -lcrypto (OpenSSL) or -lsodium here once common/crypto.c uses it
+# Security preflight validates the identity key/certificate before discovery.
+LDDDS += $(shell pkg-config --libs libcrypto)
 
 # DDS message types (idl/fuse.idl, v1 message set; see docs/PLAN.md section 2)
 GEN     := generated/fuse.c
@@ -81,8 +88,15 @@ bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/
 
 # Headless client for the join tests of #14 (bench/join_loss.sh): uses the
 # game's DDS code (common/net.c) so it joins with exactly the client's QoS
-build/dds_joiner: bench/dds_joiner.c common/net.c common/net.h $(GEN)
-	mkdir -p build && $(CC) $(CFLAGS) bench/dds_joiner.c common/net.c $(GEN) -o $@ $(LDDDS)
+build/dds_joiner: bench/dds_joiner.c common/net.c common/net.h common/dds_security.c common/dds_security.h $(GEN)
+	mkdir -p build && $(CC) $(CFLAGS) bench/dds_joiner.c common/net.c common/dds_security.c $(GEN) -o $@ $(LDDDS)
+
+# DDS security acceptance probes, each linked only to its own message schema.
+build/dds_security_probe: bench/dds_security_probe.c common/net.c common/dds_security.c $(GEN) common/dds_security.h
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
+
+build/dds_security_probe_baseline: bench/dds_security_probe.c common/dds_security.c build/baseline/messages.c common/dds_security.h
+	mkdir -p build && $(CC) $(CFLAGS) -Ibuild/baseline -DFUSE_PROBE_BASELINE $(filter %.c,$^) -o $@ $(LDDDS)
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm

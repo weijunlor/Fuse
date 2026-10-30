@@ -5,3 +5,4 @@ security/certs/
 *.o
 perf.data*
 screenshot.png
+__pycache__/
