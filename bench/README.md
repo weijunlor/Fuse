@@ -63,6 +63,35 @@ sum with four independent accumulators. Use `perf stat -r 10` on both modes
 and save the output under `bench/results/`.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
 
+`bench_branches` compares the real game's overlap tests, coordinate clamps
+and held-key direction helpers (#9). `bench_reduce` is built with
+`-fno-tree-vectorize` so its comparison isolates accumulator dependencies,
+without mixing in SIMD (#7). This flag is only for the reduction benchmark.
+
+```bash
+./build/bench_branches branchy 10000000
+./build/bench_branches branchless 10000000
+CPUSET=0 RUNS=10 bash bench/server.sh opt-08-sorted-grid collision
+CPUSET=0 RUNS=10 bash bench/server.sh opt-09-branches branches
+CPUSET=0 RUNS=10 bash bench/server.sh opt-10-reductions reduce
+```
+
+Use a new label for every run: this script refuses to overwrite evidence.
+Set `CPUSET` to fixed P-cores on the measurement machine, and set the governor
+as described in PLAN.md before running. It records the machine, git state,
+binary hash, exact commands, per-run timings, checksums and `perf stat -r 10
+-x,` output. Cache/branch/IPC claims require the relevant counters. Missing
+counters fail the run and preserve their raw error. `METRICS=time` explicitly
+selects timing/checksum checks without claiming hardware-counter evidence.
+Workload overrides: `EMBERS`, `QUERIES`, `TICKS`, `VALUES`, `ROUNDS`, `RUNS`.
+
+The game's new features must be held constant when measuring #1/#2: the
+current server keeps `--publish locked|unlocked` and `--wait busy|sleep`.
+For example, set `SERVER_ARGS="--publish locked"` for a profile.sh before run
+and `SERVER_ARGS="--publish unlocked"` for its after run. Change only one
+option per comparison, keeping every other option and the client scenario
+identical. See `docs/report-notes/zhikai-completion.md` for validation limits.
+
 ## Rendering cost: `render.sh`
 
 `bench/render.sh <label> [bin_dir]` measures the client's drawing code on its own (no server), for #16 and later
