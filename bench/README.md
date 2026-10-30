@@ -4,8 +4,9 @@ Each `bench_<name>.c` is a standalone program built to `build/bench_<name>` by `
 Each one implements the naive and optimised version of one technique, selected by a command-line argument,
 so both can be measured on the same machine with the same build flags.
 
-Done: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads; see below).
-Planned: bench_collision (branchy vs branchless), bench_false_share (padded vs unpadded), bench_reduce (1 vs 4 accumulators).
+Done: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads; see below),
+bench_collision (brute-force vs spatial grid), and bench_reduce (serial vs
+four accumulators).
 
 Results go in `results/` as CSV (`perf stat -x, -r 10 -o results/<name>.csv ...`).
 
@@ -43,6 +44,23 @@ each starting with `# started on`). Runs before 2026-10-27 16:30 (`baseline-O0`,
 reads both.
 
 Use one label per optimisation step (matching the git tag) so the final report can compare every step.
+
+## Server collision and reduction benchmarks
+
+`make bench` also builds the server benchmarks. Both print a checksum so the
+slow and optimised paths can be compared for identical results:
+
+```bash
+./build/bench_collision brute 2048 100000 100
+./build/bench_collision grid 2048 100000 100
+./build/bench_reduce serial 1000000 100
+./build/bench_reduce accum 1000000 100
+```
+
+`bench_collision` keeps a brute-force ember scan as the before path and uses
+the spatial grid as the optimised path. `bench_reduce` compares one dependent
+sum with four independent accumulators. Use `perf stat -r 10` on both modes
+and save the output under `bench/results/`.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
 
 ## Rendering cost: `render.sh`

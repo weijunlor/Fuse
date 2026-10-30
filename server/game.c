@@ -24,7 +24,7 @@ int int_snapshot_every = TICK_HZ / SNAPSHOT_HZ;
 #define TICK_STEP (PLAYER_SPEED / TICK_HZ)
 #define PLAYER_START_LIVES 3
 #define COUNTDOWN_TICKS (3 * TICK_HZ)
-#define FUSE_TICKS (10 * TICK_HZ) // Game Round time -> now is 10 secs
+#define FUSE_TICKS (20 * TICK_HZ) // Game Round time -> now is 20 secs
 #define ROUND_OVER_TICKS (2 * TICK_HZ)
 #define PASS_COOLDOWN_TICKS TICK_HZ // Pass cooldown time -> now is 1 sec 
 #define DASH_TICKS (TICK_HZ / 5)
@@ -40,6 +40,13 @@ static uint16_t arr_u16_speed_ticks[MAX_PLAYERS] = {0};
 static uint16_t arr_u16_dash_ticks[MAX_PLAYERS] = {0};
 static uint16_t arr_u16_dash_cooldown[MAX_PLAYERS] = {0};
 static bool arr_b_dash_was_down[MAX_PLAYERS] = {0};
+
+// Indexing the held-key bitmask avoids four independent conditionals in the
+// fixed-tick movement loop. KEY_DASH is outside this table's low nibble.
+static const int8_t arr_int_key_dx[16] =
+	{ 0, 0, 0, 0, -1, -1, -1, -1, 1, 1, 1, 1, 0, 0, 0, 0 };
+static const int8_t arr_int_key_dy[16] =
+	{ 0, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 0 };
 
 // When each player's last Input arrived (timing_now_ns); index = player ID - 1
 static uint64_t arr_u64_last_input_ns[MAX_PLAYERS] = {0};
@@ -64,6 +71,7 @@ static void clear_round_transients(void)
 {
 	memset(arr_pickups, 0, sizeof arr_pickups);
 	memset(arr_explosions, 0, sizeof arr_explosions);
+	collision_embers_clear();
 }
 
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
@@ -106,18 +114,24 @@ static int clamp_coord(int a_int_v, int a_int_max)
 
 static int count_active_players(void)
 {
-	int int_count = 0;
-	for (int i = 0; i < MAX_PLAYERS; i++)
-		int_count += arr_Players[i].b_active;
-	return int_count;
+	int int_count_a = 0;
+	int int_count_b = 0;
+	for (int i = 0; i < MAX_PLAYERS / 2; i++)
+		int_count_a += arr_Players[i].b_active;
+	for (int i = MAX_PLAYERS / 2; i < MAX_PLAYERS; i++)
+		int_count_b += arr_Players[i].b_active;
+	return int_count_a + int_count_b;
 }
 
 static int count_alive_players(void)
 {
-	int int_count = 0;
-	for (int i = 0; i < MAX_PLAYERS; i++)
-		int_count += arr_Players[i].b_active && arr_u8_lives[i] > 0;
-	return int_count;
+	int int_count_a = 0;
+	int int_count_b = 0;
+	for (int i = 0; i < MAX_PLAYERS / 2; i++)
+		int_count_a += arr_Players[i].b_active && arr_u8_lives[i] > 0;
+	for (int i = MAX_PLAYERS / 2; i < MAX_PLAYERS; i++)
+		int_count_b += arr_Players[i].b_active && arr_u8_lives[i] > 0;
+	return int_count_a + int_count_b;
 }
 
 static uint8_t choose_bomb_holder(void)
@@ -163,6 +177,7 @@ static void add_explosion(int a_int_x, int a_int_y)
 	for (int i = 3; i > 0; i--)
 		arr_explosions[i] = arr_explosions[i - 1];
 	arr_explosions[0] = explosion;
+	collision_embers_spawn(explosion.x, explosion.y, explosion.seed);
 }
 
 static void spawn_pickup(int a_int_x, int a_int_y)
@@ -303,6 +318,12 @@ static void update_round_state(void)
 
 			if (u_fuse_ticks > 0)
 				u_fuse_ticks--;
+
+			if (u_fuse_ticks > 0 && u_fuse_ticks % (4 * TICK_HZ) == 0)
+            {
+                spawn_pickup(rand() % WIDTH, rand() % HEIGHT);
+            }
+
 			if (u_fuse_ticks == 0 && u8_bomb_holder != 0)
 			{
 				int int_holder = u8_bomb_holder - 1;
@@ -352,9 +373,13 @@ static void move_player(int a_int_i, PlayerState *a_p_state)
 		int_speed *= 2;
 	if (arr_u16_dash_ticks[a_int_i] > 0)
 		int_speed *= 2;
+	if (collision_player_hits_ember(arr_Players[a_int_i].x,
+	                                arr_Players[a_int_i].y))
+		int_speed = (int_speed + 1) / 2;
 	// -1, 0 or +1 per axis; opposite keys cancel out
-	int int_dx = ((u8_keys & KEY_RIGHT) != 0) - ((u8_keys & KEY_LEFT) != 0);
-	int int_dy = ((u8_keys & KEY_DOWN) != 0) - ((u8_keys & KEY_UP) != 0);
+	int int_key_index = u8_keys & 0x0f;
+	int int_dx = arr_int_key_dx[int_key_index];
+	int int_dy = arr_int_key_dy[int_key_index];
 
 	int int_x = arr_Players[a_int_i].x;
 	int int_y = arr_Players[a_int_i].y;
@@ -385,6 +410,7 @@ void game_tick(void)
 {
 	pthread_mutex_lock(&mutex);
 	u_tick++;
+	collision_embers_tick();
 
 	// Build the snapshot while moving: one pass over the players
 	memset(&snapshot, 0, sizeof snapshot);
