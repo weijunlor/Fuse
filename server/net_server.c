@@ -15,8 +15,9 @@ Join nonce (lobby.h, net_join_nonce() in common/net.h): every JoinRequest
 taken is queued for the main thread with its nonce, and every answer is sent
 back with that nonce, so only the client that asked accepts it.
 
-Leave (lobby.h, net_leave() in common/net.h): every Leave taken is queued for
-the main thread, which frees the player's slot. */
+Leave (lobby.h, net_leave() in common/net.h): every Leave is authenticated
+before queueing removal. Inputs and Leave are checked against the slot's
+session under the same mutex as the state update. */
 
 #include <stdio.h>
 
@@ -77,8 +78,6 @@ void *net_server_worker(void *arg)
 	// Inputs per dds_take: all waiting ones (#14), or one as in the baseline
 	int int_input_take = net_qos_tuned() ? INPUT_TAKE : 1;
 
-	// Join Response (the session key stays 0 until the login is added)
-	JoinResponse response = {0};
 	JoinResult result;
 
 	// Copy of the latest snapshot, taken from game.c
@@ -101,7 +100,7 @@ void *net_server_worker(void *arg)
 			const JoinRequest *p_request = samples_join[i];
 			LOG_INFO("Join request received (nonce %016llx)\n",
 			         (unsigned long long)p_request->nonce);
-			if (!lobby_signal_join(p_request->nonce))
+			if (!lobby_signal_join(p_request))
 				LOG_WARN("Join queue full, request dropped\n");
 		}
 
@@ -109,16 +108,12 @@ void *net_server_worker(void *arg)
 		bool b_sent = false;
 		while (lobby_take_result(&result))
 		{
-			response.nonce = result.u64_nonce;
-			response.status = result.u8_status;
-			response.player_id = result.u8_player_id;
-
-			rc = dds_write(response_writer, &response);
+			rc = dds_write(response_writer, &result);
 			if (rc != DDS_RETCODE_OK)
 			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
-			LOG_INFO("Join response sent: player %d\n", (int)result.u8_player_id);
+			LOG_INFO("Join response sent: player %d, status %u\n", (int)result.player_id, result.status);
 			b_sent = true;
 		}
 		/* Polling sleep (the baseline's, once per pass that sent responses). */
@@ -156,7 +151,8 @@ void *net_server_worker(void *arg)
 			LOG_DEBUG("Input received\n");
 			Input *input = (Input *) samples_input[i];
 			// Remember the held keys; the next tick moves the player
-			game_set_keys(input->player_id, input->keys);
+			if (!lobby_receive_input(input))
+				LOG_DEBUG("Input rejected\n");
 		}
 
 		// Players who quit: queue them for the main thread to remove
@@ -171,9 +167,10 @@ void *net_server_worker(void *arg)
 			if (!infos_leave[i].valid_data)
 				continue;
 			const Leave *p_leave = samples_leave[i];
-			LOG_INFO("Leave received from player %d\n", (int)p_leave->player_id);
-			if (!lobby_signal_leave(p_leave->player_id))
-				LOG_WARN("Leave queue full, Leave dropped\n");
+			if (lobby_receive_leave(p_leave))
+				LOG_INFO("Leave accepted from player %d\n", (int)p_leave->player_id);
+			else
+				LOG_DEBUG("Leave rejected\n");
 		}
 	}
 }

@@ -26,6 +26,9 @@ extern pthread_mutex_t mutex;
 // baseline rate). Set before starting the worker (--input-send in main.c).
 extern bool b_input_on_change;
 
+// Load login material before spawning the worker; no password on the command line.
+bool net_client_prepare(void);
+
 /* DDS worker thread (start with pthread_create). Polls in a loop: sends a
 join request every 1 s until joined, then sends the held keys (see
 b_input_on_change), and copies each received GameSnapshot into arr_Players.

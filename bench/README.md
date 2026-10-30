@@ -3,7 +3,9 @@
 DDS security defaults to on. First provision credentials and source
 `security/scripts/env.sh` (see [security setup](../security/README.md)). Launchers
 assign a distinct client identity and record the security mode in setup.txt.
-Use `FUSE_DDS_SECURITY=off` explicitly for historical plaintext comparisons;
+Create application accounts once with `python3 security/scripts/accounts.py demo`.
+Launchers use a separate account for each client; see [application authentication](../security/AUTH.md).
+Use `FUSE_DDS_SECURITY=off FUSE_AUTH=off` explicitly for historical plaintext comparisons;
 keep the same mode before and after an optimisation. Security acceptance tests
 are run with `python3 security/scripts/test_security.py` after building both probes.
 
@@ -118,6 +120,8 @@ Settings: `LOSSES` ["0 10 30"], `TRIALS` [10], `JOINERS` [4], `STAGGER` [1.5] s 
 `MODES` ["default qos nonce"]: `default` = Cyclone QoS and baseline join (`FUSE_QOS=default FUSE_JOIN_NONCE=off`),
 `qos` = #14 QoS and baseline join (`FUSE_JOIN_NONCE=off`), `nonce` = #14 QoS and join nonce. The #14 results were
 made before the nonce existed and call `qos` "tuned".
+Nonce-off modes require `FUSE_DDS_SECURITY=off FUSE_AUTH=off`. For authenticated
+packet-loss tests, select `MODES=nonce`; authentication always requires a nonce.
 
 `FUSE_QOS=default` in the environment of `profile.sh` (or of the game) gives the "before" for #14; it is recorded
 in `raw/commands.txt` and the report.

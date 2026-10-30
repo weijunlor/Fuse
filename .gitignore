@@ -2,6 +2,9 @@ build/
 generated/*
 !generated/.gitkeep
 security/certs/
+security/accounts/
+*.pass
+users.db
 *.o
 perf.data*
 screenshot.png

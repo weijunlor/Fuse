@@ -41,11 +41,18 @@ void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
 	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS)
 		return;
 
-	uint64_t u64_now_ns = timing_now_ns();
 	pthread_mutex_lock(&mutex);
-	arr_u8_keys[a_int_player_id - 1] = a_u8_keys;
-	arr_u64_last_input_ns[a_int_player_id - 1] = u64_now_ns;
+	game_set_keys_locked(a_int_player_id, a_u8_keys);
 	pthread_mutex_unlock(&mutex);
+}
+
+void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys)
+{
+	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS ||
+	    !arr_Players[a_int_player_id - 1].b_active)
+		return;
+	arr_u8_keys[a_int_player_id - 1] = a_u8_keys;
+	arr_u64_last_input_ns[a_int_player_id - 1] = timing_now_ns();
 }
 
 void game_reset_player(int a_int_index)

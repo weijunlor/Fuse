@@ -2,7 +2,7 @@
 
 FUSE uses Cyclone DDS participant certificates, signed topic permissions and
 AES-GCM encryption. Security is **on by default**. Game password login and
-per-player Input/Leave MACs are a separate layer and are not implemented here.
+per-player Input/Leave MACs are also enabled; see [AUTH.md](AUTH.md) for that layer.
 
 ## Set up Ubuntu / WSL
 
@@ -13,6 +13,7 @@ bash security/scripts/setup_wsl.sh
 source security/scripts/env.sh
 bash security/scripts/make_ca.sh
 bash security/scripts/make_certs.sh
+python3 security/scripts/accounts.py demo
 make -j4 all baseline build/dds_joiner build/dds_security_probe build/dds_security_probe_baseline
 ```
 
@@ -121,9 +122,9 @@ zip or commit them.
 Select plaintext explicitly in every terminal/process involved:
 
 ```bash
-FUSE_DDS_SECURITY=off ./build/server
-FUSE_DDS_SECURITY=off ./build/client
-FUSE_DDS_SECURITY=off MOVE=1 bench/profile.sh comparison build
+FUSE_DDS_SECURITY=off FUSE_AUTH=off ./build/server
+FUSE_DDS_SECURITY=off FUSE_AUTH=off ./build/client
+FUSE_DDS_SECURITY=off FUSE_AUTH=off MOVE=1 bench/profile.sh comparison build
 ```
 
 FUSE comparison mode clears `CYCLONEDDS_URI` before participant creation so a
@@ -133,6 +134,7 @@ historical binaries. In secure mode they assign server/client identities, apply
 the XML to historical binaries, and support up to five distinct clients.
 `setup.txt` records the mode. Use the same mode on both sides of an optimisation
 comparison; keep existing historical result folders unchanged.
+Application authentication remains on if only DDS encryption is disabled.
 
 ## Acceptance tests and packet evidence
 

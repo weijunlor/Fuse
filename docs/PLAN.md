@@ -193,6 +193,9 @@ also secures the unchanged baseline. Acceptance evidence is in
 
 ### Layer B — application level (authentication of clients)
 
+Implemented 30 October 2026. Setup, protocol details, replay-history lifetime,
+rate limits and tests: [security/AUTH.md](../security/AUTH.md).
+
 - Username + password checked against a salted hash on the server; server issues a session token.
 - Every `Input` carries a sequence number and an HMAC computed with the token (stops replay and spoofing).
 - Player ID range-checked and matched to the token (fixes the baseline out-of-bounds write).

@@ -21,6 +21,7 @@ write_setup() {
     echo "Profiling setup: $label"
     echo "Recorded: $(date -Iseconds)"
     echo "DDS security: ${FUSE_DDS_SECURITY:-on}"
+    echo "Application authentication: ${FUSE_AUTH:-on}"
     echo
     echo "== Build"
     for bin in "$@"; do

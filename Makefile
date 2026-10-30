@@ -33,6 +33,7 @@ LDDDS += $(shell pkg-config --libs libcrypto)
 # DDS message types (idl/fuse.idl, v1 message set; see docs/PLAN.md section 2)
 GEN     := generated/fuse.c
 COMMON  := $(wildcard common/*.c) $(GEN)
+GAME_HEADERS := $(wildcard common/*.h client/*.h server/*.h) generated/fuse.h
 BENCHES := $(patsubst bench/%.c,build/%,$(wildcard bench/bench_*.c))
 # Particle update (#7, SIMD): optimised and vectorised for this machine's
 # widest vector unit (AVX2 on the test laptop). -fno-trapping-math: the game
@@ -49,11 +50,15 @@ all: build/server build/client
 $(GEN): idl/fuse.idl
 	mkdir -p generated && cd generated && idlc -x final -l c ../idl/fuse.idl
 
-build/server: $(wildcard server/*.c) $(COMMON)
-	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
+build/server: $(wildcard server/*.c) $(COMMON) $(GAME_HEADERS)
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
 
-build/client: $(filter-out client/particles.c,$(wildcard client/*.c)) build/particles.o $(COMMON)
-	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS) $(LDGL)
+build/client: $(filter-out client/particles.c,$(wildcard client/*.c)) build/particles.o $(COMMON) $(GAME_HEADERS)
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c %.o,$^) -o $@ $(LDDDS) $(LDGL)
+
+# The C and header outputs are produced by the same idlc invocation.
+generated/fuse.h: $(GEN)
+	@test -f $@
 
 # The particle system is the one file built with SIMD_FLAGS
 build/particles.o: client/particles.c client/particles.h common/worker_pool.h
@@ -88,15 +93,32 @@ bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/
 
 # Headless client for the join tests of #14 (bench/join_loss.sh): uses the
 # game's DDS code (common/net.c) so it joins with exactly the client's QoS
-build/dds_joiner: bench/dds_joiner.c common/net.c common/net.h common/dds_security.c common/dds_security.h $(GEN)
-	mkdir -p build && $(CC) $(CFLAGS) bench/dds_joiner.c common/net.c common/dds_security.c $(GEN) -o $@ $(LDDDS)
+APP_CLIENT_SRC := common/app_client.c common/crypto.c
+build/dds_joiner: bench/dds_joiner.c common/net.c common/net.h common/dds_security.c common/dds_security.h $(APP_CLIENT_SRC) $(GEN)
+	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
 
 # DDS security acceptance probes, each linked only to its own message schema.
-build/dds_security_probe: bench/dds_security_probe.c common/net.c common/dds_security.c $(GEN) common/dds_security.h
+build/dds_security_probe: bench/dds_security_probe.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN) common/dds_security.h
 	mkdir -p build && $(CC) $(CFLAGS) $(filter %.c,$^) -o $@ $(LDDDS)
 
 build/dds_security_probe_baseline: bench/dds_security_probe.c common/dds_security.c build/baseline/messages.c common/dds_security.h
 	mkdir -p build && $(CC) $(CFLAGS) -Ibuild/baseline -DFUSE_PROBE_BASELINE $(filter %.c,$^) -o $@ $(LDDDS)
+
+AUTH_TEST_SRC := bench/test_auth.c server/auth.c server/lobby.c server/game.c server/collision.c common/crypto.c common/app_client.c common/net.c common/dds_security.c common/timing.c $(GEN)
+build/test_auth: $(AUTH_TEST_SRC) common/crypto.h common/app_client.h server/auth.h
+	mkdir -p build && $(CC) $(CFLAGS) -Iserver $(AUTH_TEST_SRC) -o $@ $(LDDDS)
+
+test-auth: build/test_auth
+	./build/test_auth
+
+build/auth_probe: bench/auth_probe.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
+	mkdir -p build && $(CC) $(CFLAGS) $^ -o $@ $(LDDDS)
+
+build/auth_worker: bench/auth_worker.c client/net_client.c common/net.c common/dds_security.c $(APP_CLIENT_SRC) $(GEN)
+	mkdir -p build && $(CC) $(CFLAGS) -Iclient $^ -o $@ $(LDDDS)
+
+test-auth-integration: all build/test_auth build/auth_probe build/auth_worker build/dds_joiner build/dds_security_probe
+	python3 security/scripts/test_auth.py
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm
@@ -135,4 +157,4 @@ clean:
 # Keep pattern-built baseline binaries (make would delete them as intermediates)
 .PRECIOUS: build/baseline-O%/server build/baseline-O%/client
 
-.PHONY: all baseline bench profile debug clean
+.PHONY: all baseline bench profile debug clean test-auth test-auth-integration

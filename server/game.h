@@ -28,6 +28,9 @@ extern int int_snapshot_every;
 // 1..MAX_PLAYERS are ignored. Locks the mutex itself. Called by the DDS worker.
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys);
 
+// Same update with the mutex already held (authentication + update is atomic).
+void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys);
+
 // Start a slot afresh for a player who joins or leaves: no keys held, last
 // heard from now. The caller holds the mutex.
 void game_reset_player(int a_int_index);

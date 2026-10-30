@@ -49,6 +49,14 @@ MODES=${MODES:-default qos nonce}
 source bench/security_env.sh
 dds_check_clients "$JOINERS"
 
+# A password proof requires a nonce, so disabling nonces is meaningful only
+# with both security layers explicitly off. Never silently measure the same
+# authenticated behavior under the labels "default", "qos" and "nonce".
+if [ "${FUSE_AUTH:-on}" != off ] && [[ " $MODES " =~ [[:space:]](default|qos|tuned)[[:space:]] ]]; then
+    echo 'Nonce-off comparisons require FUSE_DDS_SECURITY=off FUSE_AUTH=off; use MODES=nonce to test authenticated joins.' >&2
+    exit 1
+fi
+
 for bin in build/server build/dds_joiner; do
     [ -x "$bin" ] || { echo "Missing $bin (make && make build/dds_joiner)" >&2; exit 1; }
 done

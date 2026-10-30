@@ -3,12 +3,15 @@ Player slots: join (nonce), leave, liveliness timeout. */
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lobby.h"
 #include "game.h"
 #include "collision.h"
 #include "net.h"
 #include "log.h"
+#include "auth.h"
+#include "timing.h"
 
 int int_player_timeout_s = PLAYER_TIMEOUT_S;
 
@@ -19,9 +22,9 @@ static int int_num_active_players = 0;
 // client sent no nonce). Only used by the main thread.
 static uint64_t arr_u64_slot_nonce[MAX_PLAYERS] = {0};
 
-// Join requests waiting for the main thread (nonces, oldest first).
+// Bounded join requests waiting for authentication/admission, oldest first.
 // Written by the DDS worker, emptied by the main thread, under the mutex.
-static uint64_t arr_u64_pending[JOIN_QUEUE];
+static JoinRequest arr_pending[JOIN_QUEUE];
 static int int_num_pending = 0;
 
 // Player IDs from Leave messages waiting for the main thread.
@@ -34,24 +37,37 @@ static int int_num_leaving = 0;
 static JoinResult arr_results[JOIN_QUEUE];
 static int int_num_results = 0;
 
-bool lobby_signal_join(uint64_t a_u64_nonce)
+bool lobby_signal_join(const JoinRequest *a_request)
 {
 	pthread_mutex_lock(&mutex);
 	bool b_queued = int_num_pending < JOIN_QUEUE;
 	if (b_queued)
-		arr_u64_pending[int_num_pending++] = a_u64_nonce;
+		arr_pending[int_num_pending++] = *a_request;
 	pthread_mutex_unlock(&mutex);
 	return b_queued;
 }
 
-bool lobby_signal_leave(int a_int_player_id)
+bool lobby_receive_input(const Input *a_input)
 {
 	pthread_mutex_lock(&mutex);
-	bool b_queued = int_num_leaving < JOIN_QUEUE;
-	if (b_queued)
-		arr_int_leaving[int_num_leaving++] = a_int_player_id;
+	bool b_ok = a_input->player_id >= 1 && a_input->player_id <= MAX_PLAYERS &&
+		arr_Players[a_input->player_id - 1].b_active && auth_input(a_input, timing_now_ns());
+	if (b_ok)
+		game_set_keys_locked(a_input->player_id, a_input->keys);
 	pthread_mutex_unlock(&mutex);
-	return b_queued;
+	return b_ok;
+}
+
+bool lobby_receive_leave(const Leave *a_leave)
+{
+	pthread_mutex_lock(&mutex);
+	bool b_ok = int_num_leaving < JOIN_QUEUE && a_leave->player_id >= 1 &&
+		a_leave->player_id <= MAX_PLAYERS && arr_Players[a_leave->player_id - 1].b_active &&
+		auth_leave(a_leave);
+	if (b_ok)
+		arr_int_leaving[int_num_leaving++] = a_leave->player_id;
+	pthread_mutex_unlock(&mutex);
+	return b_ok;
 }
 
 bool lobby_take_result(JoinResult *a_p_out)
@@ -134,6 +150,7 @@ static int admit_player(uint64_t a_u64_nonce)
 // its nonce is forgotten. The caller holds the mutex.
 static void free_slot(int a_int_index)
 {
+	auth_forget(a_int_index + 1);
 	arr_Players[a_int_index].b_active = false;
 	arr_u64_slot_nonce[a_int_index] = 0;
 	game_reset_player(a_int_index);
@@ -145,8 +162,7 @@ void lobby_poll(void)
 	pthread_mutex_lock(&mutex);
 	// Leaves first, so a slot freed now can go to a request in the same pass.
 	// The ID comes from the network: ignore IDs out of range or not playing.
-	// (Until the security layer adds the MAC, anyone can send a Leave for
-	// anyone; the Leave message already has the field for it.)
+	// Network leaves have already passed MAC/sequence validation while locked.
 	for (int i = 0; i < int_num_leaving; i++)
 	{
 		int int_index = arr_int_leaving[i] - 1;
@@ -163,8 +179,20 @@ void lobby_poll(void)
 	int int_done = 0;
 	while (int_done < int_num_pending && int_num_results < JOIN_QUEUE)
 	{
-		uint64_t u64_nonce = arr_u64_pending[int_done++];
-		JoinResult result = { .u64_nonce = u64_nonce, .u8_status = JOIN_OK };
+		const JoinRequest *p_request = &arr_pending[int_done++];
+		uint64_t u64_nonce = p_request->nonce;
+		JoinResult result = { .nonce = u64_nonce, .status = JOIN_OK };
+		if (auth_enabled())
+		{
+			int int_free_id = 0;
+			for (int i = 0; i < MAX_PLAYERS; i++)
+				if (!arr_Players[i].b_active) { int_free_id = i + 1; break; }
+			auth_join(p_request, int_free_id, timing_now_ns(), &result);
+			if (result.status == JOIN_OK && !arr_Players[result.player_id - 1].b_active)
+				admit_player(u64_nonce);
+			arr_results[int_num_results++] = result;
+			continue;
+		}
 
 		// A request with a nonce that already holds a slot: the client did
 		// not get (or not yet get) our answer and asked again. Answer with the
@@ -176,15 +204,17 @@ void lobby_poll(void)
 			int_slot = admit_player(u64_nonce);
 
 		if (int_slot >= 0)
-			result.u8_player_id = (uint8_t)(int_slot + 1);   // ID = index + 1
+			result.player_id = (uint8_t)(int_slot + 1);   // ID = index + 1
 		else
-			result.u8_status = JOIN_FULL;
+			result.status = JOIN_FULL;
 		arr_results[int_num_results++] = result;
 	}
 	// Keep the requests that did not fit for the next call
 	int_num_pending -= int_done;
 	for (int i = 0; i < int_num_pending; i++)
-		arr_u64_pending[i] = arr_u64_pending[i + int_done];
+		arr_pending[i] = arr_pending[i + int_done];
+	// Do not retain request proofs beyond the pending queue.
+	memset(arr_pending + int_num_pending, 0, (size_t)int_done * sizeof arr_pending[0]);
 	pthread_mutex_unlock(&mutex);
 }
 

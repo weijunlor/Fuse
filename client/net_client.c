@@ -14,8 +14,9 @@ of ~100. --input-send every-10ms keeps the old behaviour for measurements.
 
 Join nonce (common/net.h): the client sends the same random nonce in every
 JoinRequest and accepts only the JoinResponse carrying it; responses to other
-clients are taken and dropped. FUSE_JOIN_NONCE=off: nonce 0 and the first
-response is taken, as in the baseline.
+clients are taken and dropped. Authenticated joins always use nonces and a
+password proof. FUSE_JOIN_NONCE=off only applies in unauthenticated comparison
+mode: nonce 0 and the first response is taken, as in the baseline.
 
 Leave (common/net.h): when the window closes, the worker sends a Leave so the
 server frees the slot at once. If the server dropped this client (no Input
@@ -23,12 +24,14 @@ for its timeout, e.g. the network was cut), the client sees its own slot
 missing from the snapshots and joins again with a new nonce. */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "net_client.h"
 #include "net.h"
 #include "fuse.h"
 #include "input.h"
 #include "log.h"
+#include "app_client.h"
 
 int int_player_id = -1;
 
@@ -44,6 +47,12 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Set by net_client_stop() (main thread), read by the worker, under the mutex
 static bool b_quit = false;
+static AppClient client_auth;
+
+bool net_client_prepare(void)
+{
+	return app_client_init(&client_auth);
+}
 
 void net_client_stop(void)
 {
@@ -87,13 +96,11 @@ void *net_client_worker(void *arg)
 	response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
 	snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
 
-	// One nonce for this client, the same in every request (so the server
-	// knows a repeated request); name and proof stay empty until the login is
-	// added
+	// A retry reuses this nonce/proof; a new session always gets a new nonce.
 	JoinRequest request = {0};
-	bool b_join_nonce = net_join_nonce();
-	if (b_join_nonce)
-		request.nonce = net_random_nonce();
+	bool b_join_nonce = client_auth.b_enabled || net_join_nonce();
+	if (!app_client_request(&client_auth, &request))
+		DDS_FATAL("Cannot create login proof\n");
 
 	// Input message: sequence number counts every input sent
 	Input input = {0};
@@ -144,7 +151,9 @@ void *net_client_worker(void *arg)
 					continue;
 				LOG_INFO("Join response received\n");
 				// If server responded with an invalid player ID
-				if (response->status != JOIN_OK || response->player_id == 0)
+				if (response->status == JOIN_BAD_LOGIN && client_auth.b_enabled)
+					DDS_FATAL("Login rejected (credentials, active account, or replay check)\n");
+				if (!app_client_response(&client_auth, &request, response))
 				{
 					LOG_WARN("Unable to join\n");
 					int_resp_player_id = 0;
@@ -159,6 +168,8 @@ void *net_client_worker(void *arg)
 				// Update player ID
 				int_player_id = int_resp_player_id;
 				pthread_mutex_unlock(&mutex);
+				u8_sent_keys = 0;
+				last_input_time = 0;
 			}
 			else if (rc == 0)
 			{
@@ -211,9 +222,10 @@ void *net_client_worker(void *arg)
 
 			if (b_send)
 			{
-				input.player_id = (uint8_t)int_player_id;
-				input.seq++;
+				input.player_id = (uint8_t)int_player_id_temp;
 				input.keys = u8_keys_temp;
+				if (!app_client_input(&client_auth, &input))
+					DDS_FATAL("Input signing failed or sequence exhausted; reconnect\n");
 				// Send input
 				rc = dds_write(input_writer, &input);
 				if (rc != DDS_RETCODE_OK)
@@ -267,8 +279,9 @@ void *net_client_worker(void *arg)
 					LOG_WARN("Removed by the server (timed out), joining again\n");
 					int_player_id = -1;
 					b_seen_self = false;
-					if (b_join_nonce)
-						request.nonce = net_random_nonce();
+					crypto_clear(client_auth.arr_session_key, sizeof client_auth.arr_session_key);
+					if (!app_client_request(&client_auth, &request))
+						DDS_FATAL("Cannot create rejoin proof\n");
 				}
 			}
 			pthread_mutex_unlock(&mutex);
@@ -282,7 +295,8 @@ void *net_client_worker(void *arg)
 	{
 		Leave leave = {0};
 		leave.player_id = (uint8_t)int_player_id;
-		leave.seq = ++input.seq;   // continues the Input sequence (see the IDL)
+		if (!app_client_leave(&client_auth, &leave))
+			DDS_FATAL("Leave signing failed or sequence exhausted\n");
 		rc = dds_write(leave_writer, &leave);
 		if (rc != DDS_RETCODE_OK)
 			LOG_WARN("Leave not sent: %s\n", dds_strretcode(-rc));
@@ -292,5 +306,6 @@ void *net_client_worker(void *arg)
 			LOG_INFO("Left the game\n");
 	}
 	dds_delete(net.participant);
+	crypto_clear(&client_auth, sizeof client_auth);
 	return NULL;
 }

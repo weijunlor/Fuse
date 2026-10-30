@@ -11,6 +11,11 @@ esac
 # Secure XML also gives historical baseline binaries the same security policy.
 dds_run() {
     local str_identity=$1; shift
+    # Application accounts are separate from certificates; each benchmark
+    # client selects its own login/password file unless explicitly overridden.
+    if [ "$str_identity" != server ]; then
+        export FUSE_USERNAME=${FUSE_USERNAME:-$str_identity}
+    fi
     if [ "$FUSE_DDS_SECURITY" = on ]; then
         exec bash security/scripts/run_secure.sh "$str_identity" "$@"
     else

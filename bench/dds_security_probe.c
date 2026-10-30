@@ -1,6 +1,7 @@
 /* DDS security acceptance driver, also built against the untouched baseline
 IDL. Uses real DDS endpoints: a failed handshake must not be confused with
-a successful join. No application password/MAC behavior is implemented here. */
+a successful join. FUSE uses the same application-login helpers as the real
+client; the separate baseline build retains the lecturer's original messages. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,7 @@ a successful join. No application password/MAC behavior is implemented here. */
 #include "fuse.h"
 #include "types.h"
 #include "config.h"
+#include "app_client.h"
 #endif
 
 static dds_entity_t checked(dds_entity_t a_entity)
@@ -62,6 +64,11 @@ int main(int argc, char **argv)
     double d_seconds = argc > 2 ? atof(argv[2]) : 4.0;
     if (d_seconds <= 0 || d_seconds > 60)
         return 2;
+#ifndef FUSE_PROBE_BASELINE
+    AppClient client_auth;
+    if (!app_client_init(&client_auth))
+        return 2;
+#endif
     dds_entity_t join_topic = checked(dds_create_topic(participant, &JoinRequest_desc, "JoinRequest", NULL, NULL));
     dds_entity_t response_topic = checked(dds_create_topic(participant, &JoinResponse_desc, "JoinResponse", NULL, NULL));
     dds_entity_t input_topic = checked(dds_create_topic(participant, &Input_desc, "Input", NULL, NULL));
@@ -82,8 +89,9 @@ int main(int argc, char **argv)
     dds_entity_t input_writer = net_create_writer(&net, input_topic, NET_BEST_EFFORT);
     dds_entity_t state_reader = net_create_reader(&net, state_topic, NET_BEST_EFFORT);
     dds_entity_t leave_writer = net_create_writer(&net, leave_topic, NET_RELIABLE_ALL);
-    JoinRequest request = {.nonce = net_random_nonce()};
-    snprintf(request.name, sizeof request.name, "FUSE_SEC_PROBE");
+    JoinRequest request;
+    if (!app_client_request(&client_auth, &request))
+        return 2;
     GameSnapshot state;
 #endif
     Input input = {0};
@@ -106,7 +114,7 @@ int main(int argc, char **argv)
 #ifdef FUSE_PROBE_BASELINE
             int_id = response.int_player_id;
 #else
-            if (response.nonce == request.nonce && response.status == JOIN_OK)
+            if (int_id == 0 && app_client_response(&client_auth, &request, &response))
                 int_id = response.player_id;
 #endif
         }
@@ -137,8 +145,9 @@ int main(int argc, char **argv)
             input.ch_direction = int_first_x > 400 ? 'l' : 'r';
 #else
             input.player_id = (uint8_t)int_id;
-            input.seq++;
             input.keys = int_first_x > 400 ? KEY_LEFT : KEY_RIGHT;
+            if (!app_client_input(&client_auth, &input))
+                return 2;
 #endif
             checked(dds_write(input_writer, &input));
             last_input = now;
@@ -146,7 +155,9 @@ int main(int argc, char **argv)
 #ifndef FUSE_PROBE_BASELINE
         if (int_id > 0 && !b_left && now - start > (dds_duration_t)((d_seconds - 0.5) * 1e9))
         {
-            Leave leave = {.player_id = (uint8_t)int_id, .seq = input.seq + 1};
+            Leave leave = {.player_id = (uint8_t)int_id};
+            if (!app_client_leave(&client_auth, &leave))
+                return 2;
             checked(dds_write(leave_writer, &leave));
             dds_wait_for_acks(leave_writer, DDS_MSECS(300));
             b_left = true;

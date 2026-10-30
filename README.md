@@ -11,6 +11,7 @@ bash security/scripts/setup_wsl.sh
 source security/scripts/env.sh
 bash security/scripts/make_ca.sh
 bash security/scripts/make_certs.sh
+python3 security/scripts/accounts.py demo  # once: private application accounts
 make            # build/server, build/client
 make baseline   # build/baseline_server, build/baseline_client (original programs)
 ```
@@ -26,6 +27,8 @@ bash security/scripts/run_secure.sh client-1 ./build/client   # use client-2..5 
 DDS security is on by default. First-time certificate setup, the pinned WSL
 dependency build, security tests and explicit plaintext comparisons are documented
 in [security/README.md](security/README.md).
+Application login setup, custom accounts and authentication tests are in
+[security/AUTH.md](security/AUTH.md).
 
 ## Layout
 

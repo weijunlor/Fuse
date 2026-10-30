@@ -123,6 +123,8 @@ int main(int argc, char **argv)
     }
 
     dds_security_prepare();
+	if (!net_client_prepare())
+		return EXIT_FAILURE;
 	pthread_t thread;
 
     if (pthread_create(&thread, NULL, net_client_worker, NULL) != 0)

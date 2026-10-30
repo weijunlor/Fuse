@@ -35,7 +35,10 @@ def record(name, passed, detail=""):
 
 
 def environment(identity="client-1", mode="on", root=None):
-    env = dict(os.environ, FUSE_DDS_IDENTITY=identity, FUSE_DDS_SECURITY=mode)
+    env = dict(os.environ, FUSE_DDS_IDENTITY=identity, FUSE_DDS_SECURITY=mode,
+               FUSE_AUTH="on", FUSE_USERNAME=identity if identity != "server" else "client-1")
+    env.pop("FUSE_AUTH_USERS", None)
+    env.pop("FUSE_PASSWORD_FILE", None)
     env.pop("CYCLONEDDS_URI", None)
     if root is not None:
         env["FUSE_SECURITY_DIR"] = str(root)
@@ -307,10 +310,22 @@ def main():
         if running.returncode == 0:
             sys.exit(f"Stop the existing {name} before running isolated tests")
     try:
-        run_tests(root)
-        if args.gui:
-            gui_tests()
-        packet_tests()
+        # Valid application credentials keep failed DDS handshakes distinguishable
+        # from login failures, including the plaintext/untrusted peer probes.
+        with tempfile.TemporaryDirectory(prefix="fuse-security-app-auth-") as auth_dir:
+            previous = os.environ.get("FUSE_AUTH_DIR")
+            os.environ["FUSE_AUTH_DIR"] = auth_dir
+            try:
+                subprocess.run([sys.executable, "security/scripts/accounts.py", "demo"], check=True)
+                run_tests(root)
+                if args.gui:
+                    gui_tests()
+                packet_tests()
+            finally:
+                if previous is None:
+                    os.environ.pop("FUSE_AUTH_DIR", None)
+                else:
+                    os.environ["FUSE_AUTH_DIR"] = previous
     finally:
         (OUT / "results.json").write_text(json.dumps(RESULTS, indent=2) + "\n")
         (OUT / "report.txt").write_text("DDS security acceptance tests\n" + "\n".join(

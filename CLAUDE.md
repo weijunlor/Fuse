@@ -35,9 +35,10 @@ CSD3116 team assignment: real-time multiplayer game in C on Cyclone DDS, OpenGL 
 
 ## Status (update this section as work progresses)
 
-Last updated: 2026-10-30 (DDS security)
+Last updated: 2026-10-30 (DDS security and application authentication)
 
 Done:
+- Application security layer B: OpenSSL PBKDF2-SHA256 (600k rounds, IDL-v1 account-name salt), random per-session keys, HMAC login proofs, wrapped session responses, domain-separated Input/Leave MACs, shared monotonic sequence, per-player input and global join token buckets. Admission, validation and slot changes use the existing mutex; Leave/timeout erase session keys, active retries are idempotent and removed-session join nonces cannot be reused during that server run (4096-entry fail-closed ledger). Private provisioning and operations: `security/AUTH.md`. Benchmarks/probes use per-client accounts; `FUSE_AUTH=off` requires explicit DDS plaintext comparison. Tested: 8371 crypto/lifecycle assertions, ASan/UBSan clean, 19 real-DDS acceptance checks including production-worker timeout/rejoin, and 42 DDS security regression checks. Evidence: `bench/results/app-auth-tests/`, `bench/results/dds-security-app-auth/`. Concurrency optimisations #4/#3/#11 remain separate.
 - DDS Security layer A: pinned WSL setup, separate identity/permissions CAs, one server and five client identities, signed governance/permissions, encrypted RTPS/discovery/liveliness, explicit topic allowlists, secure-by-default participant QoS, and `run_secure.sh` for both FUSE and the unchanged baseline. Benchmark launchers select identities and record the mode; plaintext is an explicit comparison. Setup and operations: `security/README.md`. Tested: 52 acceptance checks pass, including real WSLg clients, movement/Leave, invalid credentials/policies, plaintext/untrusted peer rejection with a trusted peer still connected, denied topic operations, plaintext regression, baseline, and decoded packet captures. Evidence: `bench/results/dds-security-wsl/`. Application login/MACs and concurrency optimisations remain separate work.
 - Repo scaffold: directory structure, Makefile, module stubs, `docs/PLAN.md`, `docs/BRIEF.md` (assignment requirements and grading).
 - Module split (behaviour unchanged, baseline bugs kept for the optimisation steps): server → `collision.c` (AABB), `game.c` (player table, `mutex`, `game_apply_input`), `lobby.c` (join handshake flags, `lobby_poll`), `net_server.c` (DDS worker); client → `net_client.c` (DDS worker, `int_player_id`, mirrored `arr_Players`, `mutex`), `input.c` (`ch_dir`), `render.c`, `ui.c` (`ui_draw_text`); shared → `common/config.h`, `types.h` (`Player`), `net.c` (`net_create_topics`). Still stubs: `auth`, `bot`, `interp`, `crypto`, `spsc_ring.h` (`particles` and `timing` are done). IDL is still the baseline IDL.
@@ -71,7 +72,7 @@ Not done yet:
 
 Next (see PLAN.md section 8 for the full timeline):
 1. All: review the decided IDL (`idl/fuse.idl`, PLAN.md section 2) and raise objections before zhikai builds on it.
-2. sheeyang: DDS Security layer A is done (see `security/README.md` and acceptance evidence). Next: application security layer B (`common/crypto.c`, `server/auth.c`), then the separately measured concurrency steps #4, #3 and #11.
+2. sheeyang: DDS Security layer A and application security layer B are done (see `security/README.md`, `security/AUTH.md` and acceptance evidence). Next: separately measured concurrency steps #4, #3 and #11.
 3. Fixed tick + snapshots (#12) done by weijun. #13, #14, join nonce, leave and timeout done. Remaining: zhikai: #2 waitsets/sleep until next tick (server now spins at 2.0 CPUs, so this is the largest measurable win), #1, game rules on top of `game_tick()`.
 4. weijun: bomb/explosion/ember rendering once snapshots exist (explosion → `particles_burst()`); final art swapped into `assets/atlas.png` 3-4 Nov (same layout). Remaining owned optimisation: #15 (interpolation; snapshots now exist, vx/vy are filled).
 5. Measurement rule: if features merged since the last profile, profile right before and right after each optimisation, so the change is measured on its own.
