@@ -19,8 +19,8 @@ A 2–5 player bomb-passing arena game. One player holds a lit bomb with a burni
 | Dash | Short speed burst with a cooldown, to escape or to tag |
 | Pickups | *+speed*, *shield* (blocks one tag), *fuse-reset* |
 | Embers | Explosions leave burning embers on the floor that slow players (gives the server a large workload to optimise) |
-| Rounds | Lobby → countdown → rounds → win screen → rematch |
-| Bots (stretch) | State machine: flee when not holding the bomb, chase the nearest player when holding it |
+| Rounds | 5 s admission lobby → 3 s countdown → rounds → 5 s win screen → automatic rematch |
+| Bots (optional, implemented) | `--bots 0..4`: flee the holder, chase the nearest living player when holding the bomb; use normal dash/collision rules |
 
 ### Animation
 
@@ -32,7 +32,7 @@ Bomb pulses faster as the fuse burns down, explosion particle bursts, spark trai
 
 | Area | Baseline | FUSE |
 |---|---|---|
-| Leaving | Not supported | `Leave` message + DDS liveliness timeout for crashed clients |
+| Leaving | Not supported | `Leave` message + 5 s Input-heartbeat timeout for crashed clients |
 | Join | `JoinResponse` broadcast to all; two clients joining together can take the same ID | Client sends a random nonce and only accepts a response carrying it |
 | Movement | 1 px per input message; speed depends on network rate | Fixed tick, input is held-key state, velocity × dt |
 | State sync | One `Position` message per player | One `GameSnapshot` per tick |

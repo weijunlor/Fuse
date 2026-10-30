@@ -79,7 +79,7 @@ static int int_batch_cap;   // vertices allocated
 
 static StressSprite *arr_stress;
 static int int_num_stress;
-static unsigned long arr_u32_seen_explosions[4] = {0};
+static unsigned long u32_seen_explosion_tick = 0;
 static unsigned long u32_last_snapshot_tick = 0;
 static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
 
@@ -272,12 +272,12 @@ void render_frame(void)
     const GameSnapshot *p_game = &frame.snapshot;
 
     bool b_new_server = p_game->tick < u32_last_snapshot_tick;
-    bool b_new_round = p_game->phase == PHASE_COUNTDOWN &&
-                       u8_last_snapshot_phase != PHASE_COUNTDOWN;
-    if (b_new_server || b_new_round)
+    bool b_new_match = p_game->phase == PHASE_LOBBY &&
+                       u8_last_snapshot_phase != PHASE_LOBBY;
+    if (b_new_server || b_new_match)
     {
         particles_clear();
-        memset(arr_u32_seen_explosions, 0, sizeof arr_u32_seen_explosions);
+        u32_seen_explosion_tick = 0;
     }
     if (p_game->tick != 0)
         u32_last_snapshot_tick = p_game->tick;
@@ -312,30 +312,26 @@ void render_frame(void)
     }
 
     // Particles (explosion sparks and embers), under the players
-    for (int i = 0; i < 4; i++)
+    // Oldest first: records move between array slots, but each explosion's
+    // tick stays unique. A repeated snapshot must not replay its burst.
+    for (int i = 3; i >= 0; i--)
     {
         const Explosion *p_explosion = &p_game->explosions[i];
         if (p_explosion->tick == 0)
             continue;
-        /* Age from server ticks (the explosion's tick and the snapshot's tick
-        are both server tick numbers, TICK_HZ per second), so every client
-        shows the same frame. The server keeps sending the explosion until the
-        next round, but the animation plays once: an explosion older than the
-        animation is not drawn, and does not spawn particles in a client
-        that only sees it then (e.g. one that joined late). */
-        double d_age_s = (double)(p_game->tick - p_explosion->tick) / TICK_HZ;
-        bool b_playing = d_age_s < EXPLOSION_FRAMES * EXPLOSION_FRAME_S;
-        if (arr_u32_seen_explosions[i] != p_explosion->tick)
+        unsigned long u32_age = p_game->tick - p_explosion->tick;
+        if (p_explosion->tick > u32_seen_explosion_tick)
         {
-            if (b_playing)
+            if (u32_age < TICK_HZ / 2)
                 particles_burst((float)p_explosion->x - SQ_WIDTH / 2.0f,
                                 (float)p_explosion->y - SQ_WIDTH / 2.0f, 48);
-            arr_u32_seen_explosions[i] = p_explosion->tick;
+            u32_seen_explosion_tick = p_explosion->tick;
         }
-        if (!b_playing)
+        if (u32_age >= TICK_HZ / 2)
             continue;
-        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES, 1,
-                                     d_age_s, EXPLOSION_FRAME_S);
+        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES,
+                                     1, (double)u32_age / TICK_HZ,
+                                     0.08);
         render_sprite(int_sprite, p_explosion->x - SQ_WIDTH / 2.0f,
                       p_explosion->y - SQ_WIDTH / 2.0f);
     }
@@ -354,7 +350,7 @@ void render_frame(void)
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
         const PlayerState *p_state = &p_game->players[i];
-        if((p_state->flags & PF_ACTIVE) != 0)
+        if((p_state->flags & (PF_ACTIVE | PF_ALIVE)) == (PF_ACTIVE | PF_ALIVE))
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
@@ -390,13 +386,28 @@ void render_frame(void)
                                 p_game->phase == PHASE_GAME_OVER ? "Game over" :
                                 "Waiting";
         
-        // Use %02u and add "/ 10" to the final argument
         snprintf(str_banner, sizeof(str_banner), "Player %d %s %u.%02us",
                  int_player_id, str_phase,
                  (unsigned)(p_game->timer_ms / 1000),
-                 (unsigned)((p_game->timer_ms % 1000) / 10)); 
+                 (unsigned)((p_game->timer_ms % 1000) / 10));
+        if (p_game->phase == PHASE_GAME_OVER)
+        {
+            int int_winner = 0;
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if ((p_game->players[i].flags & (PF_ACTIVE | PF_ALIVE)) ==
+                    (PF_ACTIVE | PF_ALIVE)) int_winner = i + 1;
+            if (int_winner != 0)
+                snprintf(str_banner, sizeof str_banner, "Player %d wins! Rematch in %u.%02us",
+                         int_winner, p_game->timer_ms / 1000,
+                         (p_game->timer_ms % 1000) / 10);
+            else
+                snprintf(str_banner, sizeof str_banner, "Draw! Rematch in %u.%02us",
+                         p_game->timer_ms / 1000,
+                         (p_game->timer_ms % 1000) / 10);
+        }
     }
-    ui_draw_text(230, 20, 3.0f, str_banner);
+    ui_draw_text(140, 20, 2.0f, str_banner);
+    ui_draw_text(20, HEIGHT - 22, 1.5f, "Move: arrows / WASD   Dash: Space / Shift");
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
@@ -404,10 +415,13 @@ void render_frame(void)
         if((p_state->flags & PF_ACTIVE) != 0)
         {
             char str_player[32];
-            snprintf(str_player, sizeof(str_player), "%d L:%u", i + 1,
-                     (unsigned)p_state->lives);
-            ui_draw_text(frame.arr_f_x[i] + SQ_WIDTH / 2 - 20, frame.arr_f_y[i] - 30,
-                         2.0f, str_player);
+            bool b_alive = (p_state->flags & PF_ALIVE) != 0;
+            snprintf(str_player, sizeof(str_player), "%s%d %s%u",
+                     (p_state->flags & PF_BOT) ? "Bot " : "", i + 1,
+                     b_alive ? "L:" : "Out ", (unsigned)p_state->lives);
+            ui_draw_text(b_alive ? frame.arr_f_x[i] + SQ_WIDTH / 2 - 20 : 20,
+                        b_alive ? frame.arr_f_y[i] - 30 : 65 + i * 18,
+                        1.5f, str_player);
         }
     }
 }

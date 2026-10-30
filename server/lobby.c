@@ -7,6 +7,7 @@ Player slots: join (nonce), leave, liveliness timeout. */
 #include "lobby.h"
 #include "game.h"
 #include "collision.h"
+#include "bot.h"
 #include "net.h"
 #include "log.h"
 
@@ -134,6 +135,7 @@ static int admit_player(uint64_t a_u64_nonce)
 // its nonce is forgotten. The caller holds the mutex.
 static void free_slot(int a_int_index)
 {
+	bot_set_player(a_int_index, false);
 	arr_Players[a_int_index].b_active = false;
 	arr_u64_slot_nonce[a_int_index] = 0;
 	game_reset_player(a_int_index);
@@ -150,7 +152,8 @@ void lobby_poll(void)
 	for (int i = 0; i < int_num_leaving; i++)
 	{
 		int int_index = arr_int_leaving[i] - 1;
-		if (int_index >= 0 && int_index < MAX_PLAYERS && arr_Players[int_index].b_active)
+		if (int_index >= 0 && int_index < MAX_PLAYERS &&
+		    arr_Players[int_index].b_active && !bot_is_player(int_index))
 		{
 			free_slot(int_index);
 			LOG_INFO("Player %d left\n", int_index + 1);
@@ -172,13 +175,16 @@ void lobby_poll(void)
 		int int_slot = find_slot_by_nonce(u64_nonce);
 		if (int_slot >= 0)
 			LOG_INFO("Repeated join request, player %d again\n", int_slot + 1);
+		else if (!game_accepts_joins())
+			result.u8_status = JOIN_IN_GAME;
 		else
+		{
 			int_slot = admit_player(u64_nonce);
+			if (int_slot < 0) result.u8_status = JOIN_FULL;
+		}
 
 		if (int_slot >= 0)
 			result.u8_player_id = (uint8_t)(int_slot + 1);   // ID = index + 1
-		else
-			result.u8_status = JOIN_FULL;
 		arr_results[int_num_results++] = result;
 	}
 	// Keep the requests that did not fit for the next call
@@ -200,7 +206,7 @@ void lobby_check_timeouts(uint64_t a_u64_now_ns)
 		// The worker may record an Input just after a_u64_now_ns was read, so
 		// the last input can be later than "now": not timed out
 		uint64_t u64_last_ns = game_last_input_ns(i);
-		if (arr_Players[i].b_active && a_u64_now_ns > u64_last_ns &&
+		if (arr_Players[i].b_active && !bot_is_player(i) && a_u64_now_ns > u64_last_ns &&
 		    a_u64_now_ns - u64_last_ns > u64_timeout_ns)
 		{
 			free_slot(i);
@@ -208,4 +214,20 @@ void lobby_check_timeouts(uint64_t a_u64_now_ns)
 		}
 	}
 	pthread_mutex_unlock(&mutex);
+}
+
+bool lobby_add_bots(int a_int_count)
+{
+	if (a_int_count < 0 || a_int_count >= MAX_PLAYERS) return false;
+	pthread_mutex_lock(&mutex);
+	bool b_ok = game_accepts_joins() &&
+	            int_num_active_players + a_int_count <= MAX_PLAYERS;
+	for (int i = 0; b_ok && i < a_int_count; i++)
+	{
+		int int_slot = admit_player(0);
+		b_ok = int_slot >= 0;
+		if (b_ok) bot_set_player(int_slot, true);
+	}
+	pthread_mutex_unlock(&mutex);
+	return b_ok;
 }

@@ -13,7 +13,8 @@ Player slots: join (nonce), leave, liveliness timeout. */
 2. Main thread's lobby_poll() handles every queued request: a nonce that
    already holds a slot gets that slot again (its response was lost and the
    client asked again); otherwise it picks a free slot and a random
-   non-colliding position, or answers "full". Each answer is queued.
+   non-colliding position in the lobby, or answers "full" / "in game".
+   Retries for an existing nonce remain valid during a match.
 3. DDS worker collects the answers with lobby_take_result() and sends each in
    a JoinResponse carrying the request's nonce.
 Queues and slot nonces are guarded by the mutex in game.h.
@@ -36,7 +37,7 @@ a repeated request from a new client (see net_join_nonce() in common/net.h). */
 typedef struct
 {
 	uint64_t u64_nonce;    // copied from the request
-	uint8_t u8_status;     // JOIN_OK or JOIN_FULL (types.h)
+	uint8_t u8_status;     // JOIN_OK, JOIN_FULL or JOIN_IN_GAME (types.h)
 	uint8_t u8_player_id;  // 1..MAX_PLAYERS if JOIN_OK, else 0
 } JoinResult;
 
@@ -63,5 +64,8 @@ void lobby_poll(void);
 // Called by the main thread once per tick: frees the slots of players not
 // heard from for int_player_timeout_s seconds (a_u64_now_ns: timing_now_ns())
 void lobby_check_timeouts(uint64_t a_u64_now_ns);
+
+// Startup only: reserve 0..MAX_PLAYERS-1 slots for server-controlled bots.
+bool lobby_add_bots(int a_int_count);
 
 #endif /* SERVER_LOBBY_H */

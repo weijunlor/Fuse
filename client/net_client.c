@@ -219,7 +219,10 @@ void *net_client_worker(void *arg)
 				// If server responded with an invalid player ID
 				if (response->status != JOIN_OK || response->player_id == 0)
 				{
-					LOG_WARN("Unable to join\n");
+					if (response->status == JOIN_IN_GAME)
+						LOG_INFO("Match in progress; waiting for the next lobby\n");
+					else
+						LOG_WARN("Unable to join (status %u)\n", response->status);
 					int_resp_player_id = 0;
 				}
 				else

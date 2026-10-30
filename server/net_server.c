@@ -3,9 +3,9 @@ Server DDS worker thread: takes inputs, publishes snapshots.
 
 Since #12 the worker publishes one GameSnapshot per published tick (built by
 game_tick() on the main thread) instead of one Position message per player,
-and an Input carries the held keys, which game_tick() applies. Waiting
-instead of busy-polling (#2) and writing outside the mutex (#1) are described
-at the end of this comment; both keep the baseline's way behind a switch.
+and an Input carries the held keys, which game_tick() applies. The worker
+blocks on a waitset (#2) and publishes a copied snapshot outside the mutex
+(#1). --wait busy and --publish locked retain the separate before paths.
 
 #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
 and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
@@ -29,8 +29,6 @@ and written after unlocking, so the main thread's tick never waits for
 dds_write(). FUSE_WRITE_UNDER_LOCK=on keeps the write inside the lock. */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "net_server.h"
 #include "net.h"
@@ -48,10 +46,6 @@ static dds_entity_t guard_wake = 0;
 
 void net_server_init(void)
 {
-	const char *str_wait = getenv("FUSE_SERVER_WAIT");
-	b_server_wait = !(str_wait != NULL && strcmp(str_wait, "spin") == 0);
-	const char *str_lock = getenv("FUSE_WRITE_UNDER_LOCK");
-	b_write_under_lock = str_lock != NULL && strcmp(str_lock, "on") == 0;
 	LOG_INFO("Server wait: %s, snapshot write: %s\n",
 	         b_server_wait ? "sleep and waitset" : "spin (as the baseline)",
 	         b_write_under_lock ? "under the mutex (as the baseline)" : "after unlocking");
@@ -204,7 +198,8 @@ void *net_server_worker(void *arg)
 			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
-			LOG_INFO("Join response sent: player %d\n", (int)result.u8_player_id);
+			LOG_INFO("Join response sent: status %u, player %u\n",
+			         result.u8_status, result.u8_player_id);
 			b_sent = true;
 		}
 		/* Polling sleep (the baseline's, once per pass that sent responses).

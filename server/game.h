@@ -22,6 +22,14 @@ extern pthread_mutex_t mutex;
 // Snapshots are published every this many ticks (TICK_HZ / --snapshot-hz)
 extern int int_snapshot_every;
 
+// Before/after paths, selected by main before the worker starts.
+extern bool b_game_branchless;
+extern bool b_ember_grid;
+extern bool b_reduce_accum;
+
+// New slots are admitted only in the lobby. Caller holds mutex.
+bool game_accepts_joins(void);
+
 // Store the keys (KEY_* bitmask, types.h) that a player holds now, from an
 // Input message; the next tick moves the player by them. Also records when
 // the player was last heard from (for the timeout in lobby.c). IDs outside
@@ -37,8 +45,9 @@ void game_reset_player(int a_int_index);
 uint64_t game_last_input_ns(int a_int_index);
 
 // Advance the game by one fixed step of 1/TICK_HZ s: move every active player
-// by its held keys (PLAYER_SPEED, stopping at the window edge and at other
-// players), then build the GameSnapshot for this tick. Locks the mutex itself.
+// by its held keys (with dash/speed/ember effects), ignoring eliminated
+// spectators in collision, then build the completed tick's GameSnapshot.
+// Advances lobby/countdown/round/win/rematch rules. Locks the mutex itself.
 // Called by the main thread TICK_HZ times per second.
 void game_tick(void);
 

@@ -18,9 +18,8 @@ runs while the mutex is held, as the baseline's Position writes did, so the
 main thread waits for the network write. */
 extern bool b_write_under_lock;
 
-/* Read FUSE_SERVER_WAIT and FUSE_WRITE_UNDER_LOCK from the environment and
-create the guard condition used by net_server_wake(). Call once from main()
-before starting the worker. */
+/* Create the guard condition used by net_server_wake(). Call once from main()
+after selecting environment/CLI options and before starting the worker. */
 void net_server_init(void);
 
 /* Wake the worker so it publishes the snapshot and join answers the main
