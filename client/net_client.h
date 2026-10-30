@@ -9,6 +9,7 @@ Client DDS worker thread: sends input, receives snapshots. */
 
 #include "config.h"
 #include "types.h"
+#include "fuse.h"
 
 // This client's player ID from the server; -1 until joined.
 // Written by the worker under the mutex, but read without it by the worker
@@ -17,6 +18,7 @@ extern int int_player_id;
 
 // Mirror of the server's player table, filled from GameSnapshot messages
 extern Player arr_Players[MAX_PLAYERS];
+extern GameSnapshot latest_snapshot;
 
 // One mutex guards int_player_id, arr_Players and u8_keys (input.h)
 extern pthread_mutex_t mutex;

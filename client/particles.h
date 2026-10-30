@@ -48,6 +48,9 @@ void particles_init(ParticleLayout a_layout, int a_int_capacity, int a_int_threa
                     unsigned int a_u_seed);
 void particles_free(void);
 
+// Remove all live particles immediately, for a new round or server session.
+void particles_clear(void);
+
 // Spawn a_int_count particles flying out of (a_x, a_y) in random directions
 // (an explosion). Particles that do not fit are dropped.
 void particles_burst(float a_x, float a_y, int a_int_count);

@@ -76,27 +76,33 @@ int main(int argc, char **argv)
 	LOG_INFO("Waiting... (%d ticks/s, a snapshot every %d ticks)\n",
 	         TICK_HZ, int_snapshot_every);
 
-	/* Busy loop, as in the baseline: handle join requests as soon as the
-	worker flags them, and run a tick whenever its time has come. Ticks are
-	scheduled on absolute times (start + n * TICK_NS), so the rate does not
-	drift. Sleeping until the next tick instead of spinning is #2. */
+	/* Ticks are scheduled on absolute times (start + n * TICK_NS), so the
+	rate does not drift. Sleep until the next tick instead of spinning. */
 	uint64_t u_next_tick_ns = timing_now_ns();
 	while (1)
 	{
 		lobby_poll();
 
 		uint64_t u_now_ns = timing_now_ns();
-		if (u_now_ns >= u_next_tick_ns)
+		if (u_now_ns < u_next_tick_ns)
 		{
-			// Remove players not heard from for too long, then move the rest
-			lobby_check_timeouts(u_now_ns);
-			game_tick();
-			u_next_tick_ns += TICK_NS;
-			// More than a second behind (e.g. the process was stopped):
-			// skip the missed ticks instead of running them all at once
-			if (u_now_ns > u_next_tick_ns + 1000000000ull)
-				u_next_tick_ns = u_now_ns + TICK_NS;
+			uint64_t u_sleep_ns = u_next_tick_ns - u_now_ns;
+			struct timespec ts_sleep = {
+				.tv_sec = (time_t)(u_sleep_ns / 1000000000ull),
+				.tv_nsec = (long)(u_sleep_ns % 1000000000ull)
+			};
+			nanosleep(&ts_sleep, NULL);
+			continue;
 		}
+
+		// Remove players not heard from for too long, then move the rest
+		lobby_check_timeouts(u_now_ns);
+		game_tick();
+		u_next_tick_ns += TICK_NS;
+		// More than a second behind (e.g. the process was stopped):
+		// skip the missed ticks instead of running them all at once
+		if (u_now_ns > u_next_tick_ns + 1000000000ull)
+			u_next_tick_ns = u_now_ns + TICK_NS;
 	}
 
 	return 0;

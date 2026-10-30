@@ -75,6 +75,9 @@ static int int_batch_cap;   // vertices allocated
 
 static StressSprite *arr_stress;
 static int int_num_stress;
+static unsigned long arr_u32_seen_explosions[4] = {0};
+static unsigned long u32_last_snapshot_tick = 0;
+static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
 
 // Immediate path: one sprite = one glBegin/glEnd
 static void sprite_immediate(int a_int_sprite, float x, float y)
@@ -254,6 +257,22 @@ void render_resize(int a_int_w, int a_int_h)
 void render_frame(void)
 {
     double d_time_s = glfwGetTime();
+    GameSnapshot game_snapshot;
+    pthread_mutex_lock(&mutex);
+    game_snapshot = latest_snapshot;
+    pthread_mutex_unlock(&mutex);
+
+    bool b_new_server = game_snapshot.tick < u32_last_snapshot_tick;
+    bool b_new_round = game_snapshot.phase == PHASE_COUNTDOWN &&
+                       u8_last_snapshot_phase != PHASE_COUNTDOWN;
+    if (b_new_server || b_new_round)
+    {
+        particles_clear();
+        memset(arr_u32_seen_explosions, 0, sizeof arr_u32_seen_explosions);
+    }
+    if (game_snapshot.tick != 0)
+        u32_last_snapshot_tick = game_snapshot.tick;
+    u8_last_snapshot_phase = game_snapshot.phase;
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -284,19 +303,52 @@ void render_frame(void)
     }
 
     // Particles (explosion sparks and embers), under the players
+    for (int i = 0; i < 4; i++)
+    {
+        const Explosion *p_explosion = &game_snapshot.explosions[i];
+        if (p_explosion->tick == 0)
+            continue;
+        if (arr_u32_seen_explosions[i] != p_explosion->tick)
+        {
+            particles_burst((float)p_explosion->x - SQ_WIDTH / 2.0f,
+                            (float)p_explosion->y - SQ_WIDTH / 2.0f, 48);
+            arr_u32_seen_explosions[i] = p_explosion->tick;
+        }
+        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES,
+                                     1, d_time_s - p_explosion->tick * 0.001,
+                                     0.08);
+        render_sprite(int_sprite, p_explosion->x - SQ_WIDTH / 2.0f,
+                      p_explosion->y - SQ_WIDTH / 2.0f);
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        const Pickup *p_pickup = &game_snapshot.pickups[i];
+        int int_sprite = p_pickup->type == PICKUP_SPEED ? SPR_PICKUP_SPEED :
+                         p_pickup->type == PICKUP_SHIELD ? SPR_PICKUP_SHIELD :
+                         p_pickup->type == PICKUP_FUSE_RESET ? SPR_PICKUP_FUSE : -1;
+        if (int_sprite >= 0)
+            render_sprite(int_sprite, p_pickup->x, p_pickup->y);
+    }
     particles_draw(render_sprite);
 
     // Players: the sprite is the same size as the SQ_WIDTH hitbox
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        pthread_mutex_lock(&mutex);
-        if(arr_Players[i].b_active == true)
+        const PlayerState *p_state = &game_snapshot.players[i];
+        if((p_state->flags & PF_ACTIVE) != 0)
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
-            render_sprite(int_sprite, arr_Players[i].x, arr_Players[i].y);
+            render_sprite(int_sprite, p_state->x, p_state->y);
+            if ((p_state->flags & PF_SHIELD) != 0)
+                render_sprite(SPR_SHIELD_BUBBLE, p_state->x, p_state->y);
+            if (game_snapshot.bomb_holder == i + 1)
+            {
+                int int_bomb = atlas_frame(SPR_BOMB, BOMB_FRAMES, 1,
+                                            d_time_s, 0.12);
+                render_sprite(int_bomb, p_state->x, p_state->y - SQ_WIDTH);
+            }
         }
-        pthread_mutex_unlock(&mutex);
     }
 
     // Batched mode: everything above is drawn here, in one call
@@ -308,25 +360,32 @@ void render_frame(void)
     glDisable(GL_TEXTURE_2D);
     glColor3f(0.15f, 0.15f, 0.2f);
 
-    char str_banner[100] = "Waiting for server ...";
+    char str_banner[160] = "Waiting for server ...";
     if (int_player_id != -1)
     {
-        snprintf(str_banner, sizeof(str_banner), "Player %d", int_player_id);
+        const char *str_phase = game_snapshot.phase == PHASE_COUNTDOWN ? "Starting" :
+                                game_snapshot.phase == PHASE_PLAYING ? "Playing" :
+                                game_snapshot.phase == PHASE_ROUND_OVER ? "Round over" :
+                                game_snapshot.phase == PHASE_GAME_OVER ? "Game over" :
+                                "Waiting";
+        snprintf(str_banner, sizeof(str_banner), "Player %d  %s  %u.%03u s",
+                 int_player_id, str_phase,
+                 (unsigned)(game_snapshot.timer_ms / 1000),
+                 (unsigned)(game_snapshot.timer_ms % 1000));
     }
     ui_draw_text(320, 20, 3.0f, str_banner);
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        pthread_mutex_lock(&mutex);
-        if(arr_Players[i].b_active == true)
+        const PlayerState *p_state = &game_snapshot.players[i];
+        if((p_state->flags & PF_ACTIVE) != 0)
         {
-            // Label the player ID above the sprite
-            char str_player[2] = "";
-            snprintf(str_player, sizeof(str_player), "%d", i+1);
-            ui_draw_text(arr_Players[i].x + SQ_WIDTH / 2 - 7, arr_Players[i].y - 30,
-                         3.0f, str_player);
+            char str_player[32];
+            snprintf(str_player, sizeof(str_player), "%d L:%u", i + 1,
+                     (unsigned)p_state->lives);
+            ui_draw_text(p_state->x + SQ_WIDTH / 2 - 20, p_state->y - 30,
+                         2.0f, str_player);
         }
-        pthread_mutex_unlock(&mutex);
     }
 }
 

@@ -37,6 +37,10 @@ void *net_server_worker(void *arg)
 	dds_entity_t snapshot_writer;
 	dds_entity_t input_reader;
 	dds_entity_t leave_reader;
+	dds_entity_t waitset;
+	dds_entity_t join_condition;
+	dds_entity_t input_condition;
+	dds_entity_t leave_condition;
 
 	//Pointer to unknown type
 	void *samples_join[JOIN_TAKE];
@@ -58,6 +62,21 @@ void *net_server_worker(void *arg)
 	input_reader = net_create_reader(&net, net.input_topic, NET_BEST_EFFORT);
 	// A lost Leave would leave the player in the game until the timeout
 	leave_reader = net_create_reader(&net, net.leave_topic, NET_RELIABLE_ALL);
+
+	/* Wait for network data instead of polling the readers continuously.
+	 * The timeout lets the worker publish snapshots made by game_tick(). */
+	waitset = dds_create_waitset(net.participant);
+	if (waitset < 0)
+		DDS_FATAL("dds_create_waitset: %s\n", dds_strretcode(-waitset));
+	join_condition = dds_create_readcondition(join_reader, DDS_ANY_STATE);
+	input_condition = dds_create_readcondition(input_reader, DDS_ANY_STATE);
+	leave_condition = dds_create_readcondition(leave_reader, DDS_ANY_STATE);
+	if (join_condition < 0 || input_condition < 0 || leave_condition < 0)
+		DDS_FATAL("dds_create_readcondition failed\n");
+	if (dds_waitset_attach(waitset, join_condition, join_reader) != DDS_RETCODE_OK ||
+	    dds_waitset_attach(waitset, input_condition, input_reader) != DDS_RETCODE_OK ||
+	    dds_waitset_attach(waitset, leave_condition, leave_reader) != DDS_RETCODE_OK)
+		DDS_FATAL("dds_waitset_attach failed\n");
 
 	/* ----------------------------------------------------- */
 	/* Create writers                                        */
@@ -83,10 +102,15 @@ void *net_server_worker(void *arg)
 
 	// Copy of the latest snapshot, taken from game.c
 	GameSnapshot snapshot;
+	dds_attach_t triggered[3];
 
-	/* Poll until data has been read. */
+	/* Wait for data or periodically wake to publish a snapshot. */
 	while (1)
 	{
+		rc = dds_waitset_wait(waitset, triggered, 3, DDS_MSECS(10));
+		if (rc < 0)
+			DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+
 		// Queue every waiting join request for the main thread (the baseline
 		// took one per pass and merged requests that arrived together)
 		rc = dds_take(join_reader, samples_join, infos_join, JOIN_TAKE, JOIN_TAKE);
@@ -125,11 +149,15 @@ void *net_server_worker(void *arg)
 		if (b_sent)
 			dds_sleepfor (DDS_MSECS (20));
 
-		// Publish the latest snapshot once (game_tick() on the main thread
-		// makes a new one every int_snapshot_every ticks). The write happens
-		// while holding the mutex, as the baseline's Position writes did (#1).
+		// Copy the latest snapshot while locked, then publish it without
+		// holding the game mutex. game_tick() makes a new snapshot every
+		// int_snapshot_every ticks.
+		bool b_has_snapshot;
 		pthread_mutex_lock(&mutex);
-		if (game_take_snapshot(&snapshot))
+		b_has_snapshot = game_take_snapshot(&snapshot);
+		pthread_mutex_unlock(&mutex);
+
+		if (b_has_snapshot)
 		{
 			rc = dds_write(snapshot_writer, &snapshot);
 			if (rc != DDS_RETCODE_OK)
@@ -138,7 +166,6 @@ void *net_server_worker(void *arg)
 			}
 			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
 		}
-		pthread_mutex_unlock(&mutex);
 
 		// Listen for input
 		rc = dds_take(input_reader, samples_input, infos_input,

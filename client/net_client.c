@@ -40,6 +40,7 @@ bool b_input_on_change = true;
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
+GameSnapshot latest_snapshot = {0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Set by net_client_stop() (main thread), read by the worker, under the mutex
@@ -247,6 +248,7 @@ void *net_client_worker(void *arg)
 			// Copy every player at once, so a frame never shows a mix of
 			// two ticks (the baseline updated one player per message)
 			pthread_mutex_lock(&mutex);
+			latest_snapshot = *snapshot;
 			for (int i = 0; i < MAX_PLAYERS; i++)
 			{
 				const PlayerState *p_state = &snapshot->players[i];
