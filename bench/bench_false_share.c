@@ -66,8 +66,9 @@ static void *worker(void *a_arg)
         check_thread(pthread_setaffinity_np(pthread_self(), sizeof(cpus), &cpus),
                      "pthread_setaffinity_np");
     }
-    wait_barrier();
     uint64_t u64_sum = 0;
+    wait_barrier(); // Ready: affinity and local setup are complete.
+    wait_barrier(); // Start: main records the timestamp before releasing us.
     if (!b_ring)
         for (uint64_t i = 0; i < u64_iterations; i++)
             atomic_fetch_add_explicit(&arr_counters[p_args->int_index].u64_value,
@@ -140,9 +141,10 @@ int main(int argc, char **argv)
     pthread_t arr_threads[2];
     for (int i = 0; i < 2; i++)
         check_thread(pthread_create(&arr_threads[i], NULL, worker, &arr_args[i]), "pthread_create");
+    wait_barrier(); // Wait for both workers to finish setup before timing.
     uint64_t u64_start = now_ns();
-    wait_barrier();
-    wait_barrier();
+    wait_barrier(); // Release both ready workers into the measured workload.
+    wait_barrier(); // Wait for both workloads to finish.
     uint64_t u64_elapsed = now_ns() - u64_start;
     for (int i = 0; i < 2; i++)
         check_thread(pthread_join(arr_threads[i], NULL), "pthread_join");

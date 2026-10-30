@@ -179,7 +179,10 @@ layout sizes, offsets and elapsed time. `counters` is a synthetic pair of
 independent relaxed atomic increments; `ring` uses the production queue.
 One counters iteration is one increment per worker; one ring iteration is
 one complete producer/consumer transfer. Do not compare rates across modes.
-Thread creation and CPU-affinity setup are outside the timing window.
+Thread creation and CPU-affinity setup are outside the timing window: both
+workers reach a readiness barrier before the main thread records the start
+timestamp. A separate start phase releases the workers; start and completion
+barrier overhead remains inside the measured interval.
 
 For native measurements, choose CPUs on different physical cores using
 `lscpu -e=CPU,CORE,SOCKET`, then run (replace `0 2` with those CPU IDs):
