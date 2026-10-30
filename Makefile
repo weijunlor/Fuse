@@ -35,7 +35,8 @@ LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
 # install them alongside it. Bake in the detected path, with a runtime override.
 DDS_LIBDIR := $(shell pkg-config --variable=libdir CycloneDDS)
 DDS_PLUGIN_DIR := $(shell if test -f "$(DDS_LIBDIR)/libddsc0debian/libdds_security_auth.so"; then printf '%s' "$(DDS_LIBDIR)/libddsc0debian"; else printf '%s' "$(DDS_LIBDIR)"; fi)
-CFLAGS += -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"$(DDS_PLUGIN_DIR)"'
+# CFLAGS already has override origin from padding; retain it for this default too.
+override CFLAGS += -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"$(DDS_PLUGIN_DIR)"'
 LDDDS += -Wl,-rpath,$(DDS_LIBDIR)
 LDGL    := $(shell pkg-config --libs glfw3 stb) -lGL -lm
 # Security preflight validates the identity key/certificate before discovery.
