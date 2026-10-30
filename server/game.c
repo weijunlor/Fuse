@@ -24,9 +24,9 @@ int int_snapshot_every = TICK_HZ / SNAPSHOT_HZ;
 #define TICK_STEP (PLAYER_SPEED / TICK_HZ)
 #define PLAYER_START_LIVES 3
 #define COUNTDOWN_TICKS (3 * TICK_HZ)
-#define FUSE_TICKS (10 * TICK_HZ)
+#define FUSE_TICKS (10 * TICK_HZ) // Game Round time -> now is 10 secs
 #define ROUND_OVER_TICKS (2 * TICK_HZ)
-#define PASS_COOLDOWN_TICKS (TICK_HZ / 2)
+#define PASS_COOLDOWN_TICKS TICK_HZ // Pass cooldown time -> now is 1 sec 
 #define DASH_TICKS (TICK_HZ / 5)
 #define DASH_COOLDOWN_TICKS TICK_HZ
 #define SPEED_PICKUP_TICKS (5 * TICK_HZ)
