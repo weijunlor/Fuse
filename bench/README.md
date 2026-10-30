@@ -45,6 +45,14 @@ reads both.
 Use one label per optimisation step (matching the git tag) so the final report can compare every step.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
 
+## Headless test players: `dds_players`
+
+`build/dds_players <seconds> [keys1] [keys2]` (`make build/dds_players`) joins two players that hold the given
+keys (KEY_* bitmask, e.g. `10` = right+down), prints every phase, bomb, lives and explosion change, and ends with
+statistics of the gaps between snapshots (server source timestamps) and any snapshot ticks that were never sent.
+Used for #2 (`docs/report-notes/server-wait.txt`). Run it and the server on their own DDS domain
+(`CYCLONEDDS_URI='<Domain Id="42"/>'`) so a game already running is not disturbed.
+
 ## Rendering cost: `render.sh`
 
 `bench/render.sh <label> [bin_dir]` measures the client's drawing code on its own (no server), for #16 and later

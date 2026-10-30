@@ -77,12 +77,16 @@ build/baseline-O%/client: baseline/client.c build/baseline/messages.c
 	mkdir -p $(@D) && $(CC) -O$* -g -fno-omit-frame-pointer -Ibuild/baseline -Ithird_party $^ -o $@ \
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
-bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner
+bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner build/dds_players
 
 # Headless client for the join tests of #14 (bench/join_loss.sh): uses the
 # game's DDS code (common/net.c) so it joins with exactly the client's QoS
 build/dds_joiner: bench/dds_joiner.c common/net.c common/net.h $(GEN)
 	mkdir -p build && $(CC) $(CFLAGS) bench/dds_joiner.c common/net.c $(GEN) -o $@ $(LDDDS)
+
+# Headless test players for #2 and the game rules: snapshot gaps, phases
+build/dds_players: bench/dds_players.c common/net.c common/net.h $(GEN)
+	mkdir -p build && $(CC) $(CFLAGS) bench/dds_players.c common/net.c $(GEN) -o $@ $(LDDDS) -lm
 
 build/bench_%: bench/bench_%.c
 	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread -lm

@@ -3,9 +3,9 @@ Server DDS worker thread: takes inputs, publishes snapshots.
 
 Since #12 the worker publishes one GameSnapshot per published tick (built by
 game_tick() on the main thread) instead of one Position message per player,
-and an Input carries the held keys, which game_tick() applies. The worker
-still busy-polls and still writes while holding the mutex, as the baseline
-did: those are optimisations #2 and #1, measured separately.
+and an Input carries the held keys, which game_tick() applies. Waiting
+instead of busy-polling (#2) and writing outside the mutex (#1) are described
+at the end of this comment; both keep the baseline's way behind a switch.
 
 #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
 and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
@@ -16,9 +16,21 @@ taken is queued for the main thread with its nonce, and every answer is sent
 back with that nonce, so only the client that asked accepts it.
 
 Leave (lobby.h, net_leave() in common/net.h): every Leave taken is queued for
-the main thread, which frees the player's slot. */
+the main thread, which frees the player's slot.
+
+#2 (wait instead of spinning): the worker blocks in a waitset on three read
+conditions (join, input, leave) and a guard condition that the main thread
+sets after each tick (net_server_wake()), so it wakes only when there is work:
+a message to take, or a snapshot or join answer to send. The baseline polled
+the readers in a busy loop. FUSE_SERVER_WAIT=spin keeps the busy loop.
+
+#1 (no network write under the mutex): the snapshot is copied under the mutex
+and written after unlocking, so the main thread's tick never waits for
+dds_write(). FUSE_WRITE_UNDER_LOCK=on keeps the write inside the lock. */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "net_server.h"
 #include "net.h"
@@ -26,6 +38,39 @@ the main thread, which frees the player's slot. */
 #include "game.h"
 #include "lobby.h"
 #include "log.h"
+
+bool b_server_wait = true;
+bool b_write_under_lock = false;
+
+// Set by net_server_wake() (main thread), waited on by the worker. A guard
+// condition is thread-safe, so no mutex is needed around it.
+static dds_entity_t guard_wake = 0;
+
+void net_server_init(void)
+{
+	const char *str_wait = getenv("FUSE_SERVER_WAIT");
+	b_server_wait = !(str_wait != NULL && strcmp(str_wait, "spin") == 0);
+	const char *str_lock = getenv("FUSE_WRITE_UNDER_LOCK");
+	b_write_under_lock = str_lock != NULL && strcmp(str_lock, "on") == 0;
+	LOG_INFO("Server wait: %s, snapshot write: %s\n",
+	         b_server_wait ? "sleep and waitset" : "spin (as the baseline)",
+	         b_write_under_lock ? "under the mutex (as the baseline)" : "after unlocking");
+
+	if (b_server_wait)
+	{
+		// Owned by the library, not the participant (the worker creates that
+		// later), so the waitset is created on the library handle too
+		guard_wake = dds_create_guardcondition(DDS_CYCLONEDDS_HANDLE);
+		if (guard_wake < 0)
+			DDS_FATAL("dds_create_guardcondition: %s\n", dds_strretcode(-guard_wake));
+	}
+}
+
+void net_server_wake(void)
+{
+	if (guard_wake > 0)
+		dds_set_guardcondition(guard_wake, true);
+}
 
 void *net_server_worker(void *arg)
 {
@@ -37,10 +82,7 @@ void *net_server_worker(void *arg)
 	dds_entity_t snapshot_writer;
 	dds_entity_t input_reader;
 	dds_entity_t leave_reader;
-	dds_entity_t waitset;
-	dds_entity_t join_condition;
-	dds_entity_t input_condition;
-	dds_entity_t leave_condition;
+	dds_entity_t waitset = 0;
 
 	//Pointer to unknown type
 	void *samples_join[JOIN_TAKE];
@@ -63,20 +105,33 @@ void *net_server_worker(void *arg)
 	// A lost Leave would leave the player in the game until the timeout
 	leave_reader = net_create_reader(&net, net.leave_topic, NET_RELIABLE_ALL);
 
-	/* Wait for network data instead of polling the readers continuously.
-	 * The timeout lets the worker publish snapshots made by game_tick(). */
-	waitset = dds_create_waitset(net.participant);
-	if (waitset < 0)
-		DDS_FATAL("dds_create_waitset: %s\n", dds_strretcode(-waitset));
-	join_condition = dds_create_readcondition(join_reader, DDS_ANY_STATE);
-	input_condition = dds_create_readcondition(input_reader, DDS_ANY_STATE);
-	leave_condition = dds_create_readcondition(leave_reader, DDS_ANY_STATE);
-	if (join_condition < 0 || input_condition < 0 || leave_condition < 0)
-		DDS_FATAL("dds_create_readcondition failed\n");
-	if (dds_waitset_attach(waitset, join_condition, join_reader) != DDS_RETCODE_OK ||
-	    dds_waitset_attach(waitset, input_condition, input_reader) != DDS_RETCODE_OK ||
-	    dds_waitset_attach(waitset, leave_condition, leave_reader) != DDS_RETCODE_OK)
-		DDS_FATAL("dds_waitset_attach failed\n");
+	bool b_leave = net_leave();
+
+	/* #2: block until a reader has a sample or the main thread sets the
+	guard condition. A read condition with DDS_ANY_STATE stays triggered while
+	any sample is in the reader, so every reader attached here must be emptied
+	each pass: with FUSE_LEAVE=off Leaves are never taken, so the leave reader
+	is not attached (or the waitset would never block again). */
+	if (b_server_wait)
+	{
+		waitset = dds_create_waitset(DDS_CYCLONEDDS_HANDLE);
+		if (waitset < 0)
+			DDS_FATAL("dds_create_waitset: %s\n", dds_strretcode(-waitset));
+		dds_entity_t arr_readers[3] = { join_reader, input_reader, leave_reader };
+		int int_num_readers = b_leave ? 3 : 2;
+		for (int i = 0; i < int_num_readers; i++)
+		{
+			dds_entity_t condition = dds_create_readcondition(arr_readers[i], DDS_ANY_STATE);
+			if (condition < 0)
+				DDS_FATAL("dds_create_readcondition: %s\n", dds_strretcode(-condition));
+			rc = dds_waitset_attach(waitset, condition, arr_readers[i]);
+			if (rc != DDS_RETCODE_OK)
+				DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-rc));
+		}
+		rc = dds_waitset_attach(waitset, guard_wake, 0);
+		if (rc != DDS_RETCODE_OK)
+			DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-rc));
+	}
 
 	/* ----------------------------------------------------- */
 	/* Create writers                                        */
@@ -92,7 +147,6 @@ void *net_server_worker(void *arg)
 		samples_input[i] = Input__alloc();
 	for (int i = 0; i < JOIN_TAKE; i++)
 		samples_leave[i] = Leave__alloc();
-	bool b_leave = net_leave();
 	// Inputs per dds_take: all waiting ones (#14), or one as in the baseline
 	int int_input_take = net_qos_tuned() ? INPUT_TAKE : 1;
 
@@ -102,14 +156,22 @@ void *net_server_worker(void *arg)
 
 	// Copy of the latest snapshot, taken from game.c
 	GameSnapshot snapshot;
-	dds_attach_t triggered[3];
+	dds_attach_t arr_triggered[4];
 
-	/* Wait for data or periodically wake to publish a snapshot. */
 	while (1)
 	{
-		rc = dds_waitset_wait(waitset, triggered, 3, DDS_MSECS(10));
-		if (rc < 0)
-			DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+		if (b_server_wait)
+		{
+			// Sleep until there is work. No timeout: the main thread wakes us
+			// after every tick, and the readers wake us when data arrives.
+			rc = dds_waitset_wait(waitset, arr_triggered, 4, DDS_INFINITY);
+			if (rc < 0)
+				DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+			// Reset the guard before the work below, so a wake-up that comes
+			// while we work is not lost (it makes the next wait return at once)
+			bool b_woken;
+			dds_take_guardcondition(guard_wake, &b_woken);
+		}
 
 		// Queue every waiting join request for the main thread (the baseline
 		// took one per pass and merged requests that arrived together)
@@ -145,25 +207,31 @@ void *net_server_worker(void *arg)
 			LOG_INFO("Join response sent: player %d\n", (int)result.u8_player_id);
 			b_sent = true;
 		}
-		/* Polling sleep (the baseline's, once per pass that sent responses). */
-		if (b_sent)
+		/* Polling sleep (the baseline's, once per pass that sent responses).
+		Only in spin mode: it holds up every snapshot for 20 ms. */
+		if (b_sent && !b_server_wait)
 			dds_sleepfor (DDS_MSECS (20));
 
-		// Copy the latest snapshot while locked, then publish it without
-		// holding the game mutex. game_tick() makes a new snapshot every
-		// int_snapshot_every ticks.
-		bool b_has_snapshot;
+		// Publish the latest snapshot (game_tick() makes a new one every
+		// int_snapshot_every ticks). #1: copy it under the mutex and write it
+		// after unlocking; FUSE_WRITE_UNDER_LOCK=on writes while locked.
 		pthread_mutex_lock(&mutex);
-		b_has_snapshot = game_take_snapshot(&snapshot);
+		bool b_has_snapshot = game_take_snapshot(&snapshot);
+		if (b_has_snapshot && b_write_under_lock)
+		{
+			rc = dds_write(snapshot_writer, &snapshot);
+			b_has_snapshot = false;   // written
+			if (rc != DDS_RETCODE_OK)
+				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
+			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
+		}
 		pthread_mutex_unlock(&mutex);
 
 		if (b_has_snapshot)
 		{
 			rc = dds_write(snapshot_writer, &snapshot);
 			if (rc != DDS_RETCODE_OK)
-			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
-			}
 			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
 		}
 

@@ -29,11 +29,13 @@ CSD3116 team assignment: real-time multiplayer game in C on Cyclone DDS, OpenGL 
 - Cyclone default QoS: writers RELIABLE, readers BEST_EFFORT, both KEEP_LAST 1. A reliable reader never matches a best-effort writer (test tools must ask for best-effort on Input/GameSnapshot).
 - `--input-send every-10ms` clients send nothing while idle, so the server times them out after 5 s and they rejoin: idle "before" runs of #13 need `FUSE_LEAVE=off`.
 - Tests that `pkill -x server` also kill a server the user started by hand (and a second server on the same DDS domain answers joins too): check `pgrep -a -x server` first.
+- Tests that need a server while the user has a game open: put both on another DDS domain with `CYCLONEDDS_URI='<Domain Id="42"/>'` (the `<Domain><Id>` form is deprecated and ignored). `perf_event_paranoid` was back at 4 on 2026-10-30 (reset after reboot?): ask the user to redo the PLAN.md section 7 setup before `profile.sh`.
+- A Cyclone read condition on `DDS_ANY_STATE` stays triggered while any sample is in the reader: every reader attached to a waitset must be emptied each pass, or the waitset never blocks.
 - Baseline server CPU use is bimodal: 8 of 10 runs ~1.19 CPUs, 2 runs ~0.79. Report per-run values, not just mean ± stddev.
 
 ## Status (update this section as work progresses)
 
-Last updated: 2026-10-28 (leave and timeout)
+Last updated: 2026-10-30 (zhikai's game rules and #2 merged, #2/#1 made switchable)
 
 Done:
 - Repo scaffold: directory structure, Makefile, module stubs, `docs/PLAN.md`, `docs/BRIEF.md` (assignment requirements and grading).
@@ -62,6 +64,9 @@ Done:
 - Join nonce (not a numbered optimisation): client sends a random nonce (`net_random_nonce`, getrandom) in every JoinRequest and accepts only the response with it; server queues requests (`lobby_signal_join(nonce)`, `lobby_take_result()`, JOIN_QUEUE 16), answers with the nonce, and gives a repeated nonce the same slot. `FUSE_JOIN_NONCE=off` keeps the baseline join. `join_loss.sh` has `MODES` (default/qos/nonce). Results `bench/results/join-nonce-loss/`, `join-nonce-simultaneous/`, notes `docs/report-notes/join-nonce.txt`: 4 clients started together, 30/40 shared an ID and 11 ghost slots without loss before; 0 duplicates and 0 ghosts in every case after; join takes 17-21 ms for 4 together. Not re-profiled (steady state unchanged).
 - Leave and timeout (feature): client sends a reliable `Leave` when the window closes (`net_client_stop()` + `pthread_join`, `dds_wait_for_acks` 0.5 s); server frees the slot (`lobby_signal_leave`), and frees any player with no Input for `PLAYER_TIMEOUT_S` = 5 s (`--player-timeout S`, 0 = never; the 100 ms Input repeat from #13 is the heartbeat; DDS liveliness not used, decided with weijun). A dropped client that is still running sees its slot gone from the snapshots and rejoins with a new nonce. `FUSE_LEAVE=off` keeps the baseline (slots never freed). Notes `docs/report-notes/leave-timeout.txt`. Not profiled; the worker now does one more `dds_take` per pass, so re-profile the "before" of the next optimisation.
 
+- Game rules (zhikai, 4097c27..c0d79fc, merged 2026-10-30): phases lobby → countdown 3 s → playing (10 s fuse) → round over 2 s → game over, 3 lives, bomb passed by touch (1 s cooldown), shield/speed/fuse pickups, dash, explosions in the snapshot; client draws pickups, shield, bomb, explosions (+ `particles_burst`), phase/timer banner, lives; WASD. Fixes by weijun 2026-10-30: dash on Space/Shift (was never sent), shield now blocks for the pass cooldown (was one tick), game over → new game after 5 s (and when fewer than 2 players remain), explosion animation timed from server ticks and played once. Tested with `bench/dds_players` (full 5-round game) and client screenshots.
+- Optimisation #2 (server waits) and the snapshot half of #1 (zhikai's code in 4097c27, made switchable and fixed by weijun): main thread sleeps until the next tick, worker blocks in a waitset (read conditions + a guard condition set after each tick, `net_server_wake()`); `FUSE_SERVER_WAIT=spin` keeps the busy loops, `FUSE_WRITE_UNDER_LOCK=on` keeps `dds_write` under the mutex. Profiled 2026-10-30 (`bench/results/opt-02-server-wait{-before,}/`, `opt-01-write-outside-lock/`, idle `opt-02-server-wait-idle{-before,}/`; notes and commands `docs/report-notes/server-wait.txt`): server 2.000 → 0.006 CPUs moving (0.004 idle), instructions 329 → 0.18 G per 30 s, futex calls 16.56 M → 7.6 k per 30 s, UDP sends unchanged (241.7/s). #1 alone: same CPU; main-thread futex wait 54.7 → 3.2 ms per 30 s (~30 µs per tick blocked behind `dds_write`). Snapshot gap sd (`bench/dds_players`): 0.34 ms spin / 4.95 ms 4097c27 (10 ms timeout, one lost snapshot at join) / 0.055 ms final.
+
 Not done yet:
 - #16 remaining parts are optional (rendering is not the focus: 5 players and one explosion are cheap to draw): vertex buffer object so the driver does not copy client arrays (#16c), cached text vertices, vsync in normal play. Could still be done if time allows.
 - No flame graph SVGs: needs FlameGraph scripts on PATH, then `STEPS=record bench/profile.sh <label> <bin_dir>` (raw/record_*.script.gz can also be fed to stackcollapse-perf.pl later).
@@ -69,8 +74,8 @@ Not done yet:
 Next (see PLAN.md section 8 for the full timeline):
 1. All: review the decided IDL (`idl/fuse.idl`, PLAN.md section 2) and raise objections before zhikai builds on it.
 2. sheeyang (can start now, independent of IDL): `security/scripts/make_ca.sh`, `make_certs.sh`, governance/permissions XML; get the unmodified baseline running encrypted.
-3. Fixed tick + snapshots (#12) done by weijun. #13, #14, join nonce, leave and timeout done. Remaining: zhikai: #2 waitsets/sleep until next tick (server now spins at 2.0 CPUs, so this is the largest measurable win), #1, game rules on top of `game_tick()`.
-4. weijun: bomb/explosion/ember rendering once snapshots exist (explosion → `particles_burst()`); final art swapped into `assets/atlas.png` 3-4 Nov (same layout). Remaining owned optimisation: #15 (interpolation; snapshots now exist, vx/vy are filled).
+3. weijun: client worker still busy-polls when idle (~1.0 CPU): waitset on the client too (same pattern, own before/after). #15 interpolation (snapshots carry vx/vy). Final art 3-4 Nov. Explosion sprite is drawn under the players (hidden at the holder's position); player labels overlap when players touch.
+4. zhikai: rest of #1 (input/join path locks per message), #8-#10 (bots, `bench_collision`, `bench_reduce`), embers. sheeyang: security, #3/#4/#11 (status unknown).
 5. Measurement rule: if features merged since the last profile, profile right before and right after each optimisation, so the change is measured on its own.
 
 ## Team
