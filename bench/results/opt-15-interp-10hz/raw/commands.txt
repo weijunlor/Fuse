@@ -1,0 +1,13 @@
+# 2026-10-30T10:46:20+00:00  STEPS="stat net" RUNS=5 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="--snapshot-hz 10" CLIENT_ARGS="" FUSE_QOS="" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 219206 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 219203 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 221278 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 221276 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 223283 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 223280 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 225309 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 225307 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 227304 -- sleep 30
+perf stat --append -o bench/results/opt-15-interp-10hz/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 227301 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-15-interp-10hz/raw/net_client.txt -p 229265 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-15-interp-10hz/raw/net_server.txt -p 229262 -- sleep 30

@@ -23,6 +23,10 @@
 #   CLIENT_ARGS [""]  extra client options, e.g. "--input-send every-10ms"
 #   FUSE_QOS [unset]  "default" = Cyclone's default QoS in server and clients
 #                     (the before of #14); read by the game itself, recorded here
+#   FUSE_SERVER_WAIT [unset]  "spin" = server busy-polls (the before of #2)
+#   FUSE_WRITE_UNDER_LOCK [unset]  "on" = snapshot written under the mutex
+#                     (the before of #1); both read by the server, recorded here
+#   FUSE_CLIENT_WAIT [unset]  "spin" = client DDS worker polls (before of client #2)
 #   MOVE [0]  1 = every client moves on its own (FUSE_AUTO_MOVE=1, client/input.c:
 #             holds right, down, left, up for 1 s each, like a held arrow key,
 #             ~100 input messages/s per client); 0 = idle clients
@@ -95,9 +99,9 @@ else
     fi
 fi
 mkdir -p "$RAW"
-[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s"\n' \
+[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s" FUSE_SERVER_WAIT="%s" FUSE_WRITE_UNDER_LOCK="%s" FUSE_CLIENT_WAIT="%s"\n' \
     "$(date -Iseconds)" "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" "$SERVER_ARGS" "$CLIENT_ARGS" \
-    "${FUSE_QOS:-}" >> "$CMDS"
+    "${FUSE_QOS:-}" "${FUSE_SERVER_WAIT:-}" "${FUSE_WRITE_UNDER_LOCK:-}" "${FUSE_CLIENT_WAIT:-}" >> "$CMDS"
 
 # True if section $1 was requested in STEPS
 want() { [[ " $STEPS " == *" $1 "* ]]; }
@@ -381,6 +385,9 @@ trace_table() {
     [ -z "$SERVER_ARGS" ] || echo "Server options: $SERVER_ARGS"
     [ -z "$CLIENT_ARGS" ] || echo "Client options: $CLIENT_ARGS"
     [ -z "${FUSE_QOS:-}" ] || echo "Environment: FUSE_QOS=$FUSE_QOS"
+    [ -z "${FUSE_SERVER_WAIT:-}" ] || echo "Environment: FUSE_SERVER_WAIT=$FUSE_SERVER_WAIT"
+    [ -z "${FUSE_WRITE_UNDER_LOCK:-}" ] || echo "Environment: FUSE_WRITE_UNDER_LOCK=$FUSE_WRITE_UNDER_LOCK"
+    [ -z "${FUSE_CLIENT_WAIT:-}" ] || echo "Environment: FUSE_CLIENT_WAIT=$FUSE_CLIENT_WAIT"
     echo "Server pinned to CPUs $SERVER_CPUS, clients to CPUs"
     echo "$CLIENT_CPUS (P-cores only). Program output goes to /dev/null."
     echo "Every measurement starts fresh processes, waits ${WARMUP} s (joining finishes),"

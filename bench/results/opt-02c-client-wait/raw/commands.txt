@@ -1,0 +1,15 @@
+# 2026-10-30T10:37:56+00:00  STEPS="stat trace net" RUNS=5 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 192350 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 192347 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 194439 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 194436 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 196462 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 196459 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 198454 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 198451 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 200513 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 200510 -- sleep 30
+sudo perf trace -s -o bench/results/opt-02c-client-wait/raw/trace_server.txt -p 202561 -- sleep 30
+sudo perf trace -s -o bench/results/opt-02c-client-wait/raw/trace_client.txt -p 202564 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-02c-client-wait/raw/net_client.txt -p 204622 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-02c-client-wait/raw/net_server.txt -p 204619 -- sleep 30

@@ -11,8 +11,9 @@ Keyboard polling to key bitmask; send on change. */
 // 0 for none. Written by the main thread, read by the DDS worker (under the mutex).
 extern uint8_t u8_keys;
 
-// Read the arrow keys (non-blocking) and update u8_keys. Several keys can be
-// held at once (diagonal movement); opposite keys cancel out on the server.
+// Read the arrow keys or WASD and the dash key (Space/Shift), non-blocking,
+// and update u8_keys. Several keys can be held at once (diagonal movement);
+// opposite keys cancel out on the server.
 void input_poll(GLFWwindow *a_p_window);
 
 #endif /* CLIENT_INPUT_H */

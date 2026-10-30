@@ -1,0 +1,357 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cpu_core/cycles/'
+# Event count (approx.): 97783603127
+#
+# Overhead  Command  Shared Object         Symbol                                   
+# ........  .......  ....................  .........................................
+#
+    22.37%  server   libc.so.6             [.] pthread_mutex_lock@@GLIBC_2.2.5
+            |          
+            |--11.53%--lll_mutex_lock_optimized (inlined)
+            |          ___pthread_mutex_lock (inlined)
+            |          |          
+            |          |--5.16%--ddsrt_mutex_lock
+            |          |          |          
+            |          |          |--1.95%--0x7321280f6af0
+            |          |          |          0x7321280f6b88
+            |          |          |          0x73212810109c
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          0x400
+            |          |          |          
+            |          |          |--1.78%--0x7321280f3258
+            |          |          |          dds_entity_pin_with_origin
+            |          |          |          0x732128100fc5
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          0x400
+            |          |          |          
+            |          |           --1.44%--dds_handle_unpin
+            |          |                     0x732128101108
+            |          |                     dds_take
+            |          |                     net_server_worker
+            |          |                     0x400
+            |          |          
+            |          |--5.15%--lobby_poll
+            |          |          
+            |          |--0.62%--lobby_take_result
+            |          |          0x400
+            |          |          
+            |           --0.59%--net_server_worker
+            |                     0x400
+            |          
+             --10.84%--___pthread_mutex_lock (inlined)
+                       |          
+                       |--1.82%--0x400
+                       |          
+                        --0.82%--lobby_poll
+
+    15.17%  server   libc.so.6             [.] pthread_mutex_unlock@@GLIBC_2.2.5
+            |          
+            |--13.79%--lll_mutex_unlock_optimized (inlined)
+            |          __pthread_mutex_unlock_usercnt (inlined)
+            |          ___pthread_mutex_unlock (inlined)
+            |          |          
+            |          |--7.19%--main
+            |          |          
+            |          |--4.09%--ddsrt_mutex_unlock
+            |          |          |          
+            |          |          |--1.42%--0x7321280f6914
+            |          |          |          0x7321280f6b88
+            |          |          |          0x73212810109c
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          0x400
+            |          |          |          
+            |          |          |--1.39%--0x7321280f32a2
+            |          |          |          dds_entity_pin_with_origin
+            |          |          |          0x732128100fc5
+            |          |          |          dds_take
+            |          |          |          net_server_worker
+            |          |          |          0x400
+            |          |          |          
+            |          |           --1.29%--0x732128101108
+            |          |                     dds_take
+            |          |                     net_server_worker
+            |          |                     0x400
+            |          |          
+            |          |--1.80%--net_server_worker
+            |          |          0x400
+            |          |          
+            |           --0.71%--lobby_take_result
+            |                     0x400
+            |          
+            |--0.77%--___pthread_mutex_unlock (inlined)
+            |          
+             --0.61%--__pthread_mutex_unlock_usercnt (inlined)
+                       ___pthread_mutex_unlock (inlined)
+
+     6.22%  server   [kernel.kallsyms]     [k] futex_hash
+            |
+            ---futex_hash
+               |          
+               |--5.16%--futex_wake
+               |          do_futex
+               |          __x64_sys_futex
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __lll_lock_wake (inlined)
+               |          |          
+               |          |--2.50%--main
+               |          |          
+               |          |--1.97%--lobby_take_result
+               |          |          0x400
+               |          |          
+               |           --0.69%--net_server_worker
+               |                     0x400
+               |          
+                --0.87%--futex_wait_setup
+                          __futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     6.22%  server   [kernel.kallsyms]     [k] native_queued_spin_lock_slowpath
+            |
+            ---native_queued_spin_lock_slowpath
+               |          
+                --6.20%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+                          |          
+                          |--4.38%--main
+                          |          
+                           --1.82%--net_server_worker
+                                     0x400
+
+     6.18%  server   [vdso]                [.] 0x0000000000000a09
+            |
+            ---0x732128182a09
+               __clock_gettime (inlined)
+               timing_now_ns
+
+     4.13%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64
+            |
+            ---entry_SYSCALL_64
+               |          
+               |--2.90%--__lll_lock_wake (inlined)
+               |          |          
+               |          |--1.48%--main
+               |          |          
+               |           --0.74%--lobby_take_result
+               |                     0x400
+               |          
+                --1.23%--futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                           --0.87%--lobby_take_result
+                                     0x400
+
+     3.58%  server   [kernel.kallsyms]     [k] futex_wait_setup
+            |
+            ---futex_wait_setup
+               |          
+                --3.57%--__futex_wait
+                          futex_wait
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+                          |          
+                          |--2.36%--lobby_take_result
+                          |          0x400
+                          |          
+                           --0.95%--lobby_poll
+
+     3.43%  server   [kernel.kallsyms]     [k] futex_q_unlock
+            |
+            ---futex_q_unlock
+               futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wait (inlined)
+               __lll_lock_wait (inlined)
+               |          
+               |--2.29%--lobby_take_result
+               |          0x400
+               |          
+                --0.87%--lobby_poll
+
+     2.22%  server   libc.so.6             [.] __GI___lll_lock_wait
+            |          
+            |--1.34%--__lll_lock_wait (inlined)
+            |          |          
+            |           --0.82%--lobby_take_result
+            |                     0x400
+            |          
+             --0.87%--futex_wait (inlined)
+                       __lll_lock_wait (inlined)
+                       |          
+                        --0.57%--lobby_take_result
+                                  0x400
+
+     2.15%  server   libddsc.so.0.10.5     [.] dds_handle_unpin
+            |
+            ---dds_handle_unpin
+               |          
+                --2.11%--0x732128101108
+                          dds_take
+                          net_server_worker
+                          0x400
+
+     1.60%  server   [kernel.kallsyms]     [k] futex_wake
+            |
+            ---futex_wake
+               |          
+                --1.53%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+                          |          
+                          |--0.76%--main
+                          |          
+                           --0.52%--net_server_worker
+                                     0x400
+
+     1.48%  server   libddsc.so.0.10.5     [.] 0x00000000000c505f
+            |
+            ---0x73212810105f
+               dds_take
+               net_server_worker
+               0x400
+
+     1.48%  server   libddsc.so.0.10.5     [.] 0x00000000000b7292
+            |
+            ---0x7321280f3292
+               dds_entity_pin_with_origin
+               0x732128100fc5
+               dds_take
+               net_server_worker
+               0x400
+
+     1.38%  server   libc.so.6             [.] __GI___lll_lock_wake
+            |
+            ---__lll_lock_wake (inlined)
+               |          
+               |--0.64%--main
+               |          
+                --0.50%--lobby_take_result
+                          0x400
+
+     1.24%  server   [kernel.kallsyms]     [k] arch_exit_to_user_mode_prepare.isra.0
+            |
+            ---arch_exit_to_user_mode_prepare.isra.0
+               |          
+                --1.13%--do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          |          
+                           --0.74%--__lll_lock_wake (inlined)
+
+     1.24%  server   [kernel.kallsyms]     [k] _raw_spin_lock
+            |
+            ---_raw_spin_lock
+               |          
+                --0.89%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     0.90%  server   [kernel.kallsyms]     [k] get_futex_key
+            |
+            ---get_futex_key
+               |          
+                --0.52%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     0.86%  server   [kernel.kallsyms]     [k] do_syscall_64
+            |
+            ---do_syscall_64
+               |          
+                --0.77%--entry_SYSCALL_64_after_hwframe
+                          |          
+                           --0.55%--__lll_lock_wake (inlined)
+
+     0.85%  server   [kernel.kallsyms]     [k] futex_ref_get
+            |
+            ---futex_ref_get
+               |          
+                --0.50%--futex_wake
+                          do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __lll_lock_wake (inlined)
+
+     0.81%  server   server                [.] lobby_poll
+            |
+            ---lobby_poll
+
+     0.70%  server   [kernel.kallsyms]     [k] entry_SYSRETQ_unsafe_stack
+            |
+            ---entry_SYSRETQ_unsafe_stack
+
+     0.60%  server   [kernel.kallsyms]     [k] entry_SYSCALL_64_safe_stack
+            |
+            ---entry_SYSCALL_64_safe_stack
+
+     0.60%  server   [kernel.kallsyms]     [k] __futex_hash
+            |
+            ---__futex_hash
+
+     0.58%  server   [kernel.kallsyms]     [k] futex_wait
+            |
+            ---futex_wait
+               |          
+                --0.55%--do_futex
+                          __x64_sys_futex
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          futex_wait (inlined)
+                          __lll_lock_wait (inlined)
+
+     0.55%  server   libddsc.so.0.10.5     [.] ddsrt_mutex_lock
+            |
+            ---ddsrt_mutex_lock
+
+     0.53%  server   libddsc.so.0.10.5     [.] ddsrt_mutex_unlock
+            |
+            ---ddsrt_mutex_unlock
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

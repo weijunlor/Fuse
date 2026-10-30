@@ -24,6 +24,10 @@ Options:
   --wait, --publish, --collision, --branches, --reduction retain before paths
                     for isolated profiling; see README.md. */
 
+Environment (to measure optimisations against the old behaviour):
+  FUSE_SERVER_WAIT=spin      busy-poll in both threads as before #2
+  FUSE_WRITE_UNDER_LOCK=on   publish snapshots while holding the mutex (#1) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -126,6 +130,9 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	// Read the #1/#2 switches before the worker starts
+	net_server_init();
+
 	pthread_t thread;
 
 	if (pthread_create(&thread, NULL, net_server_worker, NULL) != 0)
@@ -138,7 +145,10 @@ int main(int argc, char **argv)
 	         TICK_HZ, int_snapshot_every);
 
 	/* Ticks are scheduled on absolute times (start + n * TICK_NS), so the
-	rate does not drift. Sleep until the next tick instead of spinning. */
+	rate does not drift. #2: sleep until the next tick instead of spinning
+	(FUSE_SERVER_WAIT=spin keeps the busy loop). Join requests and Leaves
+	queued by the worker are therefore handled once per tick, at most 1/TICK_HZ
+	s after they arrive. */
 	uint64_t u_next_tick_ns = timing_now_ns();
 	while (1)
 	{
@@ -147,6 +157,8 @@ int main(int argc, char **argv)
 		uint64_t u_now_ns = timing_now_ns();
 		if (u_now_ns < u_next_tick_ns)
 		{
+			if (!b_server_wait)
+				continue;   // spin: poll the lobby and the clock again
 			uint64_t u_sleep_ns = u_next_tick_ns - u_now_ns;
 			struct timespec ts_sleep = {
 				.tv_sec = (time_t)(u_sleep_ns / 1000000000ull),
@@ -160,6 +172,9 @@ int main(int argc, char **argv)
 		// Remove players not heard from for too long, then move the rest
 		lobby_check_timeouts(u_now_ns);
 		game_tick();
+		// The worker sleeps in its waitset: wake it to publish the new
+		// snapshot and any join answers lobby_poll() made above
+		net_server_wake();
 		u_next_tick_ns += TICK_NS;
 		// More than a second behind (e.g. the process was stopped):
 		// skip the missed ticks instead of running them all at once

@@ -1,0 +1,107 @@
+Optimisation #2: server waits instead of busy-polling (+ #1: snapshot written outside the mutex)
+============================================================================================
+
+What changed (zhikai, 2026-10-30, commit 4097c27; made switchable and fixed by weijun the same day)
+- Before (still selectable: FUSE_SERVER_WAIT=spin): both server threads spin.
+  The main thread loops calling lobby_poll() and reading the clock until the
+  next 60 Hz tick is due; the DDS worker loops over dds_take() on the join,
+  input and leave readers whether or not anything arrived. Each thread uses a
+  whole core (server ~2.0 CPUs since #12 removed the baseline's 20 ms sleeps).
+- After (default):
+  * main thread: nanosleep() until the next tick (absolute schedule, no drift),
+    then lobby_poll(), timeouts, game_tick(), then net_server_wake().
+  * worker: blocks in dds_waitset_wait() with no timeout on three read
+    conditions (join, input, leave) and one guard condition. The main thread
+    sets the guard after every tick (net_server_wake()), so the worker publishes
+    the new snapshot (and any join answers) right away; incoming messages wake
+    it through the read conditions.
+  * The baseline's 20 ms sleep after sending join answers is only kept in spin
+    mode.
+- #1 (FUSE_WRITE_UNDER_LOCK=on keeps the old way): the worker copies the
+  snapshot under the mutex and calls dds_write() after unlocking, so a tick on
+  the main thread never waits for a network write.
+- Same binary for before and after (only environment variables differ).
+
+Fixes to the first version (4097c27) and why they matter
+- 4097c27 waited with a 10 ms timeout and had no wake-up from the main thread:
+  a snapshot made at a tick sat in game.c until the worker's next timeout or
+  the next incoming Input, i.e. up to 10 ms late and unevenly spaced.
+- It kept the 20 ms dds_sleepfor() after join answers: during that sleep a
+  whole tick's snapshot was replaced by the next one (never sent).
+- With FUSE_LEAVE=off the leave reader was attached but never emptied; a read
+  condition on DDS_ANY_STATE stays triggered while samples are in the reader,
+  so one Leave would have made the waitset return immediately forever (the
+  worker spinning again). The leave reader is now attached only when Leaves
+  are taken.
+- The guard condition and waitset are created on DDS_CYCLONEDDS_HANDLE (the
+  library), because the guard is created in main() before the worker creates
+  the participant.
+
+Quick check (2026-10-30, laptop, NOT the profile.sh numbers; /proc CPU time)
+Server alone + bench/dds_players (2 players holding right+down, passing the
+bomb), 20 s each, DDS domain 42:
+  mode                         server CPUs  snapshot gap (source timestamps)
+  spin + write under lock      1.999        mean 16.667 sd 0.341 min 7.36 max 22.46 ms, 0 lost
+  4097c27 (10 ms timeout)      0.014        mean 16.686 sd 4.951 min 10.11 max 43.16 ms, 1 lost
+  waitset + guard (final)      0.012        mean 16.667 sd 0.055 min 16.48 max 16.85 ms, 0 lost
+The 43 ms gap and the lost snapshot in 4097c27 were at the join (the 20 ms
+sleep). The spin mode's short gaps (7 ms) are snapshots written late, then
+the next one on time.
+Also checked: FUSE_LEAVE=off with the waitset: 0.012 CPUs, sd 0.056 ms;
+a full 90 s game (5 rounds, game over, reset, new game) with sd 0.055 ms and
+0 lost snapshots; TSan (make debug) in both modes: only reports inside libddsc.
+
+To profile (bench/profile.sh, MOVE=1, 4 clients, same session, in this order)
+  FUSE_SERVER_WAIT=spin FUSE_WRITE_UNDER_LOCK=on MOVE=1 bench/profile.sh opt-02-server-wait-before build
+  FUSE_WRITE_UNDER_LOCK=on MOVE=1 bench/profile.sh opt-02-server-wait build
+  MOVE=1 bench/profile.sh opt-01-write-outside-lock build
+  idle (RUNS=5 STEPS="stat net"): opt-02-server-wait-idle-before, opt-02-server-wait-idle
+Expect: server CPUs 2.0 -> ~0.01, futex calls down sharply (perf trace -s).
+#1 alone will be small now (5 players, one ~100 B snapshot per tick): the
+interesting number is the lock hold time, not total CPU.
+
+Results (bench/profile.sh, 2026-10-30 09:44-10:25, laptop, governor performance,
+MOVE=1 4 clients unless idle; 10 x 30 s perf stat, idle 5 x 30 s)
+
+Server, perf stat (mean of the runs; per-run values in each report.txt)
+  label                            CPUs    task-ms/30s  Ginstr/run  IPC   ctx-sw
+  opt-02-server-wait-before        2.000   59990 (sd 3) 329.4       1.13  6638
+  opt-02-server-wait               0.006     179 (sd 16)  0.18      0.49  5952
+  opt-01-write-outside-lock        0.006     184 (sd 13)  0.18      0.49  5975
+  opt-02-server-wait-idle-before   2.000   59989         319.5       1.17  6753
+  opt-02-server-wait-idle          0.004     133           0.17      0.59  5745
+  -> #2: 335x less CPU moving (2.000 -> 0.006), 1800x fewer instructions.
+     Context switches hardly change: spinning threads were preempted about
+     as often as the waiting threads now sleep and wake (60 ticks/s each).
+
+Server futex calls, perf trace -s, 30 s (user-space mutex traffic, see Findings)
+  before: main thread 8,257,217 + worker 8,303,307 = 16.56 M (552 k/s)
+  after (#2): worker 5,816 + main 1,800 = 7,616 (254/s) -> 2170x fewer
+  The main thread's syscalls are now 1800 clock_nanosleep + 1800 futex per
+  30 s = one of each per tick.
+
+Hotspots (perf record, server): before, pthread_mutex_lock 22.4% +
+pthread_mutex_unlock 15.2% + kernel futex paths ~20%: the two spinning
+threads hammer the one mutex. After: no user-space function stands out; the
+samples are kernel UDP send/receive (fib_table_lookup, udp4_lib_lookup2,
+_copy_from_user) and Cyclone's own locks: the server now only does real work.
+
+Network (server, UDP sends/s): 241.7 before, 241.6 after #2, 241.7 after #1:
+the same messages are sent (60 snapshots/s to 4 readers), so the saving is
+pure CPU, not less traffic.
+
+#1 on its own (opt-02-server-wait = write under lock, vs opt-01-write-outside-lock):
+  CPU the same (0.006). perf lock contention sees only kernel locks (empty in
+  both). The difference shows in the main thread's futex time: 54.7 ms per
+  30 s with the write under the lock, 3.2 ms after (1800 vs 1796 calls).
+  Likely why (inferred from the code, not traced call by call): after each tick the main thread wakes the worker and goes straight
+  back to lobby_poll(), which locks the mutex; the worker has just taken it
+  to publish the snapshot. With the write under the lock the main thread
+  waits for dds_write (~30 us per tick: 54.7 ms / 1800); without, ~1.8 us.
+  Small in absolute terms (0.2% of the 16.7 ms tick), but it is time the
+  game loop is blocked by network I/O, and it grows with message size and
+  with a slow network path (e.g. security plugins encrypting the write).
+
+Clients: unchanged by #2 (server-only change). Moving client 0.015 CPUs;
+idle client 1.01 CPUs both before and after: the client's DDS worker still
+busy-polls when no key is held -> next optimisation (client waitset).

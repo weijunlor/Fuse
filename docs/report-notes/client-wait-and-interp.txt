@@ -1,0 +1,28 @@
+Client #2 (waitset) and #15 (interpolation), measured 2026-10-30 10:25-10:57, laptop
+====================================================================================
+
+Client #2: the DDS worker waits in a waitset (snapshot / join-response readers,
+a guard condition set when keys change or the window closes, timeout = next
+timed message) instead of busy-polling when no key is held.
+FUSE_CLIENT_WAIT=spin = before. bench/profile.sh, 4 clients, 5 x 30 s:
+  client #1 CPUs, idle    1.010 -> 0.015   (opt-02c-client-wait-idle{-before,})
+  client #1 CPUs, moving  0.015 -> 0.015   (opt-02c-client-wait{-before,}; a moving
+                                            client already slept 10 ms per pass)
+  Instructions per 30 s, idle: 279.5 G -> 0.70 G. Network unchanged (10 Inputs/s).
+  Side effect: a key press is sent at once (before: up to 10 ms later).
+
+#15: client draws positions interpolated between the last two snapshots,
+one snapshot interval + 1 tick in the past (--interp off = before).
+Smoothness (bench/smooth.sh, 2 moving players at 180 px/s, 60 fps display,
+3 trials x 12 s; opt-15-interp-smoothness/report.txt):
+  snapshots/s  frames with no movement (off -> on)  speed error px/s (off -> on)
+  60           0.4% -> 0.0%                        14.4 -> 4.8
+  30          50.8% -> 0.1%                       180.4 -> 8.8
+  20          67.7% -> 0.4%                       255.2 -> 12.8
+  10          84.7% -> 0.1%                       498.5 -> 9.9
+Bandwidth (profile.sh net step, server UDP, MOVE=1, 4 clients):
+  60 Hz 241.7 sends/s 46.4 KB/s (opt-02c-client-wait)
+  20 Hz  81.7 sends/s 15.7 KB/s (opt-15-interp-20hz)   -> 3x less, as smooth
+  10 Hz  41.7 sends/s  8.0 KB/s (opt-15-interp-10hz)   -> 6x less
+Cost: everything (own player too) is drawn ~33 ms (60 Hz) / 67 ms (20 Hz) late;
+no client-side prediction. Default stays 60 Hz.

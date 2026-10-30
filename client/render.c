@@ -25,10 +25,14 @@ Text is still drawn per string (ui.c) in every mode. */
 #include "net_client.h"
 #include "ui.h"
 #include "particles.h"
+#include "interp.h"
+#include "timing.h"
 
 // Seconds each animation frame is shown
 #define PLAYER_FRAME_S 0.4
 #define STRESS_FRAME_S 0.1
+// Seconds per explosion frame; the animation plays once (6 x 0.08 = 0.48 s)
+#define EXPLOSION_FRAME_S 0.08
 
 // Floor tiles needed to cover the window (the tile size divides the window
 // size exactly, so this is 16 x 12)
@@ -257,22 +261,27 @@ void render_resize(int a_int_w, int a_int_h)
 void render_frame(void)
 {
     double d_time_s = glfwGetTime();
-    GameSnapshot game_snapshot;
+    // The state to draw: interpolated between the last snapshots (#15,
+    // interp.h), or the newest snapshot with --interp off
+    InterpFrame frame;
     pthread_mutex_lock(&mutex);
-    game_snapshot = latest_snapshot;
+    interp_sample(timing_now_ns(), &frame);
     pthread_mutex_unlock(&mutex);
+    if (b_interp_stats)
+        interp_stats_frame(&frame, timing_now_ns());
+    const GameSnapshot *p_game = &frame.snapshot;
 
-    bool b_new_server = game_snapshot.tick < u32_last_snapshot_tick;
-    bool b_new_match = game_snapshot.phase == PHASE_LOBBY &&
+    bool b_new_server = p_game->tick < u32_last_snapshot_tick;
+    bool b_new_match = p_game->phase == PHASE_LOBBY &&
                        u8_last_snapshot_phase != PHASE_LOBBY;
     if (b_new_server || b_new_match)
     {
         particles_clear();
         u32_seen_explosion_tick = 0;
     }
-    if (game_snapshot.tick != 0)
-        u32_last_snapshot_tick = game_snapshot.tick;
-    u8_last_snapshot_phase = game_snapshot.phase;
+    if (p_game->tick != 0)
+        u32_last_snapshot_tick = p_game->tick;
+    u8_last_snapshot_phase = p_game->phase;
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -307,10 +316,10 @@ void render_frame(void)
     // tick stays unique. A repeated snapshot must not replay its burst.
     for (int i = 3; i >= 0; i--)
     {
-        const Explosion *p_explosion = &game_snapshot.explosions[i];
+        const Explosion *p_explosion = &p_game->explosions[i];
         if (p_explosion->tick == 0)
             continue;
-        unsigned long u32_age = game_snapshot.tick - p_explosion->tick;
+        unsigned long u32_age = p_game->tick - p_explosion->tick;
         if (p_explosion->tick > u32_seen_explosion_tick)
         {
             if (u32_age < TICK_HZ / 2)
@@ -328,7 +337,7 @@ void render_frame(void)
     }
     for (int i = 0; i < 4; i++)
     {
-        const Pickup *p_pickup = &game_snapshot.pickups[i];
+        const Pickup *p_pickup = &p_game->pickups[i];
         int int_sprite = p_pickup->type == PICKUP_SPEED ? SPR_PICKUP_SPEED :
                          p_pickup->type == PICKUP_SHIELD ? SPR_PICKUP_SHIELD :
                          p_pickup->type == PICKUP_FUSE_RESET ? SPR_PICKUP_FUSE : -1;
@@ -345,14 +354,16 @@ void render_frame(void)
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
-            render_sprite(int_sprite, p_state->x, p_state->y);
+            // Interpolated position (#15), between whole pixels
+            float f_x = frame.arr_f_x[i], f_y = frame.arr_f_y[i];
+            render_sprite(int_sprite, f_x, f_y);
             if ((p_state->flags & PF_SHIELD) != 0)
-                render_sprite(SPR_SHIELD_BUBBLE, p_state->x, p_state->y);
-            if (game_snapshot.bomb_holder == i + 1)
+                render_sprite(SPR_SHIELD_BUBBLE, f_x, f_y);
+            if (p_game->bomb_holder == i + 1)
             {
                 int int_bomb = atlas_frame(SPR_BOMB, BOMB_FRAMES, 1,
                                             d_time_s, 0.12);
-                render_sprite(int_bomb, p_state->x, p_state->y - SQ_WIDTH);
+                render_sprite(int_bomb, f_x, f_y - SQ_WIDTH);
             }
         }
     }
@@ -369,30 +380,30 @@ void render_frame(void)
     char str_banner[160] = "Waiting for server ...";
     if (int_player_id != -1)
     {
-        const char *str_phase = game_snapshot.phase == PHASE_COUNTDOWN ? "Starting" :
-                                game_snapshot.phase == PHASE_PLAYING ? "Playing" :
-                                game_snapshot.phase == PHASE_ROUND_OVER ? "Round over" :
-                                game_snapshot.phase == PHASE_GAME_OVER ? "Game over" :
+        const char *str_phase = p_game->phase == PHASE_COUNTDOWN ? "Starting" :
+                                p_game->phase == PHASE_PLAYING ? "Playing" :
+                                p_game->phase == PHASE_ROUND_OVER ? "Round over" :
+                                p_game->phase == PHASE_GAME_OVER ? "Game over" :
                                 "Waiting";
         
         snprintf(str_banner, sizeof(str_banner), "Player %d %s %u.%02us",
                  int_player_id, str_phase,
-                 (unsigned)(game_snapshot.timer_ms / 1000),
-                 (unsigned)((game_snapshot.timer_ms % 1000) / 10));
-        if (game_snapshot.phase == PHASE_GAME_OVER)
+                 (unsigned)(p_game->timer_ms / 1000),
+                 (unsigned)((p_game->timer_ms % 1000) / 10));
+        if (p_game->phase == PHASE_GAME_OVER)
         {
             int int_winner = 0;
             for (int i = 0; i < MAX_PLAYERS; i++)
-                if ((game_snapshot.players[i].flags & (PF_ACTIVE | PF_ALIVE)) ==
+                if ((p_game->players[i].flags & (PF_ACTIVE | PF_ALIVE)) ==
                     (PF_ACTIVE | PF_ALIVE)) int_winner = i + 1;
             if (int_winner != 0)
                 snprintf(str_banner, sizeof str_banner, "Player %d wins! Rematch in %u.%02us",
-                         int_winner, game_snapshot.timer_ms / 1000,
-                         (game_snapshot.timer_ms % 1000) / 10);
+                         int_winner, p_game->timer_ms / 1000,
+                         (gp_game->timer_ms % 1000) / 10);
             else
                 snprintf(str_banner, sizeof str_banner, "Draw! Rematch in %u.%02us",
-                         game_snapshot.timer_ms / 1000,
-                         (game_snapshot.timer_ms % 1000) / 10);
+                         p_game->timer_ms / 1000,
+                         (p_game->timer_ms % 1000) / 10);
         }
     }
     ui_draw_text(140, 20, 2.0f, str_banner);
@@ -400,7 +411,7 @@ void render_frame(void)
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        const PlayerState *p_state = &game_snapshot.players[i];
+        const PlayerState *p_state = &p_game->players[i];
         if((p_state->flags & PF_ACTIVE) != 0)
         {
             char str_player[32];
@@ -408,9 +419,9 @@ void render_frame(void)
             snprintf(str_player, sizeof(str_player), "%s%d %s%u",
                      (p_state->flags & PF_BOT) ? "Bot " : "", i + 1,
                      b_alive ? "L:" : "Out ", (unsigned)p_state->lives);
-            ui_draw_text(b_alive ? p_state->x + SQ_WIDTH / 2 - 20 : 20,
-                         b_alive ? p_state->y - 30 : 65 + i * 18,
-                         1.5f, str_player);
+            ui_draw_text(b_alive ? frame.arr_f_x[i] + SQ_WIDTH / 2 - 20 : 20,
+                        b_alive ? frame.arr_f_y[i] - 30 : 65 + i * 18,
+                        1.5f, str_player);
         }
     }
 }

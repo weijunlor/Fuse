@@ -20,14 +20,31 @@ response is taken, as in the baseline.
 Leave (common/net.h): when the window closes, the worker sends a Leave so the
 server frees the slot at once. If the server dropped this client (no Input
 for its timeout, e.g. the network was cut), the client sees its own slot
-missing from the snapshots and joins again with a new nonce. */
+missing from the snapshots and joins again with a new nonce.
+
+#2 on the client (wait instead of polling, the default): the worker blocks in
+a DDS waitset on the join-response and snapshot readers and on a guard
+condition that the main thread sets when the held keys change
+(net_client_wake()) or the window closes. The wait ends at the latest when
+the next timed message is due (join request every 1 s, Input repeat every
+INPUT_REPEAT_MS). The baseline loop busy-polled while no key was held (one
+core per idle client) and slept 10 ms per pass while one was, so a key press
+could wait up to 10 ms before it was sent. FUSE_CLIENT_WAIT=spin keeps that
+loop for measurements.
+
+#15: every snapshot taken is passed to interp_push() (client/interp.h) with
+the time it arrived; the render thread draws interpolated positions. */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "net_client.h"
 #include "net.h"
 #include "fuse.h"
 #include "input.h"
+#include "interp.h"
+#include "timing.h"
 #include "log.h"
 
 int int_player_id = -1;
@@ -40,17 +57,46 @@ bool b_input_on_change = true;
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
-GameSnapshot latest_snapshot = {0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+bool b_client_wait = true;
 
 // Set by net_client_stop() (main thread), read by the worker, under the mutex
 static bool b_quit = false;
+
+// Set by net_client_wake() (main thread), waited on by the worker. Created
+// before the worker starts and never changed, and a guard condition is
+// thread-safe, so no mutex is needed around it.
+static dds_entity_t guard_wake = 0;
+
+void net_client_init(void)
+{
+	const char *str_wait = getenv("FUSE_CLIENT_WAIT");
+	b_client_wait = !(str_wait != NULL && strcmp(str_wait, "spin") == 0);
+	LOG_INFO("Client network wait: %s\n",
+	         b_client_wait ? "waitset" : "poll (as the baseline)");
+	if (b_client_wait)
+	{
+		// Owned by the library: the worker creates the participant later
+		guard_wake = dds_create_guardcondition(DDS_CYCLONEDDS_HANDLE);
+		if (guard_wake < 0)
+			DDS_FATAL("dds_create_guardcondition: %s\n", dds_strretcode(-guard_wake));
+	}
+}
+
+void net_client_wake(void)
+{
+	if (guard_wake > 0)
+		dds_set_guardcondition(guard_wake, true);
+}
 
 void net_client_stop(void)
 {
 	pthread_mutex_lock(&mutex);
 	b_quit = true;
 	pthread_mutex_unlock(&mutex);
+	// A waiting worker would otherwise only notice at its next timeout
+	net_client_wake();
 }
 
 void *net_client_worker(void *arg)
@@ -87,6 +133,32 @@ void *net_client_worker(void *arg)
 	/* ----------------------------------------------------- */
 	response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
 	snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
+
+	/* #2: wake on a join response, a snapshot or the guard condition. A read
+	condition on DDS_ANY_STATE stays triggered while samples are in the
+	reader, so both readers are emptied on every pass (in wait mode the
+	responses meant for other clients are taken and dropped even after we
+	have joined). */
+	dds_entity_t waitset = 0;
+	if (b_client_wait)
+	{
+		waitset = dds_create_waitset(DDS_CYCLONEDDS_HANDLE);
+		if (waitset < 0)
+			DDS_FATAL("dds_create_waitset: %s\n", dds_strretcode(-waitset));
+		dds_entity_t arr_readers[2] = { response_reader, snapshot_reader };
+		for (int i = 0; i < 2; i++)
+		{
+			dds_entity_t condition = dds_create_readcondition(arr_readers[i], DDS_ANY_STATE);
+			if (condition < 0)
+				DDS_FATAL("dds_create_readcondition: %s\n", dds_strretcode(-condition));
+			rc = dds_waitset_attach(waitset, condition, arr_readers[i]);
+			if (rc != DDS_RETCODE_OK)
+				DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-rc));
+		}
+		rc = dds_waitset_attach(waitset, guard_wake, 0);
+		if (rc != DDS_RETCODE_OK)
+			DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-rc));
+	}
 
 	// One nonce for this client, the same in every request (so the server
 	// knows a repeated request); name and proof stay empty until the login is
@@ -164,9 +236,9 @@ void *net_client_worker(void *arg)
 				int_player_id = int_resp_player_id;
 				pthread_mutex_unlock(&mutex);
 			}
-			else if (rc == 0)
+			else if (rc == 0 && !b_client_wait)
 			{
-				/* Polling sleep. */
+				/* Polling sleep (the waitset replaces it). */
 				dds_sleepfor (DDS_MSECS (20));
 			}
 
@@ -228,13 +300,22 @@ void *net_client_worker(void *arg)
 				u8_sent_keys = u8_keys_temp;
 			}
 
-			// While a key is held the loop waits 10 ms per pass in both modes,
-			// as the baseline did after each input (keys are read every 10 ms
-			// in both, so the modes differ only in how many inputs they send).
-			// Otherwise it busy-polls, as the baseline did; waiting on DDS and
-			// the keyboard instead of polling is #2.
-			if (u8_keys_temp != 0 || (b_send && !b_input_on_change))
+			// Poll mode (FUSE_CLIENT_WAIT=spin): while a key is held the loop
+			// waits 10 ms per pass in both input modes, as the baseline did
+			// after each input; otherwise it busy-polls, as the baseline did.
+			// Wait mode: the waitset at the end of the loop replaces both.
+			if (!b_client_wait && (u8_keys_temp != 0 || (b_send && !b_input_on_change)))
 				dds_sleepfor(DDS_MSECS(10));
+
+			// Wait mode: responses to other clients' joins keep arriving;
+			// drop them, or the read condition would never let us sleep
+			if (b_client_wait)
+			{
+				rc = dds_take(response_reader, samples_response, infos_response,
+				              JOIN_TAKE, JOIN_TAKE);
+				if (rc < 0)
+					DDS_FATAL("dds_take: %s\n", dds_strretcode(-rc));
+			}
 		}
 
 		// Listen for snapshots
@@ -248,10 +329,11 @@ void *net_client_worker(void *arg)
 		{
 			GameSnapshot *snapshot = (GameSnapshot *) samples_snapshot[0];
 			LOG_DEBUG("Snapshot %u received\n", (unsigned)snapshot->tick);
+			uint64_t u_received_ns = timing_now_ns();
 			// Copy every player at once, so a frame never shows a mix of
 			// two ticks (the baseline updated one player per message)
 			pthread_mutex_lock(&mutex);
-			latest_snapshot = *snapshot;
+			interp_push(snapshot, u_received_ns);
 			for (int i = 0; i < MAX_PLAYERS; i++)
 			{
 				const PlayerState *p_state = &snapshot->players[i];
@@ -277,6 +359,36 @@ void *net_client_worker(void *arg)
 				}
 			}
 			pthread_mutex_unlock(&mutex);
+		}
+
+		/* #2: sleep until a snapshot or join response arrives, the keys
+		change or the window closes (guard condition), or the next timed
+		message is due, whichever comes first. */
+		if (b_client_wait)
+		{
+			dds_time_t now = dds_time();
+			dds_duration_t timeout;
+			if (int_player_id_temp == -1)
+				// Next join request (sent every 1 s until answered)
+				timeout = (dds_time_t)last_join_req_time + DDS_SECS(1) - now;
+			else if (b_input_on_change)
+				// Next Input repeat (#13)
+				timeout = last_input_time + DDS_MSECS(INPUT_REPEAT_MS) - now;
+			else
+				// Old input rate: every 10 ms while keys are held (and once
+				// after release); with no keys only a key press wakes us
+				timeout = u8_sent_keys != 0 ? DDS_MSECS(10) : DDS_INFINITY;
+			if (timeout > 0)
+			{
+				dds_attach_t arr_triggered[3];
+				rc = dds_waitset_wait(waitset, arr_triggered, 3, timeout);
+				if (rc < 0)
+					DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+			}
+			// Reset the guard before the next pass reads the keys, so a key
+			// change during that pass is not lost (it wakes the next wait)
+			bool b_woken;
+			dds_take_guardcondition(guard_wake, &b_woken);
 		}
 	}
 

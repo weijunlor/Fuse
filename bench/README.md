@@ -63,34 +63,22 @@ sum with four independent accumulators. Use `perf stat -r 10` on both modes
 and save the output under `bench/results/`.
 Run the setup in `docs/PLAN.md` section 7 first (perf_event_paranoid, kptr_restrict, governor); the script checks it.
 
-`bench_branches` compares the real game's overlap tests, coordinate clamps
-and held-key direction helpers (#9). `bench_reduce` is built with
-`-fno-tree-vectorize` so its comparison isolates accumulator dependencies,
-without mixing in SIMD (#7). This flag is only for the reduction benchmark.
+## Headless test players: `dds_players`
 
-```bash
-./build/bench_branches branchy 10000000
-./build/bench_branches branchless 10000000
-CPUSET=0 RUNS=10 bash bench/server.sh opt-08-sorted-grid collision
-CPUSET=0 RUNS=10 bash bench/server.sh opt-09-branches branches
-CPUSET=0 RUNS=10 bash bench/server.sh opt-10-reductions reduce
-```
+`build/dds_players <seconds> [keys1] [keys2]` (`make build/dds_players`) joins two players that hold the given
+keys (KEY_* bitmask, e.g. `10` = right+down), prints every phase, bomb, lives and explosion change, and ends with
+statistics of the gaps between snapshots (server source timestamps) and any snapshot ticks that were never sent.
+Used for #2 (`docs/report-notes/server-wait.txt`). Run it and the server on their own DDS domain
+(`CYCLONEDDS_URI='<Domain Id="42"/>'`) so a game already running is not disturbed.
 
-Use a new label for every run: this script refuses to overwrite evidence.
-Set `CPUSET` to fixed P-cores on the measurement machine, and set the governor
-as described in PLAN.md before running. It records the machine, git state,
-binary hash, exact commands, per-run timings, checksums and `perf stat -r 10
--x,` output. Cache/branch/IPC claims require the relevant counters. Missing
-counters fail the run and preserve their raw error. `METRICS=time` explicitly
-selects timing/checksum checks without claiming hardware-counter evidence.
-Workload overrides: `EMBERS`, `QUERIES`, `TICKS`, `VALUES`, `ROUNDS`, `RUNS`.
+## Smoothness vs snapshot rate: `smooth.sh` (#15)
 
-The game's new features must be held constant when measuring #1/#2: the
-current server keeps `--publish locked|unlocked` and `--wait busy|sleep`.
-For example, set `SERVER_ARGS="--publish locked"` for a profile.sh before run
-and `SERVER_ARGS="--publish unlocked"` for its after run. Change only one
-option per comparison, keeping every other option and the client scenario
-identical. See `docs/report-notes/zhikai-completion.md` for validation limits.
+`bench/smooth.sh <label>` runs, for each snapshot rate in `RATES` (default `60 30 20 10`) and with client
+interpolation off and on, a server, two auto-moving clients and one observer client with
+`--interp off|on --smooth-stats DURATION`. The observer prints how evenly the players move on screen:
+RMS error of on-screen speed vs real speed (px/s), % of frames where a moving player did not move, and the
+largest jump in one frame. Bandwidth at each rate comes from `profile.sh` with `SERVER_ARGS="--snapshot-hz H"`.
+Uses DDS domain 42 so an open game is not joined.
 
 ## Rendering cost: `render.sh`
 
