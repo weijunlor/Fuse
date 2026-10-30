@@ -1,11 +1,54 @@
 # Benchmarks
 
+## Cache-line padding: `padding.sh` (#11)
+
+`make PADDING=0` builds compact shared fields; `make PADDING=1` (default)
+enables 64-byte separation in SPSC queues, snapshot buffers and per-worker
+particle results. Switching flags rebuilds affected files automatically.
+
+`make bench-padding` builds `build/bench_false_share_0` and
+`build/bench_false_share_1` side by side. They run the same synthetic independent
+atomic counters or actual SPSC ring with only the layout changed. Both check
+their results and print padding, footprint, offsets, timing and checksums.
+
+```bash
+source security/scripts/env.sh
+make bench-padding
+lscpu -e=CPU,CORE,SOCKET
+# Choose two CPUs on separate physical cores (replace 0 2):
+RUNS=10 ITERATIONS=10000000 bash bench/padding.sh opt-11-padding 0 2
+```
+
+The script warms both layouts and alternates their order each run. Results,
+commands, setup/hashes and raw perf-stat CSV go to `bench/results/<label>/`.
+`PERF=0` skips perf for a WSL timing-only smoke check. Native cache-to-cache
+and full-game profiling instructions are in
+[the concurrency guide](../docs/CONCURRENCY.md#cache-line-padding-11).
+
+## Other benchmarks
+
+DDS security defaults to on. First provision credentials and source
+`security/scripts/env.sh` (see [security setup](../security/README.md)). Launchers
+assign a distinct client identity and record the security mode in setup.txt.
+Create application accounts once with `python3 security/scripts/accounts.py demo`.
+Launchers use a separate account for each client; see [application authentication](../security/AUTH.md).
+Use `FUSE_DDS_SECURITY=off FUSE_AUTH=off` explicitly for historical plaintext comparisons;
+keep the same mode before and after an optimisation. Security acceptance tests
+are run with `python3 security/scripts/test_security.py` after building both probes.
+
 Each `bench_<name>.c` is a standalone program built to `build/bench_<name>` by `make bench`.
 Each one implements the naive and optimised version of one technique, selected by a command-line argument,
 so both can be measured on the same machine with the same build flags.
 
 Done: bench_particles (AoS vs SoA, scalar vs SIMD, 1..N threads; see below).
 Planned: bench_collision (branchy vs branchless), bench_false_share (padded vs unpadded), bench_reduce (1 vs 4 accumulators).
+
+Concurrency #3/#4: `make test-concurrency` checks the ring/buffer under real
+threads and authentication lifecycle in both handoff modes.
+`make test-concurrency-integration` runs real-DDS acceptance checks in both modes.
+Use `FUSE_HANDOFF=mutex` or `spsc` consistently on server and clients when
+profiling; setup.txt records the selected mode. Full procedure and sanitizer
+commands: [docs/CONCURRENCY.md](../docs/CONCURRENCY.md).
 
 Results go in `results/` as CSV (`perf stat -x, -r 10 -o results/<name>.csv ...`).
 
@@ -128,6 +171,8 @@ Settings: `LOSSES` ["0 10 30"], `TRIALS` [10], `JOINERS` [4], `STAGGER` [1.5] s 
 `MODES` ["default qos nonce"]: `default` = Cyclone QoS and baseline join (`FUSE_QOS=default FUSE_JOIN_NONCE=off`),
 `qos` = #14 QoS and baseline join (`FUSE_JOIN_NONCE=off`), `nonce` = #14 QoS and join nonce. The #14 results were
 made before the nonce existed and call `qos` "tuned".
+Nonce-off modes require `FUSE_DDS_SECURITY=off FUSE_AUTH=off`. For authenticated
+packet-loss tests, select `MODES=nonce`; authentication always requires a nonce.
 
 `FUSE_QOS=default` in the environment of `profile.sh` (or of the game) gives the "before" for #14; it is recorded
 in `raw/commands.txt` and the report.

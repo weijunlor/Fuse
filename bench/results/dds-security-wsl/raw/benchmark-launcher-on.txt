@@ -1,0 +1,2 @@
+DDS security: ON, identity client-1, domain 0
+participant=ok

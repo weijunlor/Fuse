@@ -72,6 +72,8 @@ SUDO=${SUDO-sudo}
 SERVER_CPUS=0-3
 CLIENT_CPUS=4-15
 EVENTS=task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses
+source bench/security_env.sh
+dds_check_clients "$CLIENTS"
 
 OUT=bench/results/$LABEL
 RAW=$OUT/raw
@@ -99,9 +101,9 @@ else
     fi
 fi
 mkdir -p "$RAW"
-[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s" FUSE_SERVER_WAIT="%s" FUSE_WRITE_UNDER_LOCK="%s" FUSE_CLIENT_WAIT="%s"\n' \
+[ "$REPORT_ONLY" = 1 ] || printf '# %s  STEPS="%s" RUNS=%s DURATION=%s CLIENTS=%s MOVE=%s SERVER_ARGS="%s" CLIENT_ARGS="%s" FUSE_QOS="%s" FUSE_HANDOFF="%s" FUSE_SERVER_WAIT="%s" FUSE_WRITE_UNDER_LOCK="%s" FUSE_CLIENT_WAIT="%s"\n' \
     "$(date -Iseconds)" "$STEPS" "$RUNS" "$DURATION" "$CLIENTS" "${MOVE:-0}" "$SERVER_ARGS" "$CLIENT_ARGS" \
-    "${FUSE_QOS:-}" "${FUSE_SERVER_WAIT:-}" "${FUSE_WRITE_UNDER_LOCK:-}" "${FUSE_CLIENT_WAIT:-}" >> "$CMDS"
+    "${FUSE_QOS:-}" "${FUSE_HANDOFF:-spsc}" "${FUSE_SERVER_WAIT:-}" "${FUSE_WRITE_UNDER_LOCK:-}" "${FUSE_CLIENT_WAIT:-}" >> "$CMDS"
 
 # True if section $1 was requested in STEPS
 want() { [[ " $STEPS " == *" $1 "* ]]; }
@@ -132,12 +134,12 @@ start_scenario() {
     # stdout goes to /dev/null so terminal printing is not part of the cost
     # SERVER_ARGS unquoted on purpose: it may hold several words
     # shellcheck disable=SC2086
-    taskset -c "$SERVER_CPUS" "$SERVER" $SERVER_ARGS > /dev/null &
+    dds_run server taskset -c "$SERVER_CPUS" "$SERVER" $SERVER_ARGS > /dev/null &
     int_server_pid=$!
     arr_client_pids=()
-    for _ in $(seq "$CLIENTS"); do
+    for int_client in $(seq "$CLIENTS"); do
         # shellcheck disable=SC2086
-        taskset -c "$CLIENT_CPUS" "$CLIENT" $CLIENT_ARGS > /dev/null &
+        dds_run "client-$int_client" taskset -c "$CLIENT_CPUS" "$CLIENT" $CLIENT_ARGS > /dev/null &
         arr_client_pids+=($!)
     done
     sleep "$WARMUP"
@@ -385,6 +387,7 @@ trace_table() {
     [ -z "$SERVER_ARGS" ] || echo "Server options: $SERVER_ARGS"
     [ -z "$CLIENT_ARGS" ] || echo "Client options: $CLIENT_ARGS"
     [ -z "${FUSE_QOS:-}" ] || echo "Environment: FUSE_QOS=$FUSE_QOS"
+    echo "Thread handoff: ${FUSE_HANDOFF:-spsc}"
     [ -z "${FUSE_SERVER_WAIT:-}" ] || echo "Environment: FUSE_SERVER_WAIT=$FUSE_SERVER_WAIT"
     [ -z "${FUSE_WRITE_UNDER_LOCK:-}" ] || echo "Environment: FUSE_WRITE_UNDER_LOCK=$FUSE_WRITE_UNDER_LOCK"
     [ -z "${FUSE_CLIENT_WAIT:-}" ] || echo "Environment: FUSE_CLIENT_WAIT=$FUSE_CLIENT_WAIT"

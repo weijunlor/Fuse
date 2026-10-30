@@ -43,6 +43,7 @@ they combine with |. */
 #define JOIN_FULL      1
 #define JOIN_BAD_LOGIN 2
 #define JOIN_IN_GAME   3  // joining is only allowed in the lobby
+#define JOIN_RETRY     4  // temporary join rate limit; retry the same request
 
 // Pickup.type
 #define PICKUP_NONE       0  // empty slot

@@ -7,7 +7,11 @@ Project plan, architecture and optimisation list: [docs/PLAN.md](docs/PLAN.md).
 ## Build (WSL / Ubuntu)
 
 ```bash
-sudo apt install -y pkg-config libgl1-mesa-dev libglfw3-dev libstb-dev cyclonedds-dev cyclonedds-tools
+bash security/scripts/setup_wsl.sh
+source security/scripts/env.sh
+bash security/scripts/make_ca.sh
+bash security/scripts/make_certs.sh
+python3 security/scripts/accounts.py demo  # once: private application accounts
 make            # build/server, build/client
 make baseline   # build/baseline_server, build/baseline_client (original programs)
 ```
@@ -15,9 +19,26 @@ make baseline   # build/baseline_server, build/baseline_client (original program
 ## Run
 
 ```bash
-./build/server
-./build/client   # start one per player, max 5
+source security/scripts/env.sh
+bash security/scripts/run_secure.sh server ./build/server
+bash security/scripts/run_secure.sh client-1 ./build/client   # use client-2..5 for others
 ```
+
+DDS security is on by default. First-time certificate setup, the pinned WSL
+dependency build, security tests and explicit plaintext comparisons are documented
+in [security/README.md](security/README.md).
+Application login setup, custom accounts and authentication tests are in
+[security/AUTH.md](security/AUTH.md).
+
+Concurrency uses SPSC command queues and double-buffered snapshots by default.
+Set `FUSE_HANDOFF=mutex` on both server and clients for the comparison path.
+Both modes fix the player-ID race. See [concurrency checks and profiling](docs/CONCURRENCY.md).
+
+Cache-line padding (#11) is a compile-time choice: `make PADDING=1` (default)
+separates queue/buffer fields and particle worker results; `make PADDING=0`
+uses compact fields. Switching the setting rebuilds affected targets without
+requiring a clean. `make bench-padding` keeps both benchmark binaries side by
+side. See [padding checks and measurements](docs/CONCURRENCY.md#cache-line-padding-11).
 
 ## Layout
 

@@ -1,0 +1,1 @@
+DDS security: Invalid, expired or mismatched identity certificate/private key: /tmp/fuse-security-tests-uk20gjmh/mismatch/identities/client-1/cert.pem

@@ -1,0 +1,6 @@
+1793351580.529184 [0] dq.builtin: Remote secure participant 82e935a8:babfab23:18706ade:1c1 not allowed
+DDS security: ON, identity client-2, domain 0
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+joined=1 id=1 states=151 moved=1 leave_sent=1 leave_confirmed=1 first_x=332 last_x=0

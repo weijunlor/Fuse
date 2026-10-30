@@ -32,6 +32,8 @@ DURATION=${DURATION:-30}
 CLIENTS=${CLIENTS:-4}
 WARMUP=${WARMUP:-5}
 SUDO=${SUDO-sudo}
+source bench/security_env.sh
+dds_check_clients "$CLIENTS"
 # MOVE=1: clients move on their own (FUSE_AUTO_MOVE=1, see bench/profile.sh),
 # so the per-input log lines are printed too, not only the per-position ones
 MOVE=${MOVE:-0}
@@ -41,12 +43,30 @@ EVENTS=task-clock,context-switches,syscalls:sys_enter_write,syscalls:sys_enter_f
 OUT=bench/results/$LABEL/tty
 RAW=$OUT/raw
 mkdir -p "$RAW"
+arr_tty_pids=()
+stop_ttys() {
+    for int_pid in "${arr_tty_pids[@]}"; do
+        # script's child execs the measured game; never select unrelated games.
+        pkill -P "$int_pid" 2>/dev/null || true
+        kill "$int_pid" 2>/dev/null || true
+    done
+    wait 2>/dev/null || true
+    arr_tty_pids=()
+}
+trap stop_ttys EXIT
 
 # Start a program with stdout and stderr on a new pseudo-terminal
 start_on_tty()
 {
-    local str_cpus=$1 str_bin=$2
-    script -qfec "exec taskset -c $str_cpus $str_bin" /dev/null > /dev/null 2>&1 &
+    local str_cpus=$1 str_bin=$2 str_identity=$3
+    if [ "$FUSE_DDS_SECURITY" = on ]; then
+        export FUSE_DDS_IDENTITY=$str_identity
+        export CYCLONEDDS_URI
+        CYCLONEDDS_URI=$(python3 security/scripts/security.py config "$str_identity")
+    fi
+    FUSE_USERNAME=${FUSE_USERNAME:-$str_identity} \
+        script -qfec "exec taskset -c $str_cpus $str_bin" /dev/null > /dev/null 2>&1 &
+    arr_tty_pids+=($!)
 }
 
 for int_run in $(seq 1 "$RUNS"); do
@@ -55,16 +75,16 @@ for int_run in $(seq 1 "$RUNS"); do
         str_dir=${str_pair#*=}
         echo "run $int_run/$RUNS: $str_name ($str_dir)"
 
-        start_on_tty 0-3 "$str_dir/server"
+        start_on_tty 0-3 "$str_dir/server" server
         sleep 0.5
-        for _ in $(seq 1 "$CLIENTS"); do
-            start_on_tty 4-15 "$str_dir/client"
+        for int_client in $(seq 1 "$CLIENTS"); do
+            start_on_tty 4-15 "$str_dir/client" "client-$int_client"
         done
         sleep "$WARMUP"
 
         # The programs are children of "script"; find them by full path
-        int_server_pid=$(pgrep -n -f "^$str_dir/server\$")
-        int_client_pid=$(pgrep -o -f "^$str_dir/client\$")
+        int_server_pid=$(pgrep -P "${arr_tty_pids[0]}")
+        int_client_pid=$(pgrep -P "${arr_tty_pids[1]}")
 
         $SUDO perf stat -e "$EVENTS" -p "$int_server_pid" \
             -o "$RAW/stat_${str_name}_server_$int_run.txt" -- sleep "$DURATION" &
@@ -73,7 +93,7 @@ for int_run in $(seq 1 "$RUNS"); do
         wait "$!" 2> /dev/null || true
         sleep 1
 
-        pkill -f "^$str_dir/(server|client)\$" || true
+        stop_ttys
         sleep 2
     done
 done
@@ -116,4 +136,5 @@ for proc in ('server', 'client'):
             print(f'{label:9} {name:8} mean {statistics.mean(runs):{fmt}} (sd {sd:{fmt}})  runs: {per}')
     print()
 EOF
+printf 'DDS security: %s\n' "$FUSE_DDS_SECURITY" >> "$OUT/report.txt"
 cat "$OUT/report.txt"

@@ -23,8 +23,9 @@ snapshot interval plus INTERP_MARGIN_TICKS (2 ticks = 33 ms at 60 Hz, 4 ticks
 extrapolates from the newest one by its velocity for at most
 INTERP_MAX_EXTRAP_S.
 
-Threads: interp_push() is called by the DDS worker and interp_sample() by
-the render thread, both holding the client mutex (net_client.h). */
+Threads: the render thread calls both interp_push() and interp_sample().
+It receives copied snapshots and their arrival times through ClientFrame
+(net_client.h); interpolation history is never shared with the DDS worker. */
 
 #ifndef CLIENT_INTERP_H
 #define CLIENT_INTERP_H
@@ -63,13 +64,13 @@ extern bool b_interp_stats;
 
 /* Store a snapshot received at a_u_received_ns (timing_now_ns()). Snapshots
 older than the newest one are ignored; a tick lower than any seen before
-means a new server, and the buffer starts again. The caller holds the mutex. */
+means a new server, and the buffer starts again. Render thread only. */
 void interp_push(const GameSnapshot *a_p_snapshot, uint64_t a_u_received_ns);
 
 /* Fill *a_p_out with the game state to draw at a_u_now_ns: the snapshot at or
 just before the render tick with every player's position interpolated (or the
 newest snapshot if b_interp is false). Returns false if no snapshot has
-arrived yet (*a_p_out is then zeroed). The caller holds the mutex. */
+arrived yet (*a_p_out is then zeroed). Render thread only. */
 bool interp_sample(uint64_t a_u_now_ns, InterpFrame *a_p_out);
 
 /* Smoothness measurement (--smooth-stats S in main.c). Call once per frame

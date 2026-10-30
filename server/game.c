@@ -13,6 +13,11 @@ player by PLAYER_SPEED / TICK_HZ pixels per tick, TICK_HZ times per second. */
 #include "collision.h"
 #include "timing.h"
 #include "log.h"
+#include "handoff.h"
+#include "double_buffer.h"
+
+DOUBLE_BUFFER_DEFINE(SnapshotBuffer, GameSnapshot)
+static SnapshotBuffer snapshot_buffer;
 
 // Init all members to 0
 Player arr_Players[MAX_PLAYERS] = {0};
@@ -27,7 +32,7 @@ int int_snapshot_every = TICK_HZ / SNAPSHOT_HZ;
 #define FUSE_TICKS (10 * TICK_HZ) // Game Round time -> now is 10 secs
 #define ROUND_OVER_TICKS (2 * TICK_HZ)
 #define GAME_OVER_TICKS (5 * TICK_HZ)   // winner shown, then a new game starts
-#define PASS_COOLDOWN_TICKS TICK_HZ // Pass cooldown time -> now is 1 sec 
+#define PASS_COOLDOWN_TICKS TICK_HZ // Pass cooldown time -> now is 1 sec
 #define DASH_TICKS (TICK_HZ / 5)
 #define DASH_COOLDOWN_TICKS TICK_HZ
 #define SPEED_PICKUP_TICKS (5 * TICK_HZ)
@@ -88,11 +93,18 @@ void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
 	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS)
 		return;
 
-	uint64_t u64_now_ns = timing_now_ns();
 	pthread_mutex_lock(&mutex);
-	arr_u8_keys[a_int_player_id - 1] = a_u8_keys;
-	arr_u64_last_input_ns[a_int_player_id - 1] = u64_now_ns;
+	game_set_keys_locked(a_int_player_id, a_u8_keys);
 	pthread_mutex_unlock(&mutex);
+}
+
+void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys)
+{
+	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS ||
+	    !arr_Players[a_int_player_id - 1].b_active)
+		return;
+	arr_u8_keys[a_int_player_id - 1] = a_u8_keys;
+	arr_u64_last_input_ns[a_int_player_id - 1] = timing_now_ns();
 }
 
 void game_reset_player(int a_int_index)
@@ -470,12 +482,19 @@ void game_tick(void)
 
 	// Publish every int_snapshot_every-th tick (all of them at 60 Hz)
 	if (u_tick % (uint32_t)int_snapshot_every == 0)
-		b_snapshot_ready = true;
+	{
+		if (handoff_spsc())
+			SnapshotBuffer_publish(&snapshot_buffer, &snapshot);
+		else
+			b_snapshot_ready = true;
+	}
 	pthread_mutex_unlock(&mutex);
 }
 
 bool game_take_snapshot(GameSnapshot *a_p_out)
 {
+	if (handoff_spsc())
+		return SnapshotBuffer_take(&snapshot_buffer, a_p_out);
 	if (!b_snapshot_ready)
 		return false;
 	*a_p_out = snapshot;

@@ -85,15 +85,9 @@ static float *arr_x, *arr_y, *arr_vx, *arr_vy, *arr_life;
 static float *arr_life_max;
 static int *arr_sprite;
 
-// Per-worker result. _Alignas(64) gives every worker its own cache line:
-// with plain ints, all workers would write the same line at the end of each
-// tick and the line would bounce between their cores (false sharing, #11).
-typedef struct
-{
-    _Alignas(64) int int_live;  // live particles left at the start of this worker's chunk
-} ChunkResult;
-
-static ChunkResult arr_chunk[POOL_MAX_THREADS];
+// Live counts left at the start of each worker's chunk. The build-time #11
+// option controls result padding; SIMD array/chunk alignment stays unchanged.
+static PoolChunkResult arr_chunk[POOL_MAX_THREADS];
 static WorkerPool pool;
 
 // Arguments of one update, shared by all workers (read only)

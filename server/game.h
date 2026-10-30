@@ -15,8 +15,10 @@ Server simulation tick: movement, bomb/fuse, rounds, pickups, win state. */
 // Table to track clients. Player ID is the array index plus 1.
 extern Player arr_Players[MAX_PLAYERS];
 
-// One mutex guards the player table, the held keys, the latest snapshot and
-// the lobby flags (lobby.h), shared by the main thread and the DDS worker thread
+// State mutex: shared with DDS for mutex handoff, or the optional locked-write
+// comparison. Default SPSC publication does not acquire it.
+// In SPSC mode the main thread owns players/keys/auth/lobby state, and the
+// worker sees copies through rings and a pinned snapshot buffer.
 extern pthread_mutex_t mutex;
 
 // Snapshots are published every this many ticks (TICK_HZ / --snapshot-hz)
@@ -27,6 +29,9 @@ extern int int_snapshot_every;
 // the player was last heard from (for the timeout in lobby.c). IDs outside
 // 1..MAX_PLAYERS are ignored. Locks the mutex itself. Called by the DDS worker.
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys);
+
+// Same update with the mutex already held (authentication + update is atomic).
+void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys);
 
 // Start a slot afresh for a player who joins or leaves: no keys held, last
 // heard from now. The caller holds the mutex.
@@ -44,7 +49,8 @@ void game_tick(void);
 
 // Copy the latest snapshot to *a_p_out if one is waiting to be published,
 // and mark it taken. Returns false if there is nothing new.
-// The caller must hold the mutex.
+// SPSC: DDS worker copies from a pinned double buffer without taking mutex.
+// Mutex comparison: the caller must hold mutex, as in the original path.
 bool game_take_snapshot(GameSnapshot *a_p_out);
 
 #endif /* SERVER_GAME_H */

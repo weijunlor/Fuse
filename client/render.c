@@ -263,10 +263,11 @@ void render_frame(void)
     double d_time_s = glfwGetTime();
     // The state to draw: interpolated between the last snapshots (#15,
     // interp.h), or the newest snapshot with --interp off
+    static ClientFrame received = { .int_player_id = -1 };
+    if (net_client_read_frame(&received) && received.u64_received_ns != 0)
+        interp_push(&received.snapshot, received.u64_received_ns);
     InterpFrame frame;
-    pthread_mutex_lock(&mutex);
     interp_sample(timing_now_ns(), &frame);
-    pthread_mutex_unlock(&mutex);
     if (b_interp_stats)
         interp_stats_frame(&frame, timing_now_ns());
     const GameSnapshot *p_game = &frame.snapshot;
@@ -382,19 +383,19 @@ void render_frame(void)
     glColor3f(0.15f, 0.15f, 0.2f);
 
     char str_banner[160] = "Waiting for server ...";
-    if (int_player_id != -1)
+    if (received.int_player_id != -1)
     {
         const char *str_phase = p_game->phase == PHASE_COUNTDOWN ? "Starting" :
                                 p_game->phase == PHASE_PLAYING ? "Playing" :
                                 p_game->phase == PHASE_ROUND_OVER ? "Round over" :
                                 p_game->phase == PHASE_GAME_OVER ? "Game over" :
                                 "Waiting";
-        
+
         // Use %02u and add "/ 10" to the final argument
         snprintf(str_banner, sizeof(str_banner), "Player %d %s %u.%02us",
-                 int_player_id, str_phase,
+                 received.int_player_id, str_phase,
                  (unsigned)(p_game->timer_ms / 1000),
-                 (unsigned)((p_game->timer_ms % 1000) / 10)); 
+                 (unsigned)((p_game->timer_ms % 1000) / 10));
     }
     ui_draw_text(230, 20, 3.0f, str_banner);
 

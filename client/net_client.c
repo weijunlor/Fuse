@@ -14,8 +14,9 @@ of ~100. --input-send every-10ms keeps the old behaviour for measurements.
 
 Join nonce (common/net.h): the client sends the same random nonce in every
 JoinRequest and accepts only the JoinResponse carrying it; responses to other
-clients are taken and dropped. FUSE_JOIN_NONCE=off: nonce 0 and the first
-response is taken, as in the baseline.
+clients are taken and dropped. Authenticated joins always use nonces and a
+password proof. FUSE_JOIN_NONCE=off only applies in unauthenticated comparison
+mode: nonce 0 and the first response is taken, as in the baseline.
 
 Leave (common/net.h): when the window closes, the worker sends a Leave so the
 server frees the slot at once. If the server dropped this client (no Input
@@ -32,22 +33,29 @@ core per idle client) and slept 10 ms per pass while one was, so a key press
 could wait up to 10 ms before it was sent. FUSE_CLIENT_WAIT=spin keeps that
 loop for measurements.
 
-#15: every snapshot taken is passed to interp_push() (client/interp.h) with
-the time it arrived; the render thread draws interpolated positions. */
+#15: snapshots carry their arrival time through ClientFrame. The render
+thread owns interpolation history and draws interpolated positions. */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #include "net_client.h"
 #include "net.h"
 #include "fuse.h"
-#include "input.h"
-#include "interp.h"
 #include "timing.h"
 #include "log.h"
+#include "app_client.h"
+#include "handoff.h"
+#include "double_buffer.h"
 
-int int_player_id = -1;
+DOUBLE_BUFFER_DEFINE(ClientFrameBuffer, ClientFrame)
+static ClientFrameBuffer frame_buffer;
+static ClientFrame frame_mutex = { .int_player_id = -1 };
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static atomic_uchar u8_keys;
 
 bool b_input_on_change = true;
 
@@ -55,14 +63,57 @@ bool b_input_on_change = true;
 // lost Input is corrected within this time
 #define INPUT_REPEAT_MS 100
 
-// Init all members to 0
-Player arr_Players[MAX_PLAYERS] = {0};
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// Independent scalar handoffs need no player-table mutex.
+static atomic_bool b_quit;
+static AppClient client_auth;
+
+bool net_client_prepare(void)
+{
+	if (!handoff_init())
+		return false;
+	ClientFrameBuffer_init(&frame_buffer);
+	frame_mutex = (ClientFrame){ .int_player_id = -1 };
+	atomic_init(&u8_keys, 0);
+	atomic_init(&b_quit, false);
+	if (!app_client_init(&client_auth))
+		return false;
+	dds_security_prepare();
+	net_client_init();
+	return true;
+}
+
+void net_client_set_keys(uint8_t a_u8_keys)
+{
+	uint8_t u8_previous = atomic_exchange_explicit(&u8_keys, a_u8_keys, memory_order_relaxed);
+	if (u8_previous != a_u8_keys)
+		net_client_wake();
+}
+
+bool net_client_read_frame(ClientFrame *a_frame)
+{
+	if (handoff_spsc())
+		return ClientFrameBuffer_take(&frame_buffer, a_frame);
+	pthread_mutex_lock(&mutex);
+	*a_frame = frame_mutex;
+	pthread_mutex_unlock(&mutex);
+	return true;
+}
+
+// Called only by the worker. A slow reader may hold the other slot; skip
+// that publication and let the next snapshot replace it, without waiting.
+static void publish_frame(const ClientFrame *a_frame)
+{
+	if (handoff_spsc())
+		ClientFrameBuffer_publish(&frame_buffer, a_frame);
+	else
+	{
+		pthread_mutex_lock(&mutex);
+		frame_mutex = *a_frame;
+		pthread_mutex_unlock(&mutex);
+	}
+}
 
 bool b_client_wait = true;
-
-// Set by net_client_stop() (main thread), read by the worker, under the mutex
-static bool b_quit = false;
 
 // Set by net_client_wake() (main thread), waited on by the worker. Created
 // before the worker starts and never changed, and a guard condition is
@@ -92,16 +143,16 @@ void net_client_wake(void)
 
 void net_client_stop(void)
 {
-	pthread_mutex_lock(&mutex);
-	b_quit = true;
-	pthread_mutex_unlock(&mutex);
-	// A waiting worker would otherwise only notice at its next timeout
+	atomic_store_explicit(&b_quit, true, memory_order_relaxed);
 	net_client_wake();
 }
 
 void *net_client_worker(void *arg)
 {
 	(void)arg;
+	// All mutable session/ID/snapshot state belongs to this worker. The
+	// main thread gets copied frames, never references into this object.
+	ClientFrame frame = { .int_player_id = -1 };
 
 	NetTopics net;
 	dds_entity_t response_reader;
@@ -118,7 +169,7 @@ void *net_client_worker(void *arg)
 	dds_return_t rc;
 
 	// Participant and topics
-	net_create_topics(&net);
+	net_create_topics(&net, NET_ROLE_CLIENT);
 
 	/* ----------------------------------------------------- */
 	/* Create writers                                        */
@@ -160,13 +211,11 @@ void *net_client_worker(void *arg)
 			DDS_FATAL("dds_waitset_attach: %s\n", dds_strretcode(-rc));
 	}
 
-	// One nonce for this client, the same in every request (so the server
-	// knows a repeated request); name and proof stay empty until the login is
-	// added
+	// A retry reuses this nonce/proof; a new session always gets a new nonce.
 	JoinRequest request = {0};
-	bool b_join_nonce = net_join_nonce();
-	if (b_join_nonce)
-		request.nonce = net_random_nonce();
+	bool b_join_nonce = client_auth.b_enabled || net_join_nonce();
+	if (!app_client_request(&client_auth, &request))
+		DDS_FATAL("Cannot create login proof\n");
 
 	// Input message: sequence number counts every input sent
 	Input input = {0};
@@ -191,10 +240,8 @@ void *net_client_worker(void *arg)
 	while (1)
 	{
 		// If not in a game yet
-		pthread_mutex_lock(&mutex);
-		int int_player_id_temp = int_player_id;
-		bool b_quit_temp = b_quit;
-		pthread_mutex_unlock(&mutex);
+		int int_player_id_temp = frame.int_player_id;
+		bool b_quit_temp = atomic_load_explicit(&b_quit, memory_order_relaxed);
 		// The window was closed
 		if (b_quit_temp)
 			break;
@@ -217,7 +264,9 @@ void *net_client_worker(void *arg)
 					continue;
 				LOG_INFO("Join response received\n");
 				// If server responded with an invalid player ID
-				if (response->status != JOIN_OK || response->player_id == 0)
+				if (response->status == JOIN_BAD_LOGIN && client_auth.b_enabled)
+					DDS_FATAL("Login rejected (credentials, active account, or replay check)\n");
+				if (!app_client_response(&client_auth, &request, response))
 				{
 					LOG_WARN("Unable to join\n");
 					int_resp_player_id = 0;
@@ -228,10 +277,10 @@ void *net_client_worker(void *arg)
 
 			if (int_resp_player_id > 0)
 			{
-				pthread_mutex_lock(&mutex);
-				// Update player ID
-				int_player_id = int_resp_player_id;
-				pthread_mutex_unlock(&mutex);
+				frame.int_player_id = int_resp_player_id;
+				publish_frame(&frame);
+				u8_sent_keys = 0;
+				last_input_time = 0;
 			}
 			else if (rc == 0 && !b_client_wait)
 			{
@@ -261,9 +310,7 @@ void *net_client_worker(void *arg)
 		// Client is an active player
 		else
 		{
-			pthread_mutex_lock(&mutex);
-			uint8_t u8_keys_temp = u8_keys;
-			pthread_mutex_unlock(&mutex);
+			uint8_t u8_keys_temp = atomic_load_explicit(&u8_keys, memory_order_relaxed);
 
 			bool b_send;
 			if (b_input_on_change)
@@ -284,9 +331,10 @@ void *net_client_worker(void *arg)
 
 			if (b_send)
 			{
-				input.player_id = (uint8_t)int_player_id;
-				input.seq++;
+				input.player_id = (uint8_t)int_player_id_temp;
 				input.keys = u8_keys_temp;
+				if (!app_client_input(&client_auth, &input))
+					DDS_FATAL("Input signing failed or sequence exhausted; reconnect\n");
 				// Send input
 				rc = dds_write(input_writer, &input);
 				if (rc != DDS_RETCODE_OK)
@@ -326,36 +374,27 @@ void *net_client_worker(void *arg)
 		{
 			GameSnapshot *snapshot = (GameSnapshot *) samples_snapshot[0];
 			LOG_DEBUG("Snapshot %u received\n", (unsigned)snapshot->tick);
-			uint64_t u_received_ns = timing_now_ns();
-			// Copy every player at once, so a frame never shows a mix of
-			// two ticks (the baseline updated one player per message)
-			pthread_mutex_lock(&mutex);
-			interp_push(snapshot, u_received_ns);
-			for (int i = 0; i < MAX_PLAYERS; i++)
-			{
-				const PlayerState *p_state = &snapshot->players[i];
-				arr_Players[i].b_active = (p_state->flags & PF_ACTIVE) != 0;
-				arr_Players[i].x = p_state->x;
-				arr_Players[i].y = p_state->y;
-			}
+			frame.snapshot = *snapshot;
+			frame.u64_received_ns = timing_now_ns();
 
 			// Our own slot (if we are playing): still there?
 			if (int_player_id_temp >= 1 && int_player_id_temp <= MAX_PLAYERS && net_leave())
 			{
-				if (arr_Players[int_player_id_temp - 1].b_active)
+				if (snapshot->players[int_player_id_temp - 1].flags & PF_ACTIVE)
 					b_seen_self = true;
 				else if (b_seen_self)
 				{
 					// Dropped by the server: join again. A new nonce, so a
 					// late response to the old one cannot be taken by mistake.
 					LOG_WARN("Removed by the server (timed out), joining again\n");
-					int_player_id = -1;
+					frame.int_player_id = -1;
 					b_seen_self = false;
-					if (b_join_nonce)
-						request.nonce = net_random_nonce();
+					crypto_clear(client_auth.arr_session_key, sizeof client_auth.arr_session_key);
+					if (!app_client_request(&client_auth, &request))
+						DDS_FATAL("Cannot create rejoin proof\n");
 				}
 			}
-			pthread_mutex_unlock(&mutex);
+			publish_frame(&frame);
 		}
 
 		/* #2: sleep until a snapshot or join response arrives, the keys
@@ -392,11 +431,12 @@ void *net_client_worker(void *arg)
 	// Tell the server we are leaving, so it frees the slot now instead of
 	// after the timeout, and wait (briefly) until it has the message: the
 	// process exits right after this
-	if (int_player_id > 0 && net_leave())
+	if (frame.int_player_id > 0 && net_leave())
 	{
 		Leave leave = {0};
-		leave.player_id = (uint8_t)int_player_id;
-		leave.seq = ++input.seq;   // continues the Input sequence (see the IDL)
+		leave.player_id = (uint8_t)frame.int_player_id;
+		if (!app_client_leave(&client_auth, &leave))
+			DDS_FATAL("Leave signing failed or sequence exhausted\n");
 		rc = dds_write(leave_writer, &leave);
 		if (rc != DDS_RETCODE_OK)
 			LOG_WARN("Leave not sent: %s\n", dds_strretcode(-rc));
@@ -406,5 +446,6 @@ void *net_client_worker(void *arg)
 			LOG_INFO("Left the game\n");
 	}
 	dds_delete(net.participant);
+	crypto_clear(&client_auth, sizeof client_auth);
 	return NULL;
 }

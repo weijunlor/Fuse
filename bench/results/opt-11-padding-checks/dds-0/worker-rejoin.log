@@ -1,0 +1,12 @@
+DDS security: ON, identity client-1, domain 0
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+Join request sent
+Join response received
+worker_ready_to_pause=1
+Removed by the server (timed out), joining again
+Join request sent
+Join response received
+Left the game
+worker_id=1 moved=1

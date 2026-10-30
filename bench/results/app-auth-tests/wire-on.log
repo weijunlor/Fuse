@@ -1,0 +1,3 @@
+DDS security: ON, identity client-1, domain 0
+DDS QoS: per topic (#14)
+PASS wire: login, retry, movement, tampering, replay, forged Leave, logout, fresh session, old-key rejection

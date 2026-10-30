@@ -1,0 +1,5 @@
+DDS security: OFF (explicit plaintext comparison)
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+PASS wire: login, retry, movement, tampering, replay, forged Leave, logout, fresh session, old-key rejection

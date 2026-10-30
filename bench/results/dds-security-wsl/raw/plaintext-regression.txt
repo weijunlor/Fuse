@@ -1,0 +1,3 @@
+DDS security: OFF (explicit plaintext comparison)
+DDS QoS: per topic (#14)
+joined=1 id=1 states=91 moved=1 leave_sent=1 leave_confirmed=1 first_x=71 last_x=0

@@ -1,0 +1,4 @@
+PASS ring empty/full/FIFO/counter wrap
+PASS buffer empty/coalescing/pinned-reader/reuse
+PASS ring concurrent transfers=250000
+PASS buffer concurrent publications=250000 (coherent, monotonic, final delivered)

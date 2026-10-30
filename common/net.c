@@ -5,22 +5,36 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include <stdlib.h>
 #include <string.h>
 #include <sys/random.h>
+#include <pthread.h>
 
 #include "net.h"
 #include "log.h"
 #include "fuse.h"
 
-void net_create_topics(NetTopics *a_p_net)
+// The main and DDS threads can query these concurrently on their first pass.
+// A plain static "-1 means unread" cache races during that first access.
+static pthread_once_t options_once = PTHREAD_ONCE_INIT;
+static bool b_tuned, b_nonce, b_leave;
+
+static void read_options(void)
+{
+    const char *str_qos = getenv("FUSE_QOS");
+    const char *str_nonce = getenv("FUSE_JOIN_NONCE");
+    const char *str_leave = getenv("FUSE_LEAVE");
+    b_tuned = !(str_qos != NULL && strcmp(str_qos, "default") == 0);
+    b_nonce = !(str_nonce != NULL && strcmp(str_nonce, "off") == 0);
+    b_leave = !(str_leave != NULL && strcmp(str_leave, "off") == 0);
+    LOG_INFO("DDS QoS: %s\n", b_tuned ? "per topic (#14)" : "Cyclone defaults");
+    LOG_INFO("Join nonce: %s\n", b_nonce ? "on" : "off (baseline join)");
+    LOG_INFO("Leave and timeout: %s\n", b_leave ? "on" : "off (slots never freed)");
+}
+
+void net_create_topics(NetTopics *a_p_net, NetRole a_role)
 {
     /* ----------------------------------------------------- */
     /* Create participant                                    */
     /* ----------------------------------------------------- */
-    a_p_net->participant = dds_create_participant(DDS_DOMAIN_DEFAULT, NULL, NULL);
-
-    if (a_p_net->participant < 0)
-    {
-        LOG_ERROR("Failed to create participant\n");
-    }
+    a_p_net->participant = dds_security_create_participant(a_role);
 
     /* ----------------------------------------------------- */
     /* Create topics                                         */
@@ -39,18 +53,22 @@ void net_create_topics(NetTopics *a_p_net)
 
     a_p_net->leave_topic = dds_create_topic(a_p_net->participant,
         &Leave_desc, "Leave", NULL, NULL);
+
+    // A failed entity must never flow into a reader/writer or the game loop.
+    const dds_entity_t arr_topics[] = {a_p_net->join_topic, a_p_net->response_topic,
+        a_p_net->input_topic, a_p_net->snapshot_topic, a_p_net->leave_topic};
+    for (size_t i = 0; i < sizeof arr_topics / sizeof arr_topics[0]; i++)
+        if (arr_topics[i] < 0)
+        {
+            LOG_ERROR("DDS topic creation failed: %s\n", dds_strretcode(-arr_topics[i]));
+            exit(EXIT_FAILURE);
+        }
 }
 
 bool net_qos_tuned(void)
 {
-    static int int_tuned = -1;   // -1: environment not read yet
-    if (int_tuned < 0)
-    {
-        const char *str_qos = getenv("FUSE_QOS");
-        int_tuned = !(str_qos != NULL && strcmp(str_qos, "default") == 0);
-        LOG_INFO("DDS QoS: %s\n", int_tuned ? "per topic (#14)" : "Cyclone defaults");
-    }
-    return int_tuned;
+    pthread_once(&options_once, read_options);
+    return b_tuned;
 }
 
 // QoS object for a_qos, or NULL (default QoS) when not tuned. Free with
@@ -98,14 +116,8 @@ dds_entity_t net_create_writer(const NetTopics *a_p_net, dds_entity_t a_topic, N
 
 bool net_join_nonce(void)
 {
-    static int int_nonce = -1;   // -1: environment not read yet
-    if (int_nonce < 0)
-    {
-        const char *str_nonce = getenv("FUSE_JOIN_NONCE");
-        int_nonce = !(str_nonce != NULL && strcmp(str_nonce, "off") == 0);
-        LOG_INFO("Join nonce: %s\n", int_nonce ? "on" : "off (baseline join)");
-    }
-    return int_nonce;
+    pthread_once(&options_once, read_options);
+    return b_nonce;
 }
 
 uint64_t net_random_nonce(void)
@@ -122,12 +134,6 @@ uint64_t net_random_nonce(void)
 
 bool net_leave(void)
 {
-    static int int_leave = -1;   // -1: environment not read yet
-    if (int_leave < 0)
-    {
-        const char *str_leave = getenv("FUSE_LEAVE");
-        int_leave = !(str_leave != NULL && strcmp(str_leave, "off") == 0);
-        LOG_INFO("Leave and timeout: %s\n", int_leave ? "on" : "off (slots never freed)");
-    }
-    return int_leave;
+    pthread_once(&options_once, read_options);
+    return b_leave;
 }

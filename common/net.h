@@ -8,6 +8,7 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include <stdint.h>
 
 #include "dds/dds.h"
+#include "dds_security.h"
 
 /* An array of one message (aka sample in dds terms) will be used. */
 #define MAX_SAMPLES 1
@@ -47,8 +48,9 @@ typedef struct
     dds_entity_t leave_topic;       // Leave, client -> server when the player quits
 } NetTopics;
 
-// Create the participant on the default domain and all topics (default QoS)
-void net_create_topics(NetTopics *a_p_net);
+// Create the role's secure participant on domain 0 and all topics.
+// FUSE_DDS_SECURITY=off explicitly selects plaintext for comparisons.
+void net_create_topics(NetTopics *a_p_net, NetRole a_role);
 
 // True unless FUSE_QOS=default is set in the environment, which keeps
 // Cyclone's default QoS for every reader and writer and takes one input per

@@ -179,6 +179,12 @@ Fuse/
 
 ### Layer A — DDS Security (encryption of DDS traffic)
 
+Implemented 2026-10-30: see `security/README.md` for the pinned WSL setup,
+certificate provisioning, secure launch commands, comparison mode and tests.
+FUSE enforces security through participant QoS by default; generated Cyclone XML
+also secures the unchanged baseline. Acceptance evidence is in
+`bench/results/dds-security-wsl/` (52 passing checks, real WSLg clients and pcaps).
+
 - **Authentication:** each participant has an X.509 certificate signed by the team CA (created with `openssl`).
 - **Access control:** `governance.xml` turns on encryption; `permissions.xml` restricts publishing (e.g. only the server may publish `GameSnapshot` and `JoinResponse`).
 - **Encryption:** AES-GCM, configured through the XML that `CYCLONEDDS_URI` points to.
@@ -186,6 +192,9 @@ Fuse/
 - **Demo:** Wireshark showing readable RTPS packets before and encrypted ones after; a client without a certificate being rejected.
 
 ### Layer B — application level (authentication of clients)
+
+Implemented 30 October 2026. Setup, protocol details, replay-history lifetime,
+rate limits and tests: [security/AUTH.md](../security/AUTH.md).
 
 - Username + password checked against a salted hash on the server; server issues a session token.
 - Every `Input` carries a sequence number and an HMAC computed with the token (stops replay and spoofing).

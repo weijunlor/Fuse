@@ -30,8 +30,8 @@ void net_server_wake(void);
 
 /* DDS worker thread (start with pthread_create, never returns). Waits for
 network data or net_server_wake(), answers join requests, publishes each new
-GameSnapshot made by game_tick(), and stores received inputs' held keys with
-game_set_keys(). */
+GameSnapshot made by game_tick(), and queues copied Input/Leave samples for authenticated
+consumption by the main thread (or validates directly in mutex mode). */
 void *net_server_worker(void *arg);
 
 #endif /* SERVER_NET_SERVER_H */
