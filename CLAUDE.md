@@ -35,7 +35,7 @@ CSD3116 team assignment: real-time multiplayer game in C on Cyclone DDS, OpenGL 
 
 ## Status (update this section as work progresses)
 
-Last updated: 2026-10-30 (zhikai's game rules and #2 merged, #2/#1 made switchable)
+Last updated: 2026-10-30 (client waitset and #15 interpolation measured)
 
 Done:
 - Repo scaffold: directory structure, Makefile, module stubs, `docs/PLAN.md`, `docs/BRIEF.md` (assignment requirements and grading).
@@ -67,6 +67,8 @@ Done:
 - Game rules (zhikai, 4097c27..c0d79fc, merged 2026-10-30): phases lobby → countdown 3 s → playing (10 s fuse) → round over 2 s → game over, 3 lives, bomb passed by touch (1 s cooldown), shield/speed/fuse pickups, dash, explosions in the snapshot; client draws pickups, shield, bomb, explosions (+ `particles_burst`), phase/timer banner, lives; WASD. Fixes by weijun 2026-10-30: dash on Space/Shift (was never sent), shield now blocks for the pass cooldown (was one tick), game over → new game after 5 s (and when fewer than 2 players remain), explosion animation timed from server ticks and played once. Tested with `bench/dds_players` (full 5-round game) and client screenshots.
 - Optimisation #2 (server waits) and the snapshot half of #1 (zhikai's code in 4097c27, made switchable and fixed by weijun): main thread sleeps until the next tick, worker blocks in a waitset (read conditions + a guard condition set after each tick, `net_server_wake()`); `FUSE_SERVER_WAIT=spin` keeps the busy loops, `FUSE_WRITE_UNDER_LOCK=on` keeps `dds_write` under the mutex. Profiled 2026-10-30 (`bench/results/opt-02-server-wait{-before,}/`, `opt-01-write-outside-lock/`, idle `opt-02-server-wait-idle{-before,}/`; notes and commands `docs/report-notes/server-wait.txt`): server 2.000 → 0.006 CPUs moving (0.004 idle), instructions 329 → 0.18 G per 30 s, futex calls 16.56 M → 7.6 k per 30 s, UDP sends unchanged (241.7/s). #1 alone: same CPU; main-thread futex wait 54.7 → 3.2 ms per 30 s (~30 µs per tick blocked behind `dds_write`). Snapshot gap sd (`bench/dds_players`): 0.34 ms spin / 4.95 ms 4097c27 (10 ms timeout, one lost snapshot at join) / 0.055 ms final.
 
+- Client #2 (waitset) and #15 (interpolation), 2026-10-30: client worker waits in a waitset (`FUSE_CLIENT_WAIT=spin` = before); `client/interp.c` draws positions interpolated between snapshots (`--interp off` = before, `--smooth-stats S`, `bench/smooth.sh`). Idle client 1.010 → 0.015 CPUs; at 20 snapshots/s frames without movement 67.7% → 0.4% for 3x less server traffic (46.4 → 15.7 KB/s). No client prediction (own player drawn ~33 ms late at 60 Hz); default stays 60 Hz. Notes `docs/report-notes/client-wait-and-interp.txt`, results `bench/results/opt-02c-*`, `opt-15-*`.
+
 Not done yet:
 - #16 remaining parts are optional (rendering is not the focus: 5 players and one explosion are cheap to draw): vertex buffer object so the driver does not copy client arrays (#16c), cached text vertices, vsync in normal play. Could still be done if time allows.
 - No flame graph SVGs: needs FlameGraph scripts on PATH, then `STEPS=record bench/profile.sh <label> <bin_dir>` (raw/record_*.script.gz can also be fed to stackcollapse-perf.pl later).
@@ -74,7 +76,7 @@ Not done yet:
 Next (see PLAN.md section 8 for the full timeline):
 1. All: review the decided IDL (`idl/fuse.idl`, PLAN.md section 2) and raise objections before zhikai builds on it.
 2. sheeyang (can start now, independent of IDL): `security/scripts/make_ca.sh`, `make_certs.sh`, governance/permissions XML; get the unmodified baseline running encrypted.
-3. weijun: client worker still busy-polls when idle (~1.0 CPU): waitset on the client too (same pattern, own before/after). #15 interpolation (snapshots carry vx/vy). Final art 3-4 Nov. Explosion sprite is drawn under the players (hidden at the holder's position); player labels overlap when players touch.
+3. weijun: parallel/cache work is the focus; #11 (false sharing) on the particle worker pool if sheeyang has not started it. Final art 3-4 Nov. Explosion sprite is drawn under the players (hidden at the holder's position); player labels overlap when players touch.
 4. zhikai: rest of #1 (input/join path locks per message), #8-#10 (bots, `bench_collision`, `bench_reduce`), embers. sheeyang: security, #3/#4/#11 (status unknown).
 5. Measurement rule: if features merged since the last profile, profile right before and right after each optimisation, so the change is measured on its own.
 

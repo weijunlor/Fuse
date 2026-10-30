@@ -18,7 +18,6 @@ extern int int_player_id;
 
 // Mirror of the server's player table, filled from GameSnapshot messages
 extern Player arr_Players[MAX_PLAYERS];
-extern GameSnapshot latest_snapshot;
 
 // One mutex guards int_player_id, arr_Players and u8_keys (input.h)
 extern pthread_mutex_t mutex;
@@ -28,9 +27,25 @@ extern pthread_mutex_t mutex;
 // baseline rate). Set before starting the worker (--input-send in main.c).
 extern bool b_input_on_change;
 
-/* DDS worker thread (start with pthread_create). Polls in a loop: sends a
-join request every 1 s until joined, then sends the held keys (see
-b_input_on_change), and copies each received GameSnapshot into arr_Players.
+// #2: true (default) = the worker blocks in a DDS waitset until a message
+// arrives, the keys change or a timed message is due; false
+// (FUSE_CLIENT_WAIT=spin) = the baseline's polling loop. Set by
+// net_client_init().
+extern bool b_client_wait;
+
+/* Read FUSE_CLIENT_WAIT and create the guard condition used by
+net_client_wake(). Call once from main() before starting the worker. */
+void net_client_init(void);
+
+/* Wake the worker (sets a guard condition in its waitset): called by the main
+thread when the held keys change, so the new keys are sent at once. Does
+nothing in poll mode. */
+void net_client_wake(void);
+
+/* DDS worker thread (start with pthread_create). Sends a join request every
+1 s until joined, then sends the held keys (see b_input_on_change), and
+copies each received GameSnapshot into arr_Players and the interpolation
+buffer (interp.h). Waits between passes (see b_client_wait).
 Runs until net_client_stop() is called. */
 void *net_client_worker(void *arg);
 

@@ -13,6 +13,19 @@ uint8_t u8_keys = 0;
 // Seconds each direction is held in auto-move mode
 #define AUTO_MOVE_S 1.0
 
+/* Store the newly read keys. If they changed, wake the DDS worker (#2): it
+sleeps in a waitset and sends the new keys at once instead of finding them
+on its next pass. */
+static void set_keys(uint8_t a_u8_new)
+{
+	pthread_mutex_lock(&mutex);
+	bool b_changed = u8_keys != a_u8_new;
+	u8_keys = a_u8_new;
+	pthread_mutex_unlock(&mutex);
+	if (b_changed)
+		net_client_wake();
+}
+
 /* Auto-move (for measurements): with FUSE_AUTO_MOVE=1 in the environment the
 keyboard is ignored and the player holds right, down, left, up for
 AUTO_MOVE_S seconds each, round and round, so profiling runs include the input
@@ -30,10 +43,7 @@ static bool auto_move(void)
 		return false;
 
 	static const uint8_t arr_u8_dirs[4] = { KEY_RIGHT, KEY_DOWN, KEY_LEFT, KEY_UP };
-	uint8_t u8_new = arr_u8_dirs[(int)(glfwGetTime() / AUTO_MOVE_S) % 4];
-	pthread_mutex_lock(&mutex);
-	u8_keys = u8_new;
-	pthread_mutex_unlock(&mutex);
+	set_keys(arr_u8_dirs[(int)(glfwGetTime() / AUTO_MOVE_S) % 4]);
 	return true;
 }
 
@@ -63,7 +73,5 @@ void input_poll(GLFWwindow *a_p_window)
 	    glfwGetKey(a_p_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
 		u8_new |= KEY_DASH;
 
-	pthread_mutex_lock(&mutex);
-	u8_keys = u8_new;
-	pthread_mutex_unlock(&mutex);
+	set_keys(u8_new);
 }

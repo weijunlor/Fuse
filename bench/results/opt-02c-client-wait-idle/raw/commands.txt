@@ -1,0 +1,15 @@
+# 2026-10-30T10:28:26+00:00  STEPS="stat trace net" RUNS=5 DURATION=30 CLIENTS=4 MOVE=0 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 163937 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 163934 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 165927 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 165924 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 167877 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 167874 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 169886 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 169884 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 171836 -- sleep 30
+perf stat --append -o bench/results/opt-02c-client-wait-idle/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 171834 -- sleep 30
+sudo perf trace -s -o bench/results/opt-02c-client-wait-idle/raw/trace_server.txt -p 173824 -- sleep 30
+sudo perf trace -s -o bench/results/opt-02c-client-wait-idle/raw/trace_client.txt -p 173827 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-02c-client-wait-idle/raw/net_client.txt -p 175845 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-02c-client-wait-idle/raw/net_server.txt -p 175842 -- sleep 30

@@ -53,6 +53,15 @@ statistics of the gaps between snapshots (server source timestamps) and any snap
 Used for #2 (`docs/report-notes/server-wait.txt`). Run it and the server on their own DDS domain
 (`CYCLONEDDS_URI='<Domain Id="42"/>'`) so a game already running is not disturbed.
 
+## Smoothness vs snapshot rate: `smooth.sh` (#15)
+
+`bench/smooth.sh <label>` runs, for each snapshot rate in `RATES` (default `60 30 20 10`) and with client
+interpolation off and on, a server, two auto-moving clients and one observer client with
+`--interp off|on --smooth-stats DURATION`. The observer prints how evenly the players move on screen:
+RMS error of on-screen speed vs real speed (px/s), % of frames where a moving player did not move, and the
+largest jump in one frame. Bandwidth at each rate comes from `profile.sh` with `SERVER_ARGS="--snapshot-hz H"`.
+Uses DDS domain 42 so an open game is not joined.
+
 ## Rendering cost: `render.sh`
 
 `bench/render.sh <label> [bin_dir]` measures the client's drawing code on its own (no server), for #16 and later
