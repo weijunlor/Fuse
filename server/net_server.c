@@ -4,8 +4,8 @@ Server DDS worker thread: takes inputs, publishes snapshots.
 Since #12 the worker publishes one GameSnapshot per published tick (built by
 game_tick() on the main thread) instead of one Position message per player,
 and an Input carries the held keys, which game_tick() applies. The worker
-still busy-polls and still writes while holding the mutex, as the baseline
-did: those are optimisations #2 and #1, measured separately.
+blocks on a waitset (#2) and publishes a copied snapshot outside the mutex
+(#1). --wait busy and --publish locked retain the separate before paths.
 
 #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
 and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
@@ -26,6 +26,9 @@ the main thread, which frees the player's slot. */
 #include "game.h"
 #include "lobby.h"
 #include "log.h"
+
+bool b_server_wait = true;
+bool b_publish_locked = false;
 
 void *net_server_worker(void *arg)
 {
@@ -107,9 +110,12 @@ void *net_server_worker(void *arg)
 	/* Wait for data or periodically wake to publish a snapshot. */
 	while (1)
 	{
-		rc = dds_waitset_wait(waitset, triggered, 3, DDS_MSECS(10));
-		if (rc < 0)
-			DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+		if (b_server_wait)
+		{
+			rc = dds_waitset_wait(waitset, triggered, 3, DDS_MSECS(10));
+			if (rc < 0)
+				DDS_FATAL("dds_waitset_wait: %s\n", dds_strretcode(-rc));
+		}
 
 		// Queue every waiting join request for the main thread (the baseline
 		// took one per pass and merged requests that arrived together)
@@ -130,7 +136,6 @@ void *net_server_worker(void *arg)
 		}
 
 		// Send every answer the main thread has made
-		bool b_sent = false;
 		while (lobby_take_result(&result))
 		{
 			response.nonce = result.u64_nonce;
@@ -142,12 +147,9 @@ void *net_server_worker(void *arg)
 			{
 				DDS_FATAL("dds_write: %s\n", dds_strretcode(-rc));
 			}
-			LOG_INFO("Join response sent: player %d\n", (int)result.u8_player_id);
-			b_sent = true;
+			LOG_INFO("Join response sent: status %u, player %u\n",
+			         result.u8_status, result.u8_player_id);
 		}
-		/* Polling sleep (the baseline's, once per pass that sent responses). */
-		if (b_sent)
-			dds_sleepfor (DDS_MSECS (20));
 
 		// Copy the latest snapshot while locked, then publish it without
 		// holding the game mutex. game_tick() makes a new snapshot every
@@ -155,7 +157,8 @@ void *net_server_worker(void *arg)
 		bool b_has_snapshot;
 		pthread_mutex_lock(&mutex);
 		b_has_snapshot = game_take_snapshot(&snapshot);
-		pthread_mutex_unlock(&mutex);
+		if (!b_publish_locked)
+			pthread_mutex_unlock(&mutex);
 
 		if (b_has_snapshot)
 		{
@@ -166,6 +169,8 @@ void *net_server_worker(void *arg)
 			}
 			LOG_DEBUG("Snapshot %u sent\n", (unsigned)snapshot.tick);
 		}
+		if (b_publish_locked)
+			pthread_mutex_unlock(&mutex);
 
 		// Listen for input
 		rc = dds_take(input_reader, samples_input, infos_input,

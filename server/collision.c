@@ -4,7 +4,6 @@ AABB tests and spatial grid for embers. */
 #include "collision.h"
 #include "config.h"
 
-#define EMBER_LIFETIME_TICKS (8 * TICK_HZ)
 #define EMBER_CELL_SHIFT 6
 #define EMBER_CELL_SIZE (1 << EMBER_CELL_SHIFT)
 #define EMBER_GRID_WIDTH ((WIDTH + EMBER_CELL_SIZE - 1) / EMBER_CELL_SIZE)
@@ -12,16 +11,19 @@ AABB tests and spatial grid for embers. */
 #define EMBER_GRID_CELLS (EMBER_GRID_WIDTH * EMBER_GRID_HEIGHT)
 
 static Ember arr_embers[MAX_EMBERS];
-static int arr_int_cell_heads[EMBER_GRID_CELLS];
-static int arr_int_next[MAX_EMBERS];
+// Counting-sort active embers into contiguous cell ranges (#8). Queries
+// read coordinates sequentially instead of following per-ember next indices.
+static Ember arr_sorted_embers[MAX_EMBERS];
+static int arr_int_cell_offsets[EMBER_GRID_CELLS + 1];
+static bool b_grid_dirty = false;
+bool b_collision_branchless = true;
 
 static bool ember_overlaps_player(const Ember *a_p_ember, int a_int_x,
                                   int a_int_y)
 {
-	return a_p_ember->x < a_int_x + SQ_WIDTH &&
-	       a_p_ember->x + 6 > a_int_x &&
-	       a_p_ember->y < a_int_y + SQ_WIDTH &&
-	       a_p_ember->y + 6 > a_int_y;
+	return collision_overlap(a_p_ember->x, a_p_ember->y, 6,
+	                         a_int_x, a_int_y, SQ_WIDTH, false,
+	                         b_collision_branchless);
 }
 
 static int ember_cell(int a_int_x, int a_int_y)
@@ -41,24 +43,36 @@ static int ember_cell(int a_int_x, int a_int_y)
 
 static void rebuild_ember_grid(void)
 {
-	for (int i = 0; i < EMBER_GRID_CELLS; i++)
-		arr_int_cell_heads[i] = -1;
+	int arr_int_counts[EMBER_GRID_CELLS] = {0};
 	for (int i = 0; i < MAX_EMBERS; i++)
 	{
-		arr_int_next[i] = -1;
-		if (!arr_embers[i].b_active)
-			continue;
-		int int_cell = ember_cell(arr_embers[i].x, arr_embers[i].y);
-		arr_int_next[i] = arr_int_cell_heads[int_cell];
-		arr_int_cell_heads[int_cell] = i;
+		if (arr_embers[i].b_active)
+			arr_int_counts[ember_cell(arr_embers[i].x, arr_embers[i].y)]++;
 	}
+	arr_int_cell_offsets[0] = 0;
+	for (int i = 0; i < EMBER_GRID_CELLS; i++)
+		arr_int_cell_offsets[i + 1] = arr_int_cell_offsets[i] + arr_int_counts[i];
+	int arr_int_cursor[EMBER_GRID_CELLS];
+	for (int i = 0; i < EMBER_GRID_CELLS; i++)
+		arr_int_cursor[i] = arr_int_cell_offsets[i];
+	for (int i = 0; i < MAX_EMBERS; i++)
+	{
+		if (arr_embers[i].b_active)
+		{
+			int int_cell = ember_cell(arr_embers[i].x, arr_embers[i].y);
+			arr_sorted_embers[arr_int_cursor[int_cell]++] = arr_embers[i];
+		}
+	}
+	b_grid_dirty = false;
 }
 
 void collision_embers_clear(void)
 {
 	for (int i = 0; i < MAX_EMBERS; i++)
 		arr_embers[i].b_active = false;
-	rebuild_ember_grid();
+	for (int i = 0; i <= EMBER_GRID_CELLS; i++)
+		arr_int_cell_offsets[i] = 0;
+	b_grid_dirty = false;
 }
 
 void collision_embers_spawn(int a_int_x, int a_int_y, uint16_t a_u16_seed)
@@ -88,7 +102,7 @@ void collision_embers_spawn(int a_int_x, int a_int_y, uint16_t a_u16_seed)
 			.b_active = true
 		};
 	}
-	rebuild_ember_grid();
+	b_grid_dirty = true;
 }
 
 void collision_embers_tick(void)
@@ -97,9 +111,12 @@ void collision_embers_tick(void)
 	{
 		if (arr_embers[i].b_active &&
 		    ++arr_embers[i].u16_age_ticks >= EMBER_LIFETIME_TICKS)
+		{
 			arr_embers[i].b_active = false;
+			b_grid_dirty = true;
+		}
 	}
-	rebuild_ember_grid();
+	// Positions are fixed. Rebuild only on spawn/expiry, not every tick.
 }
 
 bool collision_player_hits_ember_bruteforce(int a_int_x, int a_int_y)
@@ -115,6 +132,8 @@ bool collision_player_hits_ember_bruteforce(int a_int_x, int a_int_y)
 
 bool collision_player_hits_ember(int a_int_x, int a_int_y)
 {
+	if (b_grid_dirty)
+		rebuild_ember_grid();
 	int int_min_x = a_int_x - 5;
 	int int_min_y = a_int_y - 5;
 	int int_min_cell_x = (int_min_x > 0 ? int_min_x : 0) >> EMBER_CELL_SHIFT;
@@ -130,10 +149,11 @@ bool collision_player_hits_ember(int a_int_x, int a_int_y)
 	{
 		for (int x = int_min_cell_x; x <= int_max_cell_x; x++)
 		{
-			for (int i = arr_int_cell_heads[y * EMBER_GRID_WIDTH + x];
-			     i >= 0; i = arr_int_next[i])
+			int int_cell = y * EMBER_GRID_WIDTH + x;
+			for (int i = arr_int_cell_offsets[int_cell];
+			     i < arr_int_cell_offsets[int_cell + 1]; i++)
 			{
-				if (ember_overlaps_player(&arr_embers[i], a_int_x, a_int_y))
+				if (ember_overlaps_player(&arr_sorted_embers[i], a_int_x, a_int_y))
 					return true;
 			}
 		}
@@ -147,10 +167,9 @@ bool collision_detect(Player a_arr_players[], int a_int_arr_len,
 	for(int i = 0; i < a_int_arr_len; i++)
 	{
 		if (i != a_int_id - 1 && a_arr_players[i].b_active &&
-		    a_int_x <= a_arr_players[i].x + SQ_WIDTH &&
-		    a_arr_players[i].x <= a_int_x + SQ_WIDTH &&
-		    a_int_y <= a_arr_players[i].y + SQ_WIDTH &&
-		    a_arr_players[i].y <= a_int_y + SQ_WIDTH)
+		    collision_overlap(a_int_x, a_int_y, SQ_WIDTH,
+		                      a_arr_players[i].x, a_arr_players[i].y,
+		                      SQ_WIDTH, true, b_collision_branchless))
 			return true;
 	}
 	return false;

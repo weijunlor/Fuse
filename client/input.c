@@ -52,6 +52,10 @@ void input_poll(GLFWwindow *a_p_window)
 		u8_new |= KEY_LEFT;
 	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_D) == GLFW_PRESS)
 		u8_new |= KEY_RIGHT;
+	if (glfwGetKey(a_p_window, GLFW_KEY_SPACE) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+		u8_new |= KEY_DASH;
 
 	pthread_mutex_lock(&mutex);
 	u8_keys = u8_new;

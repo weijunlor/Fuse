@@ -26,10 +26,12 @@ static unsigned int reduce_accumulators(const unsigned int *a_arr_values,
 	unsigned int u32_sum_1 = 0;
 	unsigned int u32_sum_2 = 0;
 	unsigned int u32_sum_3 = 0;
+	// Hoist the rounded loop bound: it is independent of every round (#10).
+	const int int_end = a_int_count - a_int_count % 4;
 	for (int r = 0; r < a_int_rounds; r++)
 	{
 		int i = 0;
-		for (; i + 3 < a_int_count; i += 4)
+		for (; i < int_end; i += 4)
 		{
 			u32_sum_0 += a_arr_values[i] + (unsigned int)r;
 			u32_sum_1 += a_arr_values[i + 1] + (unsigned int)r;

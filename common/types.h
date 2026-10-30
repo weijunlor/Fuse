@@ -30,6 +30,7 @@ they combine with |. */
 #define PF_SHIELD  0x04  // next tag is blocked
 #define PF_DASHING 0x08
 #define PF_SPEED   0x10  // speed pickup active
+#define PF_BOT     0x20  // server-controlled slot
 
 // GameSnapshot.phase
 #define PHASE_LOBBY      0
