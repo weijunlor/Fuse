@@ -228,7 +228,11 @@ static void pass_bomb_if_touched(void)
 	if (u8_phase != PHASE_PLAYING || u8_bomb_holder == 0)
 		return;
 	if (u_pass_cooldown_ticks > 0)
+	{
 		u_pass_cooldown_ticks--;
+		if (u_pass_cooldown_ticks == 0)
+			u8_previous_holder = 0;
+	}
 
 	int int_holder = u8_bomb_holder - 1;
 	for (int i = 0; i < MAX_PLAYERS; i++)
