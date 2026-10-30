@@ -368,12 +368,12 @@ void render_frame(void)
                                 game_snapshot.phase == PHASE_ROUND_OVER ? "Round over" :
                                 game_snapshot.phase == PHASE_GAME_OVER ? "Game over" :
                                 "Waiting";
-        snprintf(str_banner, sizeof(str_banner), "Player %d  %s  %u.%03u s",
+        snprintf(str_banner, sizeof(str_banner), "Player %d %s %u.%02us",
                  int_player_id, str_phase,
                  (unsigned)(game_snapshot.timer_ms / 1000),
                  (unsigned)(game_snapshot.timer_ms % 1000));
     }
-    ui_draw_text(320, 20, 3.0f, str_banner);
+    ui_draw_text(230, 20, 3.0f, str_banner);
 
     for(int i = 0; i < MAX_PLAYERS; i++)
     {

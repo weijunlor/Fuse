@@ -44,13 +44,13 @@ void input_poll(GLFWwindow *a_p_window)
 
 	/* Non-blocking keyboard input: one bit per held arrow key */
 	uint8_t u8_new = 0;
-	if (glfwGetKey(a_p_window, GLFW_KEY_UP) == GLFW_PRESS)
+	if (glfwGetKey(a_p_window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_W) == GLFW_PRESS) 
 		u8_new |= KEY_UP;
-	if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		u8_new |= KEY_DOWN;
-	if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_S) == GLFW_PRESS)
+        u8_new |= KEY_DOWN;
+	if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_A) == GLFW_PRESS)
 		u8_new |= KEY_LEFT;
-	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_D) == GLFW_PRESS)
 		u8_new |= KEY_RIGHT;
 
 	pthread_mutex_lock(&mutex);

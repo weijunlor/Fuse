@@ -8,7 +8,8 @@ Lobby, login prompt, win screen, cached text. */
 
 void ui_draw_text(float x, float y, float scale, const char *text)
 {
-    char buffer[4096];
+    // Increased buffer size to support longer strings
+    char buffer[16384];
 
     int num_quads = stb_easy_font_print(
         0, 0,
