@@ -349,7 +349,7 @@ void render_frame(void)
     // Players: the sprite is the same size as the SQ_WIDTH hitbox
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
-        const PlayerState *p_state = &game_snapshot.players[i];
+        const PlayerState *p_state = &p_game->players[i];
         if((p_state->flags & (PF_ACTIVE | PF_ALIVE)) == (PF_ACTIVE | PF_ALIVE))
         {
             int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
@@ -399,7 +399,7 @@ void render_frame(void)
             if (int_winner != 0)
                 snprintf(str_banner, sizeof str_banner, "Player %d wins! Rematch in %u.%02us",
                          int_winner, p_game->timer_ms / 1000,
-                         (gp_game->timer_ms % 1000) / 10);
+                         (p_game->timer_ms % 1000) / 10);
             else
                 snprintf(str_banner, sizeof str_banner, "Draw! Rematch in %u.%02us",
                          p_game->timer_ms / 1000,

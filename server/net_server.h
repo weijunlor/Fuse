@@ -6,10 +6,6 @@ Server DDS worker thread: takes inputs, publishes snapshots. */
 
 #include <stdbool.h>
 
-// Startup options retaining the before paths for #1 and #2 measurements.
-extern bool b_server_wait;
-extern bool b_publish_locked;
-
 /* #2: true (default) = the main thread sleeps until the next tick and the
 worker blocks in a DDS waitset until data arrives or net_server_wake() is
 called. false (FUSE_SERVER_WAIT=spin) = both threads busy-poll, as before #2
@@ -22,9 +18,8 @@ runs while the mutex is held, as the baseline's Position writes did, so the
 main thread waits for the network write. */
 extern bool b_write_under_lock;
 
-/* Read FUSE_SERVER_WAIT and FUSE_WRITE_UNDER_LOCK from the environment and
-create the guard condition used by net_server_wake(). Call once from main()
-before starting the worker. */
+/* Create the guard condition used by net_server_wake(). Call once from main()
+after selecting environment/CLI options and before starting the worker. */
 void net_server_init(void);
 
 /* Wake the worker so it publishes the snapshot and join answers the main

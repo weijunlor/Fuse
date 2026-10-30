@@ -99,7 +99,7 @@ build/baseline-O%/client: baseline/client.c build/baseline/messages.c
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
 bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 \
-	build/dds_joiner build/bench_collision build/bench_reduce
+	build/dds_joiner build/dds_players build/bench_collision build/bench_reduce
 
 build/bench_collision: bench/bench_collision.c server/collision.c server/collision.h \
 		common/timing.c common/timing.h
@@ -114,7 +114,6 @@ build/bench_branches: bench/bench_branches.c server/movement.h server/collision.
 		common/timing.c common/timing.h
 	mkdir -p build && $(CC) $(CFLAGS) -g -Iserver bench/bench_branches.c \
 		common/timing.c -o $@ -pthread -lm
-bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 build/dds_joiner build/dds_players
 
 # Headless client for the join tests of #14 (bench/join_loss.sh): uses the
 # game's DDS code (common/net.c) so it joins with exactly the client's QoS

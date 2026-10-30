@@ -22,7 +22,7 @@ Options:
                     in the environment turns Leave and the timeout off.
   --bots N         reserve N slots for chase/flee bots (0..4, default 0).
   --wait, --publish, --collision, --branches, --reduction retain before paths
-                    for isolated profiling; see README.md. */
+                    for isolated profiling; see README.md.
 
 Environment (to measure optimisations against the old behaviour):
   FUSE_SERVER_WAIT=spin      busy-poll in both threads as before #2
@@ -60,6 +60,12 @@ static bool parse_number(const char *a_str_value, int *a_p_out)
 int main(int argc, char **argv)
 {
 	int int_bots = 0;
+	// Environment values are defaults; explicit command-line options win.
+	// Create the wake guard only after the final wait mode has been selected.
+	const char *str_wait = getenv("FUSE_SERVER_WAIT");
+	b_server_wait = !(str_wait != NULL && strcmp(str_wait, "spin") == 0);
+	const char *str_lock = getenv("FUSE_WRITE_UNDER_LOCK");
+	b_write_under_lock = str_lock != NULL && strcmp(str_lock, "on") == 0;
 	// Command-line options (see the top of this file)
 	for (int i = 1; i < argc; i++)
 	{
@@ -92,7 +98,7 @@ int main(int argc, char **argv)
 			else if (strcmp(str_option, "--publish") == 0)
 			{
 				b_ok = strcmp(str_value, "unlocked") == 0 || strcmp(str_value, "locked") == 0;
-				b_publish_locked = strcmp(str_value, "locked") == 0;
+				b_write_under_lock = strcmp(str_value, "locked") == 0;
 			}
 			else if (strcmp(str_option, "--collision") == 0)
 			{
@@ -130,7 +136,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	// Read the #1/#2 switches before the worker starts
+	// Set up the wake guard using the final environment/CLI configuration.
 	net_server_init();
 
 	pthread_t thread;
@@ -164,8 +170,7 @@ int main(int argc, char **argv)
 				.tv_sec = (time_t)(u_sleep_ns / 1000000000ull),
 				.tv_nsec = (long)(u_sleep_ns % 1000000000ull)
 			};
-			if (b_server_wait)
-				nanosleep(&ts_sleep, NULL);
+			nanosleep(&ts_sleep, NULL);
 			continue;
 		}
 

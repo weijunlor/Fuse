@@ -63,19 +63,6 @@ static bool player_alive(int a_int_index)
 	return arr_Players[a_int_index].b_active && arr_u8_lives[a_int_index] > 0;
 }
 
-// Full lives and no power-ups for every slot, and no pickups or explosions
-// left on the field: the start of a new game
-static void reset_for_new_game(void)
-{
-	for (int i = 0; i < MAX_PLAYERS; i++)
-	{
-		arr_u8_lives[i] = PLAYER_START_LIVES;
-		arr_u8_shield[i] = 0;
-		arr_u16_speed_ticks[i] = 0;
-	}
-	clear_round_transients();
-}
-
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
 {
 	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS) return;
@@ -263,10 +250,8 @@ static void pass_bomb_if_touched(void)
 		                       SQ_WIDTH + TICK_STEP, true, b_game_branchless)) continue;
 		if (arr_u8_shield[i] != 0)
 		{
-			// The shield blocks this pass and is used up. Start the cooldown
-			// too: the players are still touching on the next tick, and
-			// without it the bomb would pass then, so the shield would only
-			// have lasted one tick (1/60 s).
+			// Protect this target while contact continues, without blocking
+			// a pass to a third player during the guard window.
 			arr_u8_shield[i] = 0;
 			arr_u16_tag_guard_ticks[i] = PASS_COOLDOWN_TICKS;
 			continue;
