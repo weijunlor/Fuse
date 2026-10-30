@@ -42,16 +42,26 @@ void input_poll(GLFWwindow *a_p_window)
 	if (auto_move())
 		return;
 
-	/* Non-blocking keyboard input: one bit per held arrow key */
+	/* Non-blocking keyboard input: one bit per held key. Arrows or WASD move;
+	Space or either Shift dashes (the server starts a dash when KEY_DASH goes
+	from up to down, so holding it does not repeat the dash). */
 	uint8_t u8_new = 0;
-	if (glfwGetKey(a_p_window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_W) == GLFW_PRESS) 
+	if (glfwGetKey(a_p_window, GLFW_KEY_UP) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_W) == GLFW_PRESS)
 		u8_new |= KEY_UP;
-	if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_S) == GLFW_PRESS)
-        u8_new |= KEY_DOWN;
-	if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_A) == GLFW_PRESS)
+	if (glfwGetKey(a_p_window, GLFW_KEY_DOWN) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_S) == GLFW_PRESS)
+		u8_new |= KEY_DOWN;
+	if (glfwGetKey(a_p_window, GLFW_KEY_LEFT) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_A) == GLFW_PRESS)
 		u8_new |= KEY_LEFT;
-	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(a_p_window, GLFW_KEY_D) == GLFW_PRESS)
+	if (glfwGetKey(a_p_window, GLFW_KEY_RIGHT) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_D) == GLFW_PRESS)
 		u8_new |= KEY_RIGHT;
+	if (glfwGetKey(a_p_window, GLFW_KEY_SPACE) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+	    glfwGetKey(a_p_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+		u8_new |= KEY_DASH;
 
 	pthread_mutex_lock(&mutex);
 	u8_keys = u8_new;

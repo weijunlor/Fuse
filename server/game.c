@@ -26,6 +26,7 @@ int int_snapshot_every = TICK_HZ / SNAPSHOT_HZ;
 #define COUNTDOWN_TICKS (3 * TICK_HZ)
 #define FUSE_TICKS (10 * TICK_HZ) // Game Round time -> now is 10 secs
 #define ROUND_OVER_TICKS (2 * TICK_HZ)
+#define GAME_OVER_TICKS (5 * TICK_HZ)   // winner shown, then a new game starts
 #define PASS_COOLDOWN_TICKS TICK_HZ // Pass cooldown time -> now is 1 sec 
 #define DASH_TICKS (TICK_HZ / 5)
 #define DASH_COOLDOWN_TICKS TICK_HZ
@@ -51,6 +52,7 @@ static uint8_t u8_bomb_holder = 0;
 static uint32_t u_countdown_ticks = 0;
 static uint32_t u_fuse_ticks = 0;
 static uint32_t u_round_over_ticks = 0;
+static uint32_t u_game_over_ticks = 0;
 static uint8_t u8_previous_holder = 0;
 static uint32_t u_pass_cooldown_ticks = 0;
 static Pickup arr_pickups[MAX_PICKUPS] = {0};
@@ -64,6 +66,19 @@ static void clear_round_transients(void)
 {
 	memset(arr_pickups, 0, sizeof arr_pickups);
 	memset(arr_explosions, 0, sizeof arr_explosions);
+}
+
+// Full lives and no power-ups for every slot, and no pickups or explosions
+// left on the field: the start of a new game
+static void reset_for_new_game(void)
+{
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		arr_u8_lives[i] = PLAYER_START_LIVES;
+		arr_u8_shield[i] = 0;
+		arr_u16_speed_ticks[i] = 0;
+	}
+	clear_round_transients();
 }
 
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
@@ -244,8 +259,14 @@ static void pass_bomb_if_touched(void)
 			continue;
 		if (arr_u8_shield[i] != 0)
 		{
+			// The shield blocks this pass and is used up. Start the cooldown
+			// too: the players are still touching on the next tick, and
+			// without it the bomb would pass then, so the shield would only
+			// have lasted one tick (1/60 s).
 			arr_u8_shield[i] = 0;
-			continue;
+			u_pass_cooldown_ticks = PASS_COOLDOWN_TICKS;
+			LOG_INFO("Pass blocked by player %d's shield\n", i + 1);
+			break;
 		}
 		u8_previous_holder = u8_bomb_holder;
 		u8_bomb_holder = (uint8_t)(i + 1);
@@ -269,7 +290,10 @@ static void update_round_state(void)
 		u_countdown_ticks = 0;
 		u_fuse_ticks = 0;
 		u_round_over_ticks = 0;
-		clear_round_transients();
+		u_game_over_ticks = 0;
+		// The game cannot go on with one player: the next one starts afresh,
+		// so players knocked out in this game are not left with 0 lives
+		reset_for_new_game();
 		return;
 	}
 
@@ -314,7 +338,10 @@ static void update_round_state(void)
 				spawn_pickup(int_x, int_y);
 				u8_bomb_holder = 0;
 				if (count_alive_players() <= 1)
+				{
 					u8_phase = PHASE_GAME_OVER;
+					u_game_over_ticks = GAME_OVER_TICKS;
+				}
 				else
 				{
 					u8_phase = PHASE_ROUND_OVER;
@@ -335,6 +362,15 @@ static void update_round_state(void)
 			break;
 
 		case PHASE_GAME_OVER:
+			// After GAME_OVER_TICKS, give everyone still here full lives and
+			// start again (the next tick goes from the lobby to a countdown)
+			if (u_game_over_ticks > 0)
+				u_game_over_ticks--;
+			if (u_game_over_ticks == 0)
+			{
+				reset_for_new_game();
+				u8_phase = PHASE_LOBBY;
+			}
 			break;
 	}
 }
@@ -405,6 +441,8 @@ void game_tick(void)
 		snapshot.timer_ms = ticks_to_ms(u_fuse_ticks);
 	else if (u8_phase == PHASE_ROUND_OVER)
 		snapshot.timer_ms = ticks_to_ms(u_round_over_ticks);
+	else if (u8_phase == PHASE_GAME_OVER)
+		snapshot.timer_ms = ticks_to_ms(u_game_over_ticks);
 	memcpy(snapshot.pickups, arr_pickups, sizeof arr_pickups);
 	memcpy(snapshot.explosions, arr_explosions, sizeof arr_explosions);
 	for (int i = 0; i < MAX_PLAYERS; i++)

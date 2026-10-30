@@ -29,6 +29,8 @@ Text is still drawn per string (ui.c) in every mode. */
 // Seconds each animation frame is shown
 #define PLAYER_FRAME_S 0.4
 #define STRESS_FRAME_S 0.1
+// Seconds per explosion frame; the animation plays once (6 x 0.08 = 0.48 s)
+#define EXPLOSION_FRAME_S 0.08
 
 // Floor tiles needed to cover the window (the tile size divides the window
 // size exactly, so this is 16 x 12)
@@ -308,15 +310,25 @@ void render_frame(void)
         const Explosion *p_explosion = &game_snapshot.explosions[i];
         if (p_explosion->tick == 0)
             continue;
+        /* Age from server ticks (the explosion's tick and the snapshot's tick
+        are both server tick numbers, TICK_HZ per second), so every client
+        shows the same frame. The server keeps sending the explosion until the
+        next round, but the animation plays once: an explosion older than the
+        animation is not drawn, and does not spawn particles in a client
+        that only sees it then (e.g. one that joined late). */
+        double d_age_s = (double)(game_snapshot.tick - p_explosion->tick) / TICK_HZ;
+        bool b_playing = d_age_s < EXPLOSION_FRAMES * EXPLOSION_FRAME_S;
         if (arr_u32_seen_explosions[i] != p_explosion->tick)
         {
-            particles_burst((float)p_explosion->x - SQ_WIDTH / 2.0f,
-                            (float)p_explosion->y - SQ_WIDTH / 2.0f, 48);
+            if (b_playing)
+                particles_burst((float)p_explosion->x - SQ_WIDTH / 2.0f,
+                                (float)p_explosion->y - SQ_WIDTH / 2.0f, 48);
             arr_u32_seen_explosions[i] = p_explosion->tick;
         }
-        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES,
-                                     1, d_time_s - p_explosion->tick * 0.001,
-                                     0.08);
+        if (!b_playing)
+            continue;
+        int int_sprite = atlas_frame(SPR_EXPLOSION, EXPLOSION_FRAMES, 1,
+                                     d_age_s, EXPLOSION_FRAME_S);
         render_sprite(int_sprite, p_explosion->x - SQ_WIDTH / 2.0f,
                       p_explosion->y - SQ_WIDTH / 2.0f);
     }
