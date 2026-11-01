@@ -30,6 +30,35 @@ make baseline   # build/baseline_server, build/baseline_client (original program
 
 ## Run
 
+On Windows, run these from separate terminals in this folder:
+
+```bat
+.\run-server.bat
+.\run-client.bat
+.\run-client.bat --player 2
+```
+
+The batch files call the Linux scripts through your default WSL distribution.
+
+On Linux or inside Ubuntu/WSL, use the same scripts directly in separate terminals:
+
+```bash
+bash run-server.sh
+bash run-client.sh
+bash run-client.sh --player 2
+```
+
+Run the first-time setup under **Build** above before using these scripts.
+Each script builds only its own target, sources the DDS environment, and starts
+its process with security enabled. `--player` accepts 1–5 (default 1); use a
+different identity for each client. Both launchers accept `--no-build` to skip
+compilation; the batch files forward these options to the Linux scripts.
+Output stays in each terminal. Close a game window to stop that client; Ctrl+C
+in the server terminal stops the server independently. Movement is WASD/arrows;
+dash is Space/Shift. The game requires WSLg (or another graphical display).
+
+To run each process manually in its own Ubuntu/WSL terminal:
+
 ```bash
 source security/scripts/env.sh
 bash security/scripts/run_secure.sh server ./build/server

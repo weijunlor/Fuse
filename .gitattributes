@@ -1,3 +1,4 @@
 # Shell entrypoints are executed in Linux/WSL even from a Windows checkout.
 *.sh text eol=lf
 *.py text eol=lf
+*.bat text eol=crlf
