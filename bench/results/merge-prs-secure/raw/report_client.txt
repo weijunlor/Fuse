@@ -1,0 +1,1200 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 225  of event 'cpu_core/cycles/'
+# Event count (approx.): 398702774
+#
+# Overhead  Command      Shared Object                    Symbol                                     
+# ........  ...........  ...............................  ...........................................
+#
+     2.79%  client       libc.so.6                        [.] __memmove_avx_unaligned_erms
+            |
+            ---__memmove_avx_unaligned_erms
+               0x7a75286c3375
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.26%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000021ef0b
+            |
+            ---0x7a75284cef0b
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.03%  client       [kernel.kallsyms]                [k] poll_schedule_timeout.constprop.0
+            |
+            ---poll_schedule_timeout.constprop.0
+               do_poll.constprop.0
+               do_sys_poll
+               __x64_sys_ppoll
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               ppoll
+               0x7a754ffa3ffd
+               wl_display_dispatch_queue_timeout
+               wl_display_dispatch_queue
+               0x7a75441622f6
+               0x7a7544162792
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.96%  client:zfq0  libc.so.6                        [.] __memset_avx2_unaligned_erms
+            |
+            ---__memset_avx2_unaligned_erms
+               |          
+               |--1.41%--0x7a7528fbb5db
+               |          0x7a75289036f2
+               |          0x7a752894db5c
+               |          start_thread
+               |          __clone3 (inlined)
+               |          
+                --0.55%--0x7a7528fbba06
+                          0x7a75289036f2
+                          0x7a752894db5c
+                          start_thread
+                          __clone3 (inlined)
+
+     1.85%  client       [kernel.kallsyms]                [k] __kmalloc_cache_noprof
+            |
+            ---__kmalloc_cache_noprof
+               dma_fence_allocate_private_stub
+               __dma_fence_unwrap_merge
+               sync_file_merge.constprop.0
+               sync_file_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               0x7a75065e3bd2
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.69%  client       client                           [.] stb_easy_font_draw_segs.constprop.0
+            |
+            ---stb_easy_font_draw_segs (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.62%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001f9be6
+            |
+            ---0x7a75284a9be6
+               0x7a752858f3e9
+               0x7a7528472331
+               0x7a75284729eb
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.62%  client       [kernel.kallsyms]                [k] __raw_spin_lock_irqsave
+            |
+            ---__raw_spin_lock_irqsave
+               _raw_spin_lock_irqsave
+               |          
+                --1.36%--__pm_runtime_resume
+                          nouveau_drm_ioctl
+                          __x64_sys_ioctl
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __ioctl (inlined)
+                          drmIoctl
+                          drmSyncobjTimelineWait
+                          0x7a75065a38f0
+                          0x7a750659ee82
+                          0x7a750659e99b
+                          0x7a7528f9b731
+                          0x7a7529084ee0
+                          dri_flush
+                          kopperSwapBuffersWithDamage
+                          0x7a75441627a7
+                          0x7a75441593c9
+                          0x7a754414dc3b
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.58%  client       libvulkan_nouveau.so             [.] 0x00000000006d9b34
+            |
+            ---0x7a7506b30b34
+               0x7a75065e0aa7
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.43%  client       libc.so.6                        [.] __printf_buffer
+            |
+            ---read_int (inlined)
+               __printf_buffer
+               __printf_buffer_snprintf_done (inlined)
+               __vsnprintf_internal
+               ___snprintf_chk (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.38%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000003b1a40
+            |
+            ---0x7a7528661a40
+               0x7a7528478c9c
+               0x7a7528478e2d
+               0x7a752864e473
+               0x7a75286c0e23
+               0x7a7528472331
+               0x7a75284729eb
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.28%  client       [kernel.kallsyms]                [k] sized_strscpy
+            |
+            ---sized_strscpy
+               sync_file_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               0x7a75065e3bd2
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.28%  client       [kernel.kallsyms]                [k] fget
+            |
+            ---fget
+               sync_file_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               0x7a75065e3bd2
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.26%  client       libc.so.6                        [.] syscall
+            |
+            ---syscall
+               0x7a75289032d0
+               0x7a75289044b4
+               0x7a7528f8d3b8
+               kopper_copy_to_front (inlined)
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.25%  client       [kernel.kallsyms]                [k] __update_load_avg_cfs_rq
+            |
+            ---__update_load_avg_cfs_rq
+               update_load_avg
+               dequeue_entity
+               dequeue_entities
+               dequeue_task_fair
+               dequeue_task
+               try_to_block_task.constprop.0.isra.0
+               __schedule
+               schedule
+               schedule_hrtimeout_range_clock
+               schedule_hrtimeout_range
+               poll_schedule_timeout.constprop.0
+               do_poll.constprop.0
+               do_sys_poll
+               __x64_sys_ppoll
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               ppoll
+               0x7a754ffa3ffd
+               wl_display_dispatch_queue_timeout
+               wl_display_dispatch_queue
+               0x7a75441622f6
+               0x7a7544162792
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.25%  client       [kernel.kallsyms]                [k] kfree
+            |
+            ---kfree
+               drm_syncobj_array_find
+               drm_syncobj_timeline_wait_ioctl
+               drm_ioctl_kernel
+               drm_ioctl
+               nouveau_drm_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               drmIoctl
+               drmSyncobjTimelineWait
+               0x7a75065a38f0
+               0x7a750659ee82
+               0x7a750659e99b
+               0x7a7528f9b731
+               0x7a7529084ee0
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.19%  client       libc.so.6                        [.] __syscall_cancel
+            |
+            ---__syscall_cancel
+               0x7a75065e3d8d
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.18%  client       libvulkan_nouveau.so             [.] 0x00000000001aa144
+            |
+            ---0x7a7506601144
+               0x7a7528ff8fdd
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.13%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x000000000020ba84
+            |
+            ---0x7a75284bba84
+               0x7a752873f843
+               0x7a752873fe0b
+               0x7a75284bf341
+               0x7a752864cd70
+               0x7a75286c0e23
+               0x7a7528472331
+               0x7a75284729eb
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.05%  client       libc.so.6                        [.] __memcmp_avx2_movbe
+            |
+            ---__memcmp_avx2_movbe
+               |          
+                --0.78%--0x7a752873e565
+                          0x7a75284bf341
+                          0x7a752864cd70
+                          0x7a75286c0e23
+                          0x7a7528472331
+                          0x7a75284729eb
+                          dri_flush
+                          kopperSwapBuffersWithDamage
+                          0x7a75441627a7
+                          0x7a75441593c9
+                          0x7a754414dc3b
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.03%  recvUC       libc.so.6                        [.] malloc
+            |          
+             --0.78%--tcache_get_n (inlined)
+                       tcache_get (inlined)
+                       __libc_malloc (inlined)
+
+     1.02%  client       [kernel.kallsyms]                [k] _copy_from_user
+            |
+            ---_copy_from_user
+               sync_file_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               0x7a75065e3bd2
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.01%  client       [kernel.kallsyms]                [k] reweight_entity
+            |
+            ---reweight_entity
+               update_cfs_group
+               task_tick_fair
+               sched_tick
+               update_process_times
+               tick_nohz_handler
+               __hrtimer_run_queues
+               hrtimer_interrupt
+               __sysvec_apic_timer_interrupt
+               sysvec_apic_timer_interrupt
+               asm_sysvec_apic_timer_interrupt
+               0x7a7528b55789
+               0x7a7528741f85
+               0x7a752858e568
+               0x7a7528472331
+               0x7a75284729eb
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.01%  client       libEGL.so.1.1.0                  [.] 0x0000000000006fa0
+            |
+            ---0x7a75447aafa0
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.00%  client       [kernel.kallsyms]                [k] kmem_cache_alloc_noprof
+            |
+            ---kmem_cache_alloc_noprof
+               alloc_empty_file
+               alloc_file_pseudo
+               __anon_inode_getfile
+               anon_inode_getfile
+               sync_file_alloc
+               sync_file_merge.constprop.0
+               sync_file_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               0x7a75065e3bd2
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.00%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001c40c7
+            |
+            ---0x7a75284740c7
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.99%  client       [kernel.kallsyms]                [k] memcg_list_lru_alloc
+            |
+            ---memcg_list_lru_alloc
+               kmem_cache_alloc_lru_noprof
+               __d_alloc
+               d_alloc_pseudo
+               alloc_file_pseudo
+               __anon_inode_getfile
+               anon_inode_getfile
+               sync_file_alloc
+               sync_file_create
+               drm_syncobj_handle_to_fd_ioctl
+               drm_ioctl_kernel
+               drm_ioctl
+               nouveau_drm_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               drmIoctl
+               drmSyncobjExportSyncFile
+               0x7a75065e3b63
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.98%  client       libc.so.6                        [.] pthread_mutex_lock@@GLIBC_2.2.5
+            |          
+             --0.57%--lll_mutex_lock_optimized (inlined)
+                       ___pthread_mutex_lock (inlined)
+
+     0.98%  client       libc.so.6                        [.] __GI___ioctl
+            |
+            ---__ioctl (inlined)
+               drmSyncobjQuery2
+               0x7a75065e4b57
+               0x7a75065ead65
+               0x7a75065e0aa7
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.94%  client:zfq0  libc.so.6                        [.] pthread_mutex_lock@@GLIBC_2.2.5
+            |          
+             --0.69%--lll_mutex_lock_optimized (inlined)
+                       ___pthread_mutex_lock (inlined)
+                       0x7a752894dced
+                       0x7a75289035f8
+                       0x7a752894db5c
+                       start_thread
+                       __clone3 (inlined)
+
+     0.94%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x00000000001b93b0
+            |
+            ---0x7a75284693b0
+               0x7a7528762623
+               0x7a752858e568
+               0x7a7528472331
+               0x7a75284729eb
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.93%  client       libvulkan_nouveau.so             [.] 0x00000000001ae0fc
+            |
+            ---0x7a75066050fc
+               0x7a7528ff8fdd
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.92%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000413205
+            |
+            ---0x7a75286c3205
+               batch_flush (inlined)
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.91%  client       libvulkan_nouveau.so             [.] 0x00000000001b3155
+            |
+            ---0x7a750660a155
+               0x7a750660ca9c
+               0x7a752907ffe7
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.91%  client       libvulkan_nouveau.so             [.] 0x00000000001dd354
+            |
+            ---0x7a7506634354
+               0x7a750660caa4
+               0x7a752907ffe7
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.87%  client       [kernel.kallsyms]                [k] __nr_to_section
+            |
+            ---__nr_to_section
+               check_heap_object
+               __check_object_size
+               drm_syncobj_array_find
+               drm_syncobj_wait_ioctl
+               drm_ioctl_kernel
+               drm_ioctl
+               nouveau_drm_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               drmIoctl
+               drmSyncobjWait
+               0x7a75065a3a79
+               0x7a750659ee82
+               0x7a750658ac96
+               0x7a75065e0d89
+               0x7a7528f8c118
+               0x7a7528f8d33d
+               kopper_copy_to_front (inlined)
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.87%  client:zfq0  libgallium-26.0.8-1ubuntu0.3.so  [.] pthread_mutex_unlock@plt
+            |
+            ---pthread_mutex_unlock@plt
+               0x7a75289036dc
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.79%  recvUC       libcrypto.so.3                   [.] 0x0000000000411b70
+            |
+            ---0x7a7551945b70
+               EVP_Q_mac
+               HMAC
+               0x7a754c11609a
+               crypto_calculate_session_key
+               0x7a754c1188f0
+               0x7a7551b876f5
+               0x7a7551b8972e
+               0x7a7551be7422
+               0x7a7551bea9a1
+               0x7a7551beaa9f
+               0x7a7551be3c91
+               0x7a7551c2afad
+               start_thread
+               __clone3 (inlined)
+
+     0.78%  client       [kernel.kallsyms]                [k] ____sys_recvmsg
+            |
+            ---____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               wl_display_read_events
+               wl_display_dispatch_queue_timeout
+               wl_display_dispatch_queue
+               0x7a75441622f6
+               0x7a7544162792
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.78%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] memcpy@plt
+            |
+            ---memcpy@plt
+               0x7a75286c3375
+               ui_draw_text
+               render_frame
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  client       libvulkan_nouveau.so             [.] 0x0000000000552356
+            |
+            ---0x7a75069a9356
+               0x7a75069a0416
+               0x7a75069aa112
+               nil_image_level_extent_sa
+               0x7a7506604b73
+               0x7a7528ff8fdd
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.70%  client:zfq0  libvulkan_nouveau.so             [.] 0x00000000006956a0
+            |
+            ---0x7a7506aec6a0
+               0x7a7506597cd3
+               0x7a750659857e
+               0x7a75065a10fe
+               0x7a7528fbb6d2
+               0x7a75289036f2
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.66%  client:zfq0  libc.so.6                        [.] __internal_syscall_cancel
+            |
+            ---__internal_syscall_cancel
+
+     0.64%  client:zfq0  [kernel.kallsyms]                [k] __futex_hash
+            |
+            ---__futex_hash
+               futex_hash
+               futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lll_lock_wake (inlined)
+               0x7a752894dd0d
+               0x7a75289036dc
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.63%  recvUC       libc.so.6                        [.] pthread_once@GLIBC_2.2.5
+            |
+            ---___pthread_once (inlined)
+               0x7a75517903d7
+               0x7a7551790924
+               0x7a7551761464
+               0x7a7551761a52
+               EVP_MAC_fetch
+               EVP_Q_mac
+               HMAC
+               0x7a754c11609a
+               crypto_calculate_session_key
+               0x7a754c1188f0
+               0x7a7551b876f5
+               0x7a7551b8972e
+               0x7a7551be7422
+               0x7a7551bea9a1
+               0x7a7551beaa9f
+               0x7a7551be3c91
+               0x7a7551c2afad
+               start_thread
+               __clone3 (inlined)
+
+     0.62%  client       [kernel.kallsyms]                [k] ima_file_free
+            |
+            ---ima_file_free
+               __fput
+               fput_close_sync
+               __x64_sys_close
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __close
+               0x7a75065e3d8d
+               0x7a75065e0bdb
+               0x7a75065e0a52
+               0x7a7528f8bc6e
+               0x7a7528f8cf95
+               0x7a7528ff7a4c
+               0x7a7528ff897e
+               0x7a7528ffc95a
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.62%  client       [kernel.kallsyms]                [k] task_h_load
+            |
+            ---task_h_load
+               wake_affine
+               select_task_rq_fair
+               select_task_rq
+               try_to_wake_up
+               default_wake_function
+               pollwake
+               __wake_up_common
+               __wake_up
+               ep_poll_callback
+               __wake_up_common
+               __wake_up_sync_key
+               sock_def_readable
+               unix_stream_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               0x7a754ffa4e41
+               wl_display_flush
+               wl_display_dispatch_queue_timeout
+               0x7a7506b309dc
+               0x7a75065ea220
+               0x7a75065edfed
+               0x7a75065e18ff
+               0x7a7528f8c118
+               0x7a7528f8d33d
+               kopper_copy_to_front (inlined)
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.62%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000d12bbf
+            |
+            ---0x7a7528fc2bbf
+               0x7a7528ffc9ad
+               0x7a752907e490
+               0x7a7528b71c0c
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.62%  client       [kernel.kallsyms]                [k] __srcu_read_lock
+            |
+            ---__srcu_read_lock
+               drm_dev_enter
+
+     0.59%  client       [kernel.kallsyms]                [k] psi_group_change
+            |
+            ---psi_group_change
+               psi_task_switch
+               __schedule
+               schedule
+
+     0.58%  client       [kernel.kallsyms]                [k] __srcu_read_unlock
+            |
+            ---__srcu_read_unlock
+               drm_dev_exit
+               drm_ioctl
+               nouveau_drm_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               drmIoctl
+               drmSyncobjTransfer
+               0x7a75065a431b
+               0x7a7506589e2e
+               0x7a75065de81a
+               0x7a75065e153b
+               0x7a7528f8c118
+               0x7a7528f8d33d
+               kopper_copy_to_front (inlined)
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.58%  client       libgallium-26.0.8-1ubuntu0.3.so  [.] 0x0000000000cf807b
+            |
+            ---0x7a7528fa807b
+               0x7a7528fe68fb
+               0x7a7528b7197a
+               0x7a7528b72c61
+               0x7a7528b737ff
+               0x7a75284cf225
+               dri_flush
+               kopperSwapBuffersWithDamage
+               0x7a75441627a7
+               0x7a75441593c9
+               0x7a754414dc3b
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.53%  client:zfq0  [kernel.kallsyms]                [k] __queue_work.part.0
+            |
+            ---__queue_work.part.0
+               __queue_work
+               queue_work_on
+               drm_sched_wakeup
+               drm_sched_entity_push_job
+               nouveau_job_submit
+               nouveau_exec_ioctl_exec
+               drm_ioctl_kernel
+               drm_ioctl
+               nouveau_drm_ioctl
+               __x64_sys_ioctl
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __ioctl (inlined)
+               drmIoctl
+               drmCommandWriteRead
+               0x7a7506635251
+               0x7a750662fe42
+               0x7a750659749b
+               0x7a75065975da
+               0x7a75065a10fe
+               0x7a7528fbb6d2
+               0x7a75289036f2
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.53%  client:zfq0  [kernel.kallsyms]                [k] put_prev_entity
+            |
+            ---put_prev_entity
+               put_prev_task_fair
+               pick_next_task
+               __schedule
+               schedule
+               futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               0x7a752894dc1d
+               0x7a752890361c
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.52%  client       libc.so.6                        [.] __printf_buffer_write
+            |
+            ---__printf_buffer_write
+
+     0.52%  client:zfq0  [kernel.kallsyms]                [k] __pi_memset
+            |
+            ---__pi_memset
+
+     0.52%  client:zfq0  [kernel.kallsyms]                [k] futex_wake
+            |
+            ---futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               syscall
+               0x7a752890392b
+               0x7a752894db5c
+               start_thread
+               __clone3 (inlined)
+
+     0.50%  client:zfq0  [kernel.kallsyms]                [k] _raw_spin_lock
+            |
+            ---_raw_spin_lock
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
