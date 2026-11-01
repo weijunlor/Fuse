@@ -12,6 +12,16 @@ if ! pkg-config --exists CycloneDDS; then
 fi
 str_dds_libdir=$(pkg-config --variable=libdir CycloneDDS)
 export LD_LIBRARY_PATH="$str_dds_libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# A terminal sourced before setup_wsl.sh may still select Ubuntu's plugins.
+# Those plugins must not be loaded into the newly selected local DDS library.
+case "${FUSE_DDS_PLUGIN_DIR:-}" in
+    /usr/lib/*/libddsc0debian)
+        if [ "$str_dds_libdir" = "$FUSE_CYCLONEDDS_PREFIX/lib" ] &&
+           [ -f "$str_dds_libdir/libdds_security_auth.so" ]; then
+            export FUSE_DDS_PLUGIN_DIR="$str_dds_libdir"
+        fi
+        ;;
+esac
 if [ -z "${FUSE_DDS_PLUGIN_DIR:-}" ]; then
     if [ -f "$str_dds_libdir/libdds_security_auth.so" ]; then
         export FUSE_DDS_PLUGIN_DIR="$str_dds_libdir"
