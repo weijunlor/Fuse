@@ -82,6 +82,24 @@ static int int_num_stress;
 static unsigned long u32_seen_explosion_tick = 0;
 static unsigned long u32_last_snapshot_tick = 0;
 static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
+static ClientFrame received = { .int_player_id = -1 };
+
+void render_set_client_frame(const ClientFrame *a_frame)
+{
+    received = *a_frame;
+    if (received.u64_received_ns != 0)
+        interp_push(&received.snapshot, received.u64_received_ns);
+}
+
+void render_reset_session(void)
+{
+    received = (ClientFrame){ .int_player_id = -1 };
+    interp_reset();
+    particles_clear();
+    u32_seen_explosion_tick = 0;
+    u32_last_snapshot_tick = 0;
+    u8_last_snapshot_phase = PHASE_LOBBY;
+}
 
 // Immediate path: one sprite = one glBegin/glEnd
 static void sprite_immediate(int a_int_sprite, float x, float y)
@@ -263,9 +281,6 @@ void render_frame(void)
     double d_time_s = glfwGetTime();
     // The state to draw: interpolated between the last snapshots (#15,
     // interp.h), or the newest snapshot with --interp off
-    static ClientFrame received = { .int_player_id = -1 };
-    if (net_client_read_frame(&received) && received.u64_received_ns != 0)
-        interp_push(&received.snapshot, received.u64_received_ns);
     InterpFrame frame;
     interp_sample(timing_now_ns(), &frame);
     if (b_interp_stats)

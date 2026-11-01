@@ -27,6 +27,14 @@ static double d_offset_s = 0.0;
 // never smaller, so the minimum is the true interval.
 static uint32_t u_interval_ticks = 0;
 
+void interp_reset(void)
+{
+    int_first = 0;
+    int_count = 0;
+    d_offset_s = 0.0;
+    u_interval_ticks = 0;
+}
+
 // Snapshot number a_int_i, counted from the oldest
 static const GameSnapshot *slot(int a_int_i)
 {

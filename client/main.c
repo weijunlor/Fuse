@@ -31,6 +31,8 @@ Options (for measurements, see bench/render.sh):
                        default on) or the newest snapshot as received
   --smooth-stats S     after S seconds print smoothness statistics of the
                        players' on-screen movement (interp.h) and quit
+  --auto-join          skip the menu (also FUSE_AUTO_JOIN=1; measurements
+                       and FUSE_AUTO_MOVE=1 keep automatic joining)
 
 Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
                                     did instead of waiting (#2) */
@@ -48,8 +50,38 @@ Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
 #include "input.h"
 #include "render.h"
 #include "particles.h"
-#include "dds_security.h"
 #include "interp.h"
+#include "lobby_ui.h"
+
+// Each Join starts a fresh authenticated session. Never reset handoffs or
+// credentials until the previous worker has stopped and pthread_join finished.
+static bool start_client(pthread_t *a_thread)
+{
+    if (!net_client_prepare())
+    {
+        net_client_finish();
+        return false;
+    }
+    int int_error = pthread_create(a_thread, NULL, net_client_worker, NULL);
+    if (int_error != 0)
+    {
+        fprintf(stderr, "pthread_create: %s\n", strerror(int_error));
+        net_client_finish();
+        return false;
+    }
+    return true;
+}
+
+static void stop_client(pthread_t a_thread, bool *a_b_running)
+{
+    if (!*a_b_running)
+        return;
+    net_client_set_keys(0);
+    net_client_stop();
+    pthread_join(a_thread, NULL);
+    net_client_finish();
+    *a_b_running = false;
+}
 
 // qsort comparison for frame times
 static int compare_u64(const void *a, const void *b)
@@ -102,9 +134,15 @@ int main(int argc, char **argv)
     ParticleLayout particle_layout = PARTICLES_SOA;
     int int_particle_threads = 1;
     double d_smooth_stats_s = 0;
+    const char *str_auto_join = getenv("FUSE_AUTO_JOIN");
+    const char *str_auto_move = getenv("FUSE_AUTO_MOVE");
+    bool b_auto_join = (str_auto_join != NULL && strcmp(str_auto_join, "1") == 0) ||
+                       (str_auto_move != NULL && strcmp(str_auto_move, "1") == 0);
     for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
+        if (strcmp(argv[i], "--auto-join") == 0)
+            b_auto_join = true;
+        else if (strcmp(argv[i], "--stress") == 0 && i + 1 < argc)
             int_stress = atoi(argv[++i]);
         else if (strcmp(argv[i], "--frames") == 0 && i + 1 < argc)
             int_frames = atoi(argv[++i]);
@@ -133,28 +171,20 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Usage: %s [--stress N] [--frames F] [--render immediate|float|short]\n"
                             "          [--particles N] [--particle-layout aos|soa|soa-intrin|soa-intrin-scan] [--particle-threads T]\n"
-                            "          [--input-send change|every-10ms] [--interp on|off] [--smooth-stats S]\n",
+                            "          [--input-send change|every-10ms] [--interp on|off] [--smooth-stats S] [--auto-join]\n",
                     argv[0]);
             return 1;
         }
     }
 
-    dds_security_prepare();
-	if (!net_client_prepare())
-		return EXIT_FAILURE;
-	pthread_t thread;
-
-    if (pthread_create(&thread, NULL, net_client_worker, NULL) != 0)
-    {
-        perror("pthread_create");
-        return 1;
-    }
+    b_auto_join = b_auto_join || int_frames > 0 || int_stress > 0 ||
+                  int_particles > 0 || b_interp_stats;
 
     if (!glfwInit())
         return 1;
 
     GLFWwindow *window =
-        glfwCreateWindow(WIDTH, HEIGHT, "DDS Client (Click within the window to control)", NULL, NULL);
+        glfwCreateWindow(WIDTH, HEIGHT, "FUSE", NULL, NULL);
 
     if (!window)
     {
@@ -174,6 +204,11 @@ int main(int argc, char **argv)
     glfwGetFramebufferSize(window, &int_fb_w, &int_fb_h);
     render_resize(int_fb_w, int_fb_h);
     glfwSetFramebufferSizeCallback(window, on_framebuffer_size);
+    if (!b_auto_join)
+    {
+        lobby_ui_init(window);
+        glfwSwapInterval(1);
+    }
 
     // Measured run: fixed vsync so frame pacing is the same on every run,
     // and one render_frame() time per frame
@@ -183,10 +218,14 @@ int main(int argc, char **argv)
         glfwSwapInterval(1);
         arr_frame_ns = malloc((size_t)int_frames * sizeof(uint64_t));
         if (arr_frame_ns == NULL)
+        {
+            particles_free();
+            glfwDestroyWindow(window);
+            glfwTerminate();
             return 1;
+        }
     }
     int int_frame = 0;
-    uint64_t u_start_ns = timing_now_ns();
 
     // Screenshots: F12 saves screenshot.png; FUSE_SCREENSHOT=<file> saves one
     // automatically after 2 s (for tests and slides)
@@ -203,18 +242,72 @@ int main(int argc, char **argv)
             d_screenshot_delay < 0.0 || d_screenshot_delay > 60.0)
         {
             fprintf(stderr, "FUSE_SCREENSHOT_DELAY must be a number from 0 to 60 seconds\n");
+            free(arr_frame_ns);
+            particles_free();
+            glfwDestroyWindow(window);
+            glfwTerminate();
             return 1;
         }
     }
     int int_f12_prev = GLFW_RELEASE;
     double d_prev_s = glfwGetTime();
 
-    // Render loop: no frame cap; swap interval left at the driver default (as in the baseline)
+    pthread_t thread = {0};
+    bool b_running = false;
+    ClientFrame client_frame = { .int_player_id = -1 };
+    const char *str_menu_message = "";
+    if (b_auto_join)
+    {
+        b_running = start_client(&thread);
+        if (!b_running)
+        {
+            free(arr_frame_ns);
+            particles_free();
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return EXIT_FAILURE;
+        }
+    }
+
+    uint64_t u_start_ns = timing_now_ns();
+    d_prev_s = glfwGetTime();
+    // Normal clients begin at the menu. Measurement runs preserve their
+    // automatic join and existing frame pacing, without a menu overlay.
     while (!glfwWindowShouldClose(window))
     {
         /* Process keyboard/window events */
         glfwPollEvents();
-        input_poll(window);
+        if (glfwWindowShouldClose(window))
+            break;
+        // Exactly one consumer of the SPSC frame handoff. Both the UI and
+        // renderer use this main-thread copy, never another network read.
+        if (b_running && net_client_read_frame(&client_frame))
+            render_set_client_frame(&client_frame);
+
+        if (!b_auto_join)
+        {
+            LobbyAction action = lobby_ui_poll(window, &client_frame, b_running);
+            if (action == LOBBY_EXIT)
+                break;
+            if (action == LOBBY_JOIN || action == LOBBY_LEAVE)
+            {
+                stop_client(thread, &b_running);
+                client_frame = (ClientFrame){ .int_player_id = -1 };
+                render_reset_session();
+                str_menu_message = "";
+                if (action == LOBBY_JOIN)
+                {
+                    b_running = start_client(&thread);
+                    if (!b_running)
+                        str_menu_message = "Cannot join. Check login settings in terminal.";
+                }
+            }
+        }
+        if (b_running && (b_auto_join ||
+            (client_frame.int_player_id > 0 && client_frame.snapshot.phase == PHASE_PLAYING)))
+            input_poll(window);
+        else if (b_running)
+            net_client_set_keys(0);
 
         // Particles move by the real time since the last frame (at most 0.1 s,
         // so a stalled frame does not throw them across the window)
@@ -227,6 +320,8 @@ int main(int argc, char **argv)
 
         uint64_t u_t0 = timing_now_ns();
         render_frame();
+        if (!b_auto_join)
+            lobby_ui_draw(&client_frame, b_running, str_menu_message);
         if (arr_frame_ns != NULL)
         {
             arr_frame_ns[int_frame++] = timing_now_ns() - u_t0;
@@ -260,9 +355,9 @@ int main(int argc, char **argv)
     }
 
     // Leave the game (the worker sends a Leave and closes DDS)
-    net_client_stop();
-    pthread_join(thread, NULL);
+    stop_client(thread, &b_running);
 
+    free(arr_frame_ns);
     particles_free();
     glfwDestroyWindow(window);
     glfwTerminate();

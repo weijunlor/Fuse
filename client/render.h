@@ -5,6 +5,7 @@ Batched rendering of players, bomb and HUD. */
 #define CLIENT_RENDER_H
 
 #include <stdbool.h>
+#include "net_client.h"
 
 // How sprites are sent to OpenGL (optimisation #16). Every step stays
 // selectable (--render <name>) so each can be measured against the one before.
@@ -29,6 +30,11 @@ void render_init(RenderMode a_mode, int a_int_stress);
 // scaling (e.g. 133% on Wayland) an 800 x 600 window has a larger framebuffer;
 // the game is still drawn in WIDTH x HEIGHT game pixels, stretched to fill it.
 void render_resize(int a_int_w, int a_int_h);
+
+// Main is the sole network-frame consumer. Share its copy with the renderer
+// and the menu; neither draws from the worker's live state.
+void render_set_client_frame(const ClientFrame *a_frame);
+void render_reset_session(void);
 
 // Draw one frame: floor, stress sprites, particles, every active player's sprite and ID,
 // and the banner. Does not swap buffers.
