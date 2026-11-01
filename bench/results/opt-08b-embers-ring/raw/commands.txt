@@ -1,0 +1,33 @@
+# 2026-11-01T08:19:14+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 257382 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 257378 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 259419 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 259415 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 261474 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 261470 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 263536 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 263532 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 265624 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 265620 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 267689 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 267685 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 269738 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 269734 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 271799 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 271795 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 273778 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 273774 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 275829 -- sleep 30
+perf stat --append -o bench/results/opt-08b-embers-ring/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 275825 -- sleep 30
+sudo perf lock record -o bench/results/opt-08b-embers-ring/raw/lock_server.data -p 277886 -- sleep 30
+perf lock contention -i bench/results/opt-08b-embers-ring/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-08b-embers-ring/raw/trace_server.txt -p 279954 -- sleep 30
+sudo perf trace -s -o bench/results/opt-08b-embers-ring/raw/trace_client.txt -p 279958 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-08b-embers-ring/raw/record_server.data -p 281958 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-08b-embers-ring/raw/record_client.data -p 281962 -- sleep 10
+perf script -i bench/results/opt-08b-embers-ring/raw/record_server.data
+perf report -i bench/results/opt-08b-embers-ring/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-08b-embers-ring/raw/record_client.data
+perf report -i bench/results/opt-08b-embers-ring/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-08b-embers-ring/raw/net_client.txt -p 284046 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-08b-embers-ring/raw/net_server.txt -p 284042 -- sleep 30

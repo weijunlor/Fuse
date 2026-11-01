@@ -1,0 +1,89 @@
+Step: embers-game; metrics: perf; runs: 10; CPUSET: 2
+Recorded: 2026-11-01T08:45:51+00:00
+Git: db1e52b48530dcd5811e975b29e48fc5a8928061
+ M CLAUDE.md
+ M Makefile
+ M README.md
+ M bench/bench_collision.c
+ M bench/server.sh
+ M docs/ai_log.md
+ M server/collision.c
+ M server/collision.h
+ M server/main.c
+ M tests/test_server.c
+?? bench/results/merge-prs-plain/
+?? bench/results/opt-03-handoff-before/
+?? bench/results/opt-08-collision-brute/
+?? bench/results/opt-08-collision-micro/
+?? bench/results/opt-08b-embers-array/
+?? bench/results/opt-08b-embers-game-0/
+?? bench/results/opt-08b-embers-query-avx2/
+?? bench/results/opt-08b-embers-query-novec/
+?? bench/results/opt-08b-embers-query/
+?? bench/results/opt-08b-embers-ring/
+?? bench/results/opt-08b-embers-vec/
+?? bench/results/opt-09-branches-micro/
+?? bench/results/opt-09-branchy/
+?? bench/results/opt-10-reduce-micro/
+?? bench/results/opt-10-reduce-serial/
+?? bench/results/opt-11-game-compact/
+?? bench/results/opt-11-padding-micro/
+?? bench/results/opt-merged-defaults/
+Linux ubuntu 7.0.0-30-generic #30-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 31 18:22:54 UTC 2026 x86_64 GNU/Linux
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           39 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  24
+On-line CPU(s) list:                     0-23
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Core(TM) i7-14650HX
+CPU family:                              6
+Model:                                   183
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               1
+Stepping:                                1
+CPU(s) scaling MHz:                      42%
+CPU max MHz:                             5200.0000
+CPU min MHz:                             800.0000
+BogoMIPS:                                4838.40
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves split_lock_detect user_shstk avx_vnni dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp hwp_pkg_req hfi vnmi umip pku ospke waitpkg gfni vaes vpclmulqdq rdpid movdiri movdir64b fsrm md_clear serialize arch_lbr ibt flush_l1d arch_capabilities
+Virtualization:                          VT-x
+L1d cache:                               640 KiB (16 instances)
+L1i cache:                               768 KiB (16 instances)
+L2 cache:                                24 MiB (10 instances)
+L3 cache:                                30 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-23
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Mitigation; Clear Register File
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+Build command (same Makefile and options used immediately above):
+mkdir -p build
+printf '%s\n' '1' > build/.cache-padding.tmp
+cmp -s build/.cache-padding.tmp build/.cache-padding || cp build/.cache-padding.tmp build/.cache-padding
+rm -f build/.cache-padding.tmp
+mkdir -p build && gcc -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party -I/usr/include/stb -DLOG_LEVEL=LOG_LEVEL_INFO -DFUSE_CACHE_PADDING=1 -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"/usr/lib/x86_64-linux-gnu/libddsc0debian"' -falign-loops=64 -Iserver bench/bench_collision.c \
+	server/collision.c common/timing.c -o build/bench_collision -pthread -lm
+bd84254b13e1a2665ccbfbea14636b690b22b2175922505976bd349176074101  build/bench_collision
+Governor: performance
+No governor, sysctl or privilege changes are made by this script.
+METRICS=time is timing/checksum evidence only, without cache/branch/IPC claims.

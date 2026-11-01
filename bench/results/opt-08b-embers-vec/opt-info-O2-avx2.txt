@@ -1,0 +1,408 @@
+server/collision.c:118:20: missed: couldn't vectorize loop
+server/collision.c:118:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:113:20: missed: couldn't vectorize loop
+server/collision.c:114:53: missed: not vectorized, possible dependence between data-refs arr_int_cell_offsets[i_65] and arr_int_cell_offsets[_8]
+server/collision.c:107:20: missed: couldn't vectorize loop
+server/collision.c:104:13: missed: possible alias involving gather/scatter between *_89 and *_89
+server/collision.c:104:13: note: vectorized 0 loops in function.
+server/collision.c:117:21: missed: not vectorized: more than one data ref in stmt: MEM <unsigned char[520]> [(char * {ref-all})&arr_int_cursor] = MEM <unsigned char[520]> [(char * {ref-all})&arr_int_cell_offsets];
+server/collision.c:123:50: missed: not vectorized: more than one data ref in stmt: arr_sorted_embers[_14] = arr_embers[i_67];
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V32QI
+server/collision.c:82:39: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V16QI
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:279:20: missed: couldn't vectorize loop
+server/collision.c:279:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:281:36: missed: couldn't vectorize loop
+server/collision.c:283:33: missed: possible alias involving gather/scatter between arr_int_cursor[_74] and arr_int_cursor[_74]
+server/collision.c:274:20: missed: couldn't vectorize loop
+server/collision.c:275:53: missed: not vectorized, possible dependence between data-refs arr_int_cell_offsets[i_96] and arr_int_cell_offsets[_10]
+server/collision.c:270:20: missed: couldn't vectorize loop
+server/collision.c:270:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:271:36: missed: couldn't vectorize loop
+server/collision.c:272:18: missed: possible alias involving gather/scatter between arr_int_counts[_66] and arr_int_counts[_66]
+server/collision.c:264:13: note: vectorized 0 loops in function.
+server/collision.c:278:21: missed: not vectorized: more than one data ref in stmt: MEM <unsigned char[520]> [(char * {ref-all})&arr_int_cursor] = MEM <unsigned char[520]> [(char * {ref-all})&arr_int_cell_offsets];
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V8SI
+server/collision.c:82:39: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V16QI
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:82:39: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:82:39: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:207:33: missed: couldn't vectorize loop
+server/collision.c:207:33: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:209:34: missed: couldn't vectorize loop
+server/collision.c:209:34: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:213:11: missed: couldn't vectorize loop
+server/collision.c:213:11: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:191:13: note: vectorized 0 loops in function.
+server/collision.c:194:3: missed: statement clobbers memory: rebuild_ember_grid_array ();
+server/collision.c:191:13: note: ***** Analysis failed with vector mode V32QI
+server/collision.c:191:13: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:191:13: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:191:13: note: ***** Analysis failed with vector mode V16QI
+server/collision.c:191:13: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:191:13: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:191:13: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:191:13: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:374:20: missed: couldn't vectorize loop
+server/collision.c:374:20: missed: may need non-SLP handling
+server/collision.c:371:6: note: vectorized 0 loops in function.
+server/collision.c:378:27: missed: statement clobbers memory: __builtin_memset (&arr_int_cell_offsets, 0, 524);
+server/collision.c:380:1: note: ***** Analysis failed with vector mode V32QI
+server/collision.c:380:1: note: ***** Skipping vector mode V32QI, which would repeat the analysis for V32QI
+server/collision.c:296:39: missed: couldn't vectorize loop
+server/collision.c:298:25: missed: not vectorized: unsupported use in stmt.
+server/collision.c:132:20: missed: couldn't vectorize loop
+server/collision.c:132:20: missed: not vectorized: unsupported outerloop form.
+server/collision.c:136:21: optimized: loop vectorized using 32 byte vectors
+server/collision.c:382:6: note: vectorized 1 loops in function.
+server/collision.c:150:24: note: ***** Analysis succeeded with vector mode V32QI
+server/collision.c:150:24: note: SLPing BB part
+server/collision.c:150:24: note: Costing subgraph: 
+server/collision.c:150:24: note: node 0x3c57a2f8 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 0 arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 1 arr_embers[j_89].y = _58;
+server/collision.c:150:24: note: 	children 0x3c57a380
+server/collision.c:150:24: note: node 0x3c57a380 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 0 _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 1 _58 = a_int_y_8(D) + int_dy_56;
+server/collision.c:150:24: note: 	children 0x3c57a408 0x3c57a490
+server/collision.c:150:24: note: node (external) 0x3c57a408 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ a_int_x_7(D), a_int_y_8(D) }
+server/collision.c:150:24: note: node 0x3c57a490 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 0 int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 1 int_dy_56 = _55 + -60;
+server/collision.c:150:24: note: 	children 0x3c57a518 0x3c57aea8
+server/collision.c:150:24: note: node (external) 0x3c57a518 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	stmt 0 _50 = (int) _49;
+server/collision.c:150:24: note: 	stmt 1 _55 = (int) _54;
+server/collision.c:150:24: note: 	children 0x3c57a5a0
+server/collision.c:150:24: note: node 0x3c57a5a0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_203 = u32_state_48 - patt_202;
+server/collision.c:150:24: note: 	stmt 0 patt_203 = u32_state_48 - patt_202;
+server/collision.c:150:24: note: 	stmt 1 patt_123 = u32_state_53 - patt_122;
+server/collision.c:150:24: note: 	children 0x3c57a628 0x3c57a958
+server/collision.c:150:24: note: node 0x3c57a628 (max_nunits=2, refcnt=3) vector(2) unsigned int
+server/collision.c:150:24: note: op template: u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 0 u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 1 u32_state_53 = _52 + 1013904223;
+server/collision.c:150:24: note: 	children 0x3c57a6b0 0x3c57a8d0
+server/collision.c:150:24: note: node 0x3c57a6b0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 0 _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 1 _52 = u32_state_48 * 1664525;
+server/collision.c:150:24: note: 	children 0x3c57a7c0 0x3c57a848
+server/collision.c:150:24: note: node (external) 0x3c57a7c0 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ u32_state_77, u32_state_48 }
+server/collision.c:150:24: note: node (constant) 0x3c57a848 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1664525, 1664525 }
+server/collision.c:150:24: note: node (constant) 0x3c57a8d0 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1013904223, 1013904223 }
+server/collision.c:150:24: note: node 0x3c57a958 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_202 = patt_76 * 121;
+server/collision.c:150:24: note: 	stmt 0 patt_202 = patt_76 * 121;
+server/collision.c:150:24: note: 	stmt 1 patt_122 = patt_210 * 121;
+server/collision.c:150:24: note: 	children 0x3c57a9e0 0x3c57ae20
+server/collision.c:150:24: note: node 0x3c57a9e0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_76 = patt_86 >> 6;
+server/collision.c:150:24: note: 	stmt 0 patt_76 = patt_86 >> 6;
+server/collision.c:150:24: note: 	stmt 1 patt_210 = patt_209 >> 6;
+server/collision.c:150:24: note: 	children 0x3c57aa68 0x3c57ad98
+server/collision.c:150:24: note: node 0x3c57aa68 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_86 = patt_75 + patt_39;
+server/collision.c:150:24: note: 	stmt 0 patt_86 = patt_75 + patt_39;
+server/collision.c:150:24: note: 	stmt 1 patt_209 = patt_204 + patt_208;
+server/collision.c:150:24: note: 	children 0x3c57aaf0 0x3c57ac00
+server/collision.c:150:24: note: node 0x3c57aaf0 (max_nunits=2, refcnt=2) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_75 = u32_state_48 h* 248469183;
+server/collision.c:150:24: note: 	stmt 0 patt_75 = u32_state_48 h* 248469183;
+server/collision.c:150:24: note: 	stmt 1 patt_204 = u32_state_53 h* 248469183;
+server/collision.c:150:24: note: 	children 0x3c57a628 0x3c57ab78
+server/collision.c:150:24: note: node (constant) 0x3c57ab78 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 248469183, 248469183 }
+server/collision.c:150:24: note: node 0x3c57ac00 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_39 = patt_78 >> 1;
+server/collision.c:150:24: note: 	stmt 0 patt_39 = patt_78 >> 1;
+server/collision.c:150:24: note: 	stmt 1 patt_208 = patt_207 >> 1;
+server/collision.c:150:24: note: 	children 0x3c57ac88 0x3c57ad10
+server/collision.c:150:24: note: node 0x3c57ac88 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_78 = u32_state_48 - patt_75;
+server/collision.c:150:24: note: 	stmt 0 patt_78 = u32_state_48 - patt_75;
+server/collision.c:150:24: note: 	stmt 1 patt_207 = u32_state_53 - patt_204;
+server/collision.c:150:24: note: 	children 0x3c57a628 0x3c57aaf0
+server/collision.c:150:24: note: node (constant) 0x3c57ad10 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 1, 1 }
+server/collision.c:150:24: note: node (constant) 0x3c57ad98 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 6, 6 }
+server/collision.c:150:24: note: node (constant) 0x3c57ae20 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 121, 121 }
+server/collision.c:150:24: note: node (constant) 0x3c57aea8 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ -60, -60 }
+server/collision.c:150:24: note: Cost model analysis: 
+server/collision.c:150:24: note: Cost model analysis for part in loop 2:
+  Vector cost: 72
+  Scalar cost: 48
+server/collision.c:150:24: missed: not vectorized: vectorization is not profitable.
+server/collision.c:150:24: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:150:24: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:150:24: note: ***** Analysis succeeded with vector mode V16QI
+server/collision.c:150:24: note: SLPing BB part
+server/collision.c:150:24: note: Costing subgraph: 
+server/collision.c:150:24: note: node 0x3c57a2f8 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 0 arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 1 arr_embers[j_89].y = _58;
+server/collision.c:150:24: note: 	children 0x3c57a380
+server/collision.c:150:24: note: node 0x3c57a380 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 0 _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 1 _58 = a_int_y_8(D) + int_dy_56;
+server/collision.c:150:24: note: 	children 0x3c57a490 0x3c57aea8
+server/collision.c:150:24: note: node (external) 0x3c57a490 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ a_int_x_7(D), a_int_y_8(D) }
+server/collision.c:150:24: note: node 0x3c57aea8 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 0 int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 1 int_dy_56 = _55 + -60;
+server/collision.c:150:24: note: 	children 0x3c57a518 0x3c57af30
+server/collision.c:150:24: note: node (external) 0x3c57a518 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	stmt 0 _50 = (int) _49;
+server/collision.c:150:24: note: 	stmt 1 _55 = (int) _54;
+server/collision.c:150:24: note: 	children 0x3c57a5a0
+server/collision.c:150:24: note: node 0x3c57a5a0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_13 = u32_state_48 - patt_2;
+server/collision.c:150:24: note: 	stmt 0 patt_13 = u32_state_48 - patt_2;
+server/collision.c:150:24: note: 	stmt 1 patt_12 = u32_state_53 - patt_46;
+server/collision.c:150:24: note: 	children 0x3c57a958 0x3c57ad10
+server/collision.c:150:24: note: node 0x3c57a958 (max_nunits=2, refcnt=3) vector(2) unsigned int
+server/collision.c:150:24: note: op template: u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 0 u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 1 u32_state_53 = _52 + 1013904223;
+server/collision.c:150:24: note: 	children 0x3c57ae20 0x3c57ac00
+server/collision.c:150:24: note: node 0x3c57ae20 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 0 _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 1 _52 = u32_state_48 * 1664525;
+server/collision.c:150:24: note: 	children 0x3c57ad98 0x3c57aa68
+server/collision.c:150:24: note: node (external) 0x3c57ad98 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ u32_state_77, u32_state_48 }
+server/collision.c:150:24: note: node (constant) 0x3c57aa68 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1664525, 1664525 }
+server/collision.c:150:24: note: node (constant) 0x3c57ac00 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1013904223, 1013904223 }
+server/collision.c:150:24: note: node 0x3c57ad10 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_2 = patt_94 * 121;
+server/collision.c:150:24: note: 	stmt 0 patt_2 = patt_94 * 121;
+server/collision.c:150:24: note: 	stmt 1 patt_46 = patt_25 * 121;
+server/collision.c:150:24: note: 	children 0x3c57ac88 0x3c57a408
+server/collision.c:150:24: note: node 0x3c57ac88 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_94 = patt_95 >> 6;
+server/collision.c:150:24: note: 	stmt 0 patt_94 = patt_95 >> 6;
+server/collision.c:150:24: note: 	stmt 1 patt_25 = patt_73 >> 6;
+server/collision.c:150:24: note: 	children 0x3c57aaf0 0x3c57a7c0
+server/collision.c:150:24: note: node 0x3c57aaf0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_95 = patt_98 + patt_96;
+server/collision.c:150:24: note: 	stmt 0 patt_95 = patt_98 + patt_96;
+server/collision.c:150:24: note: 	stmt 1 patt_73 = patt_10 + patt_11;
+server/collision.c:150:24: note: 	children 0x3c57ab78 0x3c57a8d0
+server/collision.c:150:24: note: node 0x3c57ab78 (max_nunits=2, refcnt=2) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_98 = u32_state_48 h* 248469183;
+server/collision.c:150:24: note: 	stmt 0 patt_98 = u32_state_48 h* 248469183;
+server/collision.c:150:24: note: 	stmt 1 patt_10 = u32_state_53 h* 248469183;
+server/collision.c:150:24: note: 	children 0x3c57a958 0x3c57a628
+server/collision.c:150:24: note: node (constant) 0x3c57a628 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 248469183, 248469183 }
+server/collision.c:150:24: note: node 0x3c57a8d0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_96 = patt_97 >> 1;
+server/collision.c:150:24: note: 	stmt 0 patt_96 = patt_97 >> 1;
+server/collision.c:150:24: note: 	stmt 1 patt_11 = patt_42 >> 1;
+server/collision.c:150:24: note: 	children 0x3c57a6b0 0x3c57a848
+server/collision.c:150:24: note: node 0x3c57a6b0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: patt_97 = u32_state_48 - patt_98;
+server/collision.c:150:24: note: 	stmt 0 patt_97 = u32_state_48 - patt_98;
+server/collision.c:150:24: note: 	stmt 1 patt_42 = u32_state_53 - patt_10;
+server/collision.c:150:24: note: 	children 0x3c57a958 0x3c57ab78
+server/collision.c:150:24: note: node (constant) 0x3c57a848 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 1, 1 }
+server/collision.c:150:24: note: node (constant) 0x3c57a7c0 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 6, 6 }
+server/collision.c:150:24: note: node (constant) 0x3c57a408 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 121, 121 }
+server/collision.c:150:24: note: node (constant) 0x3c57af30 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ -60, -60 }
+server/collision.c:150:24: note: Cost model analysis: 
+server/collision.c:150:24: note: Cost model analysis for part in loop 2:
+  Vector cost: 72
+  Scalar cost: 48
+server/collision.c:150:24: missed: not vectorized: vectorization is not profitable.
+server/collision.c:150:24: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:150:24: note: ***** Analysis succeeded with vector mode V8QI
+server/collision.c:150:24: note: SLPing BB part
+server/collision.c:150:24: note: Costing subgraph: 
+server/collision.c:150:24: note: node 0x3c57a2f8 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 0 arr_embers[j_89].x = _57;
+server/collision.c:150:24: note: 	stmt 1 arr_embers[j_89].y = _58;
+server/collision.c:150:24: note: 	children 0x3c57a380
+server/collision.c:150:24: note: node 0x3c57a380 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 0 _57 = a_int_x_7(D) + int_dx_51;
+server/collision.c:150:24: note: 	stmt 1 _58 = a_int_y_8(D) + int_dy_56;
+server/collision.c:150:24: note: 	children 0x3c57aea8 0x3c57af30
+server/collision.c:150:24: note: node (external) 0x3c57aea8 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ a_int_x_7(D), a_int_y_8(D) }
+server/collision.c:150:24: note: node 0x3c57af30 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 0 int_dx_51 = _50 + -60;
+server/collision.c:150:24: note: 	stmt 1 int_dy_56 = _55 + -60;
+server/collision.c:150:24: note: 	children 0x3c57a518 0x3c57a6b0
+server/collision.c:150:24: note: node 0x3c57a518 (max_nunits=2, refcnt=1) vector(2) int
+server/collision.c:150:24: note: op template: _50 = (int) _49;
+server/collision.c:150:24: note: 	stmt 0 _50 = (int) _49;
+server/collision.c:150:24: note: 	stmt 1 _55 = (int) _54;
+server/collision.c:150:24: note: 	children 0x3c57a5a0
+server/collision.c:150:24: note: node (external) 0x3c57a5a0 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	stmt 0 _49 = u32_state_48 % 121;
+server/collision.c:150:24: note: 	stmt 1 _54 = u32_state_53 % 121;
+server/collision.c:150:24: note: 	children 0x3c57ad10 0x3c57a848
+server/collision.c:150:24: note: node 0x3c57ad10 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 0 u32_state_48 = _47 + 1013904223;
+server/collision.c:150:24: note: 	stmt 1 u32_state_53 = _52 + 1013904223;
+server/collision.c:150:24: note: 	children 0x3c57a408 0x3c57a8d0
+server/collision.c:150:24: note: node 0x3c57a408 (max_nunits=2, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: op template: _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 0 _47 = u32_state_77 * 1664525;
+server/collision.c:150:24: note: 	stmt 1 _52 = u32_state_48 * 1664525;
+server/collision.c:150:24: note: 	children 0x3c57a7c0 0x3c57aaf0
+server/collision.c:150:24: note: node (external) 0x3c57a7c0 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ u32_state_77, u32_state_48 }
+server/collision.c:150:24: note: node (constant) 0x3c57aaf0 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1664525, 1664525 }
+server/collision.c:150:24: note: node (constant) 0x3c57a8d0 (max_nunits=1, refcnt=1) vector(2) unsigned int
+server/collision.c:150:24: note: 	{ 1013904223, 1013904223 }
+server/collision.c:150:24: note: node (constant) 0x3c57a848 (max_nunits=1, refcnt=1)
+server/collision.c:150:24: note: 	{ 121, 121 }
+server/collision.c:150:24: note: node (constant) 0x3c57a6b0 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:150:24: note: 	{ -60, -60 }
+server/collision.c:150:24: note: Cost model analysis: 
+server/collision.c:150:24: note: Cost model analysis for part in loop 2:
+  Vector cost: 72
+  Scalar cost: 48
+server/collision.c:150:24: missed: not vectorized: vectorization is not profitable.
+server/collision.c:150:24: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:138:22: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:318:28: missed: couldn't vectorize loop
+server/collision.c:321:34: missed: not vectorized: unsupported use in stmt.
+server/collision.c:163:20: missed: couldn't vectorize loop
+server/collision.c:163:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:390:6: note: vectorized 0 loops in function.
+server/collision.c:397:1: note: ***** Analysis failed with vector mode V8SI
+server/collision.c:397:1: note: ***** Skipping vector mode V32QI, which would repeat the analysis for V8SI
+server/collision.c:332:20: missed: couldn't vectorize loop
+server/collision.c:332:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:334:36: missed: couldn't vectorize loop
+server/collision.c:334:36: missed: not vectorized: unsupported outerloop form.
+server/collision.c:258:20: optimized: loop vectorized using 32 byte vectors
+server/collision.c:177:20: missed: couldn't vectorize loop
+server/collision.c:177:20: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:399:6: note: vectorized 1 loops in function.
+server/collision.c:399:6: note: ***** Analysis succeeded with vector mode V32QI
+server/collision.c:399:6: note: SLPing BB part
+server/collision.c:399:6: note: Costing subgraph: 
+server/collision.c:399:6: note: node 0x3c651148 (max_nunits=2, refcnt=1) vector(2) long unsigned int
+server/collision.c:399:6: note: op template: _19 = (long unsigned int) i_62;
+server/collision.c:399:6: note: 	stmt 0 _19 = (long unsigned int) i_62;
+server/collision.c:399:6: note: 	stmt 1 _146 = (long unsigned int) i_148;
+server/collision.c:399:6: note: 	children 0x3c651258
+server/collision.c:399:6: note: node (external) 0x3c651258 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:399:6: note: 	{ i_62, i_148 }
+server/collision.c:399:6: note: Cost model analysis: 
+server/collision.c:399:6: note: Cost model analysis for part in loop 2:
+  Vector cost: 20
+  Scalar cost: 4
+server/collision.c:399:6: missed: not vectorized: vectorization is not profitable.
+server/collision.c:399:6: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:399:6: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:399:6: note: ***** Analysis succeeded with vector mode V16QI
+server/collision.c:399:6: note: SLPing BB part
+server/collision.c:399:6: note: Costing subgraph: 
+server/collision.c:399:6: note: node 0x3c650950 (max_nunits=2, refcnt=1) vector(2) long unsigned int
+server/collision.c:399:6: note: op template: _19 = (long unsigned int) i_62;
+server/collision.c:399:6: note: 	stmt 0 _19 = (long unsigned int) i_62;
+server/collision.c:399:6: note: 	stmt 1 _146 = (long unsigned int) i_148;
+server/collision.c:399:6: note: 	children 0x3c651478
+server/collision.c:399:6: note: node (external) 0x3c651478 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:399:6: note: 	{ i_62, i_148 }
+server/collision.c:399:6: note: Cost model analysis: 
+server/collision.c:399:6: note: Cost model analysis for part in loop 2:
+  Vector cost: 20
+  Scalar cost: 4
+server/collision.c:399:6: missed: not vectorized: vectorization is not profitable.
+server/collision.c:399:6: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:399:6: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:399:6: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:399:6: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:357:33: missed: couldn't vectorize loop
+server/collision.c:357:33: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:258:20: optimized: loop vectorized using 32 byte vectors
+server/collision.c:405:6: note: vectorized 1 loops in function.
+server/collision.c:408:24: missed: statement clobbers memory: _3 = hits_ember_grid_array (a_int_x_7(D), a_int_y_8(D));
+server/collision.c:350:3: missed: statement clobbers memory: rebuild_ember_grid_ring ();
+server/collision.c:405:6: note: ***** Analysis succeeded with vector mode V32QI
+server/collision.c:405:6: note: SLPing BB part
+server/collision.c:405:6: note: Costing subgraph: 
+server/collision.c:405:6: note: node 0x3c4f14c0 (max_nunits=2, refcnt=1) vector(2) long unsigned int
+server/collision.c:405:6: note: op template: _23 = (long unsigned int) int_first_17;
+server/collision.c:405:6: note: 	stmt 0 _23 = (long unsigned int) int_first_17;
+server/collision.c:405:6: note: 	stmt 1 _112 = (long unsigned int) i_114;
+server/collision.c:405:6: note: 	children 0x3c4f15d0
+server/collision.c:405:6: note: node (external) 0x3c4f15d0 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:405:6: note: 	{ int_first_17, i_114 }
+server/collision.c:405:6: note: Cost model analysis: 
+server/collision.c:405:6: note: Cost model analysis for part in loop 1:
+  Vector cost: 14
+  Scalar cost: 4
+server/collision.c:405:6: missed: not vectorized: vectorization is not profitable.
+server/collision.c:405:6: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:405:6: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:405:6: note: ***** Analysis succeeded with vector mode V16QI
+server/collision.c:405:6: note: SLPing BB part
+server/collision.c:405:6: note: Costing subgraph: 
+server/collision.c:405:6: note: node 0x3c4f15d0 (max_nunits=2, refcnt=1) vector(2) long unsigned int
+server/collision.c:405:6: note: op template: _23 = (long unsigned int) int_first_17;
+server/collision.c:405:6: note: 	stmt 0 _23 = (long unsigned int) int_first_17;
+server/collision.c:405:6: note: 	stmt 1 _112 = (long unsigned int) i_114;
+server/collision.c:405:6: note: 	children 0x3c4f1548
+server/collision.c:405:6: note: node (external) 0x3c4f1548 (max_nunits=1, refcnt=1) vector(2) int
+server/collision.c:405:6: note: 	{ int_first_17, i_114 }
+server/collision.c:405:6: note: Cost model analysis: 
+server/collision.c:405:6: note: Cost model analysis for part in loop 1:
+  Vector cost: 14
+  Scalar cost: 4
+server/collision.c:405:6: missed: not vectorized: vectorization is not profitable.
+server/collision.c:405:6: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:405:6: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:405:6: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:259:11: note: ***** Analysis failed with vector mode V4QI
+server/collision.c:414:19: missed: couldn't vectorize loop
+server/collision.c:414:19: missed: not vectorized: unsupported control flow in loop.
+server/collision.c:411:6: note: vectorized 0 loops in function.
+server/collision.c:411:6: note: ***** Analysis failed with vector mode V32QI
+server/collision.c:411:6: note: ***** The result for vector mode V32QI would be the same
+server/collision.c:411:6: note: ***** Re-trying analysis with vector mode V16QI
+server/collision.c:411:6: note: ***** Analysis failed with vector mode V16QI
+server/collision.c:411:6: note: ***** Re-trying analysis with vector mode V8QI
+server/collision.c:411:6: note: ***** Analysis failed with vector mode V8QI
+server/collision.c:411:6: note: ***** Re-trying analysis with vector mode V4QI
+server/collision.c:411:6: note: ***** Analysis failed with vector mode V4QI

@@ -79,6 +79,7 @@ Server profiling options keep each slower path runnable:
 | `--wait` | `sleep` | `busy` (#2, both server threads) |
 | `--publish` | `unlocked` | `locked` (#1, snapshot publication) |
 | `--collision` | `grid` | `brute` (#8, ember queries) |
+| `--embers` | `ring` | `array` (#8b, ember storage: FIFO ring of SoA arrays vs fixed 4096-slot array) |
 | `--branches` | `branchless` | `branchy` (#9, overlap/clamp/held-key lookup) |
 | `--reduction` | `accum` | `serial` (#10, player counting) |
 

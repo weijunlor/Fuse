@@ -20,7 +20,63 @@ static void reset_test(void)
 	int_snapshot_every = 1;
 	int_player_timeout_s = PLAYER_TIMEOUT_S;
 	b_game_branchless = b_collision_branchless = b_ember_grid = b_reduce_accum = true;
+	b_ember_ring = true;
 	srand(1234);
+}
+
+/* #8b: record ember hits (grid and brute force, which must agree) at
+ * checkpoints of one scripted sequence: overfill past MAX_EMBERS, expiry on
+ * the exact tick, a partly expired ring refilled so it wraps. The ring and
+ * array layouts must give identical records. */
+#define EMBER_CHECKPOINTS 7
+#define EMBER_POINTS ((WIDTH - SQ_WIDTH) / 23 + 1) * ((HEIGHT - SQ_WIDTH) / 29 + 1)
+static int record_ember_hits(bool *a_p_out)
+{
+	int int_hits = 0;
+	for (int x = 0; x <= WIDTH - SQ_WIDTH; x += 23)
+		for (int y = 0; y <= HEIGHT - SQ_WIDTH; y += 29)
+		{
+			bool b_hit = collision_player_hits_ember(x, y);
+			assert(b_hit == collision_player_hits_ember_bruteforce(x, y));
+			*a_p_out++ = b_hit;
+			int_hits += b_hit;
+		}
+	return int_hits;
+}
+
+static void ember_ticks(int a_int_n)
+{
+	for (int i = 0; i < a_int_n; i++) collision_embers_tick();
+}
+
+static void ember_spawns(int a_int_first, int a_int_batches)
+{
+	for (int n = a_int_first; n < a_int_first + a_int_batches; n++)
+		collision_embers_spawn((n * 37) % WIDTH, (n * 53) % HEIGHT, (uint16_t)n);
+}
+
+static void run_ember_script(bool a_b_ring, bool a_arr_out[EMBER_CHECKPOINTS][EMBER_POINTS])
+{
+	b_ember_ring = a_b_ring;
+	collision_embers_clear();
+	int arr_int_hits[EMBER_CHECKPOINTS];
+	ember_spawns(0, 100);                      // 3200 embers at tick 0
+	arr_int_hits[0] = record_ember_hits(a_arr_out[0]);
+	ember_ticks(240);
+	ember_spawns(100, 40);                     // 896 fit, the rest dropped
+	arr_int_hits[1] = record_ember_hits(a_arr_out[1]);
+	ember_ticks(EMBER_LIFETIME_TICKS - 240 - 1);
+	arr_int_hits[2] = record_ember_hits(a_arr_out[2]);  // all still alive
+	ember_ticks(1);                            // first 3200 expire now
+	arr_int_hits[3] = record_ember_hits(a_arr_out[3]);
+	ember_spawns(140, 100);                    // ring wraps past the end
+	arr_int_hits[4] = record_ember_hits(a_arr_out[4]);
+	ember_ticks(240);                          // the 896 expire
+	arr_int_hits[5] = record_ember_hits(a_arr_out[5]);
+	ember_ticks(EMBER_LIFETIME_TICKS);         // everything expired
+	arr_int_hits[6] = record_ember_hits(a_arr_out[6]);
+	assert(arr_int_hits[0] > 0 && arr_int_hits[2] > arr_int_hits[3]);
+	assert(arr_int_hits[3] > 0 && arr_int_hits[6] == 0);
 }
 
 static JoinResult join(uint64_t a_nonce)
@@ -113,6 +169,18 @@ int main(void)
 			assert(collision_player_hits_ember(x,y) == collision_player_hits_ember_bruteforce(x,y));
 	for (int i = 0; i < EMBER_LIFETIME_TICKS; i++) collision_embers_tick();
 	assert(!collision_player_hits_ember(0,0));
+	static bool arr_ring_hits[EMBER_CHECKPOINTS][EMBER_POINTS];
+	static bool arr_array_hits[EMBER_CHECKPOINTS][EMBER_POINTS];
+	for (int branchless = 0; branchless < 2; branchless++)
+	{
+		b_collision_branchless = branchless;
+		run_ember_script(true, arr_ring_hits);
+		run_ember_script(false, arr_array_hits);
+		assert(memcmp(arr_ring_hits, arr_array_hits, sizeof arr_ring_hits) == 0);
+	}
+	b_ember_ring = b_collision_branchless = true;
+	collision_embers_clear();
+	puts("PASS ember ring/SoA and array layouts agree (overfill, expiry tick, wrap)");
 	for (int keys = 0; keys < 256; keys++)
 	{
 		int ax, ay, bx, by;

@@ -1,0 +1,7 @@
+# started on Sun Nov  1 08:39:01 2026
+
+48617741208,,cpu_core/cycles/,0.01%,9751025958,100.00,,
+291842520829,,cpu_core/instructions/,0.00%,9751025958,100.00,,
+37579166326,,cpu_core/L1-dcache-loads/,0.00%,9751025958,100.00,,
+135655879,,cpu_core/L1-dcache-load-misses/,11.31%,9751025958,100.00,,
+13094859,,cpu_core/branch-misses/,0.01%,9751025958,100.00,,

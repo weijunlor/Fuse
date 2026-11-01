@@ -1,0 +1,10 @@
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.724 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.739 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.718 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.777 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.732 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.733 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.751 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.735 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.741 checksum=0
+mode=game-ring embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=24.733 checksum=0

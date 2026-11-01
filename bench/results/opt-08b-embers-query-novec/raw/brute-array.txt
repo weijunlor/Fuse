@@ -1,0 +1,10 @@
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=974.954 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=974.444 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=976.650 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=974.777 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=974.165 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=976.851 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=976.402 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=976.683 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=974.454 checksum=6966519
+mode=brute-array embers=2048 queries=100000 ticks=100 hits=6966519 ns_per_query=976.249 checksum=6966519

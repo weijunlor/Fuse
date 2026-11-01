@@ -1,0 +1,4 @@
+taskset -c 2 ./build/bench_collision_avx2 grid-array 2048 100000 100 
+taskset -c 2 ./build/bench_collision_avx2 grid-ring 2048 100000 100 
+taskset -c 2 ./build/bench_collision_avx2 brute-array 2048 100000 100 
+taskset -c 2 ./build/bench_collision_avx2 brute-ring 2048 100000 100 

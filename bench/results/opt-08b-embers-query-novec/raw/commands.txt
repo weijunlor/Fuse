@@ -1,0 +1,4 @@
+taskset -c 2 ./build/bench_collision_novec grid-array 2048 100000 100 
+taskset -c 2 ./build/bench_collision_novec grid-ring 2048 100000 100 
+taskset -c 2 ./build/bench_collision_novec brute-array 2048 100000 100 
+taskset -c 2 ./build/bench_collision_novec brute-ring 2048 100000 100 

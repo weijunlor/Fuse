@@ -1,0 +1,136 @@
+Optimisation #8b: ember storage as a FIFO ring of SoA arrays (follow-up to #8 grid)
+==================================================================================
+
+What changed (weijun with Claude Code, 2026-11-01; zhikai's collision module)
+- Embers are server-only gameplay objects: an explosion places 32 small
+  squares that slow any player touching them for 8 s (480 ticks). The client
+  never sees them; it draws its own particles from the Explosion record.
+- Before (still selectable: server --embers array; bench mode suffix -array):
+    typedef struct { int x, y; uint16_t u16_age_ticks; bool b_active; } Ember;
+    static Ember arr_embers[4096];          // 12 B each = 48 KB
+  * collision_embers_tick(): every tick, all 4096 slots: test b_active, add 1
+    to the age of live ones, clear the flag at 480. 48 KB is the whole L1 data
+    cache of a P-core, read 60 times a second even with no embers at all.
+  * spawn: a linear search from slot 0 for a free slot, for each of 32 embers.
+  * grid rebuild (#8): two full passes over the 4096 slots.
+  * queries (#8 grid, and brute force): loops with an early return on a hit.
+- After (default: --embers ring):
+  * Every ember has the same lifetime, so embers expire in the order they were
+    spawned: the live ones are always one contiguous run of a FIFO ring.
+    Spawn appends at the tail; the tick pops from the head while the oldest
+    ember is 480 ticks old (usually one comparison, none when empty).
+  * Age is not stored; each ember stores its spawn tick and the tick counts
+    up once (no write per ember per tick). No active flag: live = inside the
+    run [head, head + count).
+  * One array per field (SoA): int16_t x[4096], int16_t y[4096],
+    uint32_t spawn[4096]. Positions fit in 16 bits (window +-60 px). The tick
+    reads only spawn ticks; rebuild and queries read only 2-byte coordinates.
+    The grid's cell-sorted copy is SoA too.
+  * Query loop (any_ember_overlaps): the four comparisons are combined with &
+    and OR-ed into one flag over a run with no early exit inside it, so GCC
+    vectorises it at the server's normal -O2. Early exit happens between
+    runs: per grid row (the cells of one row are contiguous in the sorted
+    arrays), or every 64 embers for brute force.
+- Same results: tests/test_server.c runs one scripted sequence in both
+  layouts (overfill past 4096 with drops, expiry on the exact tick, partial
+  expiry, a ring that wraps past the end, everything expired) and compares
+  grid and brute-force hits at 7 checkpoints x 627 positions, with the #9
+  branchless test on and off. Passes in both handoff modes and under
+  ASan/UBSan. Every benchmark run below has matching checksums.
+
+Data layout, before and after (64-byte cache lines)
+- array: [E0 E1 E2 E3 E4 E5..] ... 768 lines; 32 live embers among 4064 dead
+  slots; every loop walks all 768 lines.
+- ring:  x: [x0 .. x31] 1 line   y: [y0 .. y31] 1 line   spawn: 2 lines
+  32 live embers = 4 lines in total, and each loop touches only the arrays it
+  needs (a query reads 2 of the 4 lines).
+
+Results: microbenchmarks (bench/server.sh, 10 runs each, P-core CPU 2,
+perf counters on the P-core PMU, all checksums equal)
+
+1. Server tick workload (bench_collision game-*: collision_embers_tick, one
+   grid query per player (5), an explosion every K ticks so ~N embers live;
+   1M ticks per run after a 480-tick warm-up). bench/results/opt-08b-embers-game-N/
+
+     live embers   array ns/tick   ring ns/tick   speed-up   L1 misses/tick   instructions/tick
+     0                 1055.5          24.7          43x       148 -> 0.01       25530 -> 610
+     32                1016.0          35.5          29x       156 -> 0.02       25830 -> 680
+     160                968.7          59.9          16x       169 -> 0.02       27170 -> 930
+
+   (array sd 2-59 ns, ring sd < 0.5 ns.) The array tick costs ~1 us whatever
+   the number of embers, because it is the 4096-slot scan. At 60 Hz that is
+   ~60 us of CPU per second; the ring needs ~1.5-3.6 us per second.
+
+2. Queries alone, 2048 embers, 100k queries x 100 ticks
+   (bench/results/opt-08b-embers-query, -novec, -avx2)
+
+     ns per query       array    ring SSE2 (-O2, server)   ring no SIMD   ring AVX2
+     grid (#8)          19.49    16.06  (1.21x)            31.19          19.09
+     brute force       975.26   185.13  (5.3x)            777.57         105.23 (9.3x)
+
+   L1 misses per brute query: 13.6 (array) -> 0.013 (ring). Per grid query:
+   0.019 -> 0.002, and branch misses 8.7M -> 1.6M per run.
+
+   What the three ring builds show:
+   - Layout alone (no SIMD, -fno-tree-vectorize): brute force 975 -> 778 ns
+     (2048 live embers only, 4 B of coordinates per ember instead of 12, no
+     flag test). The grid query gets slower (19.5 -> 31.2 ns): without SIMD
+     the run has no early exit, so it tests every ember in the row.
+   - SIMD is what pays for the branch-free loop: 8 embers per 16-byte SSE2
+     compare -> grid 16.1 ns, brute 185 ns; 16 per 32-byte AVX2 compare ->
+     brute 105 ns. Grid rows hold only ~30 embers, too few for 16-wide
+     vectors (the scalar tail and vector set-up dominate): AVX2 grid 19.1 ns,
+     no better than the array. The server stays on portable -O2 (SSE2).
+
+Results: game (bench/profile.sh, 4 moving clients, secure defaults, MOVE=1,
+10 x 30 s; bench/results/opt-08b-embers-ring/ vs opt-08b-embers-array/)
+- Server instructions 0.31 -> 0.27 G per 30 s (-13%). CPU time 205 -> 192 ms
+  per 30 s, but sd is 16-18 ms, so that difference is not significant.
+- collision_embers_tick: 2.22% of server samples (array) -> no collision
+  function in the ring profile at all.
+- Client unchanged (486-489 ms). Same UDP traffic.
+- Honest summary: like #8-#10, a large win in isolation and a small one in
+  the game, because the server (after #2) sleeps ~99% of the time and holds
+  at most a few dozen embers.
+
+Vectorisation evidence (bench/results/opt-08b-embers-vec/: gcc -fopt-info-vec-all
+and objdump of server/collision.c with the server's CFLAGS; -O2, -O2
+-fno-tree-vectorize, -O2 -march=native)
+- -O2: "collision.c:258:20: optimized: loop vectorized using 16 byte vectors"
+  (any_ember_overlaps, inlined into the grid and brute-force ring queries).
+  -march=native: 32-byte vectors. -fno-tree-vectorize: none.
+- The array-layout loops are not vectorised: "collision.c:177 (brute force)
+  and :213 (grid cell): missed: not vectorized: unsupported control flow in
+  loop" (the early return on a hit); :163, the 4096-slot tick, likewise (the
+  conditional age update and flag clear).
+- Generated code for the ring query (SSE2): x >= min is done as
+  pminsw + pcmpeqw (min(x, bound) == bound), the four tests combined with
+  pand/por, 8 x int16 per instruction; AVX2: the same with vpminsw/vpcmpeqw
+  and vpbroadcastw for the bounds.
+
+Measurement pitfalls found on the way (worth a sentence in the report)
+- Adding the layout switch made GCC inline the old array grid query into the
+  dispatcher and lay out the #9 "branchless" overlap test with an extra
+  data-dependent branch: 2.4x the branch misses, 35% slower on an E-core.
+  The array query is now noinline and compiles to the same instructions as
+  before #8b.
+- Even with identical instructions, where GCC placed the hot loop changed the
+  array query from 19 to 28 ns per query on the P-cores (loop starting 16 B
+  into a cache line; more branch misses). The collision benchmarks are now
+  built with -falign-loops=64 (COLLISION_BENCH_FLAGS in the Makefile); with
+  it the array query measures 19.5 ns, the same as the original #8 run
+  (19.2 ns, opt-08-collision-micro) and as the pre-#8b code with the same
+  flag (18.9 ns). The ring query gets slightly slower with it (14.6 -> 16.1
+  ns): the numbers above are the conservative ones. Unaligned results are
+  kept out of bench/results/ (both effects are as large as the gain).
+- Hybrid CPU: perf stat opened every event on the E-core PMU too, which has
+  no L1-dcache-load-misses; bench/server.sh now counts on cpu_core only.
+
+Commands
+  make bench
+  CPUSET=2 bash bench/server.sh opt-08b-embers-query embers
+  BINARY=build/bench_collision_novec CPUSET=2 bash bench/server.sh opt-08b-embers-query-novec embers
+  BINARY=build/bench_collision_avx2  CPUSET=2 bash bench/server.sh opt-08b-embers-query-avx2 embers
+  EMBERS=0|32|160 CPUSET=2 bash bench/server.sh opt-08b-embers-game-N embers-game
+  make profile && MOVE=1 bench/profile.sh opt-08b-embers-ring build
+  MOVE=1 SERVER_ARGS="--embers array" bench/profile.sh opt-08b-embers-array build

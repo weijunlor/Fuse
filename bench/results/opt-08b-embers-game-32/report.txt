@@ -1,0 +1,10 @@
+Metrics: perf
+game-array: 10 runs, mean=1015.996 ns, stddev=23.122 ns
+  mean counters: cycles=5035003704, instructions=25831375098, L1-dcache-loads=4373526574, L1-dcache-load-misses=156206814, branch-misses=4755735
+  IPC=5.130
+game-ring: 10 runs, mean=35.470 ns, stddev=0.028 ns
+  mean counters: cycles=147282747, instructions=680433837, L1-dcache-loads=88822855, L1-dcache-load-misses=17524, branch-misses=1063191
+  IPC=4.620
+All checksums match: 244873
+Raw commands, timings and available perf counters are in raw/.
+Compare only runs from the same machine; timing alone does not prove IPC/cache/branch changes.

@@ -1,0 +1,2 @@
+taskset -c 2 ./build/bench_collision game-array 160 5 1000000 
+taskset -c 2 ./build/bench_collision game-ring 160 5 1000000 

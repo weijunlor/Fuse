@@ -1,0 +1,16 @@
+Metrics: perf
+brute-array: 10 runs, mean=975.592 ns, stddev=0.643 ns
+  mean counters: cycles=48660672015, instructions=291850251398, L1-dcache-loads=37578317124, L1-dcache-load-misses=165897158, branch-misses=13087893
+  IPC=5.998
+brute-ring: 10 runs, mean=105.233 ns, stddev=0.169 ns
+  mean counters: cycles=4305817546, instructions=18187626795, L1-dcache-loads=1501148724, L1-dcache-load-misses=72947, branch-misses=7343602
+  IPC=4.224
+grid-array: 10 runs, mean=19.137 ns, stddev=0.084 ns
+  mean counters: cycles=956608067, instructions=3431826998, L1-dcache-loads=476003345, L1-dcache-load-misses=211432, branch-misses=8490483
+  IPC=3.587
+grid-ring: 10 runs, mean=19.093 ns, stddev=0.086 ns
+  mean counters: cycles=783037114, instructions=2954745679, L1-dcache-loads=308622835, L1-dcache-load-misses=25121, branch-misses=4914191
+  IPC=3.773
+All checksums match: 6966519
+Raw commands, timings and available perf counters are in raw/.
+Compare only runs from the same machine; timing alone does not prove IPC/cache/branch changes.

@@ -30,6 +30,8 @@ static inline bool collision_overlap(int a_int_x, int a_int_y, int a_int_size,
 	return b_left && b_right && b_top && b_bottom;
 }
 
+// One slot of the "array" ember layout (the before for #8b): 4096 of these
+// (12 B each, 48 KB) whether or not they are in use.
 typedef struct
 {
 	int x;
@@ -53,5 +55,13 @@ bool collision_player_hits_ember_bruteforce(int a_int_x, int a_int_y);
 
 // Selected before threads start; benchmarks can compare the same workload.
 extern bool b_collision_branchless;
+
+// #8b ember storage, selected before any ember is spawned:
+// true  (--embers ring, default): live embers only, in a FIFO ring of
+//       separate x / y / spawn-tick arrays (SoA); see collision.c.
+// false (--embers array): the fixed 4096-slot array of Ember structs that
+//       every tick, spawn and grid rebuild scans in full.
+// Collision results are identical in both layouts.
+extern bool b_ember_ring;
 
 #endif /* SERVER_COLLISION_H */

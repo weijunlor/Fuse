@@ -122,11 +122,31 @@ build/baseline-O%/client: baseline/client.c build/baseline/messages.c
 		$(shell pkg-config --cflags CycloneDDS glfw3) $(LDDDS) $(LDGL)
 
 bench: $(BENCHES) build/bench_particles_scalar build/bench_particles_sse2 \
-	build/dds_joiner build/dds_players build/bench_collision build/bench_reduce
+	build/dds_joiner build/dds_players build/bench_collision build/bench_reduce \
+	build/bench_collision_novec build/bench_collision_avx2
+
+# Collision benchmarks align every loop to 64 bytes: without it, where GCC
+# happens to place the hot query loop moved the same array-layout code
+# between 19 and 28 ns per query on the P-cores (more branch misses when the
+# loop starts mid-line), as large as the #8b effect being measured.
+COLLISION_BENCH_FLAGS := -falign-loops=64
 
 build/bench_collision: bench/bench_collision.c server/collision.c server/collision.h \
 		common/timing.c common/timing.h
-	mkdir -p build && $(CC) $(CFLAGS) -Iserver bench/bench_collision.c \
+	mkdir -p build && $(CC) $(CFLAGS) $(COLLISION_BENCH_FLAGS) -Iserver bench/bench_collision.c \
+		server/collision.c common/timing.c -o $@ -pthread -lm
+
+# #8b: the same benchmark with vectorisation off, and for this machine's
+# widest vectors (AVX2), to separate the ember layout gain from the SIMD gain
+# (the server itself uses the plain -O2 build above: SSE2)
+build/bench_collision_novec: bench/bench_collision.c server/collision.c server/collision.h \
+		common/timing.c common/timing.h
+	mkdir -p build && $(CC) $(CFLAGS) $(COLLISION_BENCH_FLAGS) -fno-tree-vectorize -Iserver bench/bench_collision.c \
+		server/collision.c common/timing.c -o $@ -pthread -lm
+
+build/bench_collision_avx2: bench/bench_collision.c server/collision.c server/collision.h \
+		common/timing.c common/timing.h
+	mkdir -p build && $(CC) $(CFLAGS) $(COLLISION_BENCH_FLAGS) -march=native -Iserver bench/bench_collision.c \
 		server/collision.c common/timing.c -o $@ -pthread -lm
 
 build/bench_reduce: bench/bench_reduce.c common/timing.c common/timing.h

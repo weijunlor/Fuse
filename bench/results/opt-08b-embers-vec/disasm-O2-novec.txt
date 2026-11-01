@@ -1,0 +1,950 @@
+
+bench/results/opt-08b-embers-vec/collision-O2-novec.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <rebuild_ember_grid_array>:
+   0:	sub    $0x428,%rsp
+   7:	mov    $0x41,%ecx
+   c:	mov    %fs:0x28,%rax
+  15:	mov    %rax,0x418(%rsp)
+  1d:	xor    %eax,%eax
+  1f:	mov    %rsp,%rdi
+  22:	rep stos %rax,(%rdi)
+  25:	lea    0x0(%rip),%rax        # 2c <rebuild_ember_grid_array+0x2c>
+  2c:	lea    0xc000(%rax),%r8
+  33:	mov    %rax,%rcx
+  36:	cs nopw 0x0(%rax,%rax,1)
+  40:	cmpb   $0x0,0xa(%rcx)
+  44:	je     87 <rebuild_ember_grid_array+0x87>
+  46:	mov    0x4(%rcx),%edx
+  49:	mov    $0x9,%edi
+  4e:	mov    $0xc,%r9d
+  54:	sar    $0x6,%edx
+  57:	cmp    %edi,%edx
+  59:	cmovg  %edi,%edx
+  5c:	xor    %edi,%edi
+  5e:	test   %edx,%edx
+  60:	cmovs  %edi,%edx
+  63:	lea    (%rdx,%rdx,2),%edi
+  66:	lea    (%rdx,%rdi,4),%edi
+  69:	mov    (%rcx),%edx
+  6b:	sar    $0x6,%edx
+  6e:	cmp    %r9d,%edx
+  71:	cmovg  %r9d,%edx
+  75:	xor    %r9d,%r9d
+  78:	test   %edx,%edx
+  7a:	cmovs  %r9d,%edx
+  7e:	add    %edi,%edx
+  80:	movslq %edx,%rdx
+  83:	addl   $0x1,(%rsp,%rdx,4)
+  87:	add    $0xc,%rcx
+  8b:	cmp    %r8,%rcx
+  8e:	jne    40 <rebuild_ember_grid_array+0x40>
+  90:	movl   $0x0,0x0(%rip)        # 9a <rebuild_ember_grid_array+0x9a>
+  9a:	mov    %rsp,%rdi
+  9d:	xor    %edx,%edx
+  9f:	lea    0x0(%rip),%rsi        # a6 <rebuild_ember_grid_array+0xa6>
+  a6:	lea    0x208(%rsp),%r9
+  ae:	mov    %rsi,%rcx
+  b1:	nopl   0x0(%rax)
+  b5:	data16 cs nopw 0x0(%rax,%rax,1)
+  c0:	add    (%rdi),%edx
+  c2:	add    $0x4,%rdi
+  c6:	add    $0x4,%rcx
+  ca:	mov    %edx,-0x4(%rcx)
+  cd:	cmp    %r9,%rdi
+  d0:	jne    c0 <rebuild_ember_grid_array+0xc0>
+  d2:	lea    0x210(%rsp),%rdx
+  da:	lea    0x418(%rsp),%rdi
+  e2:	xor    %ecx,%ecx
+  e4:	jmp    106 <rebuild_ember_grid_array+0x106>
+  e6:	nopl   0x0(%rax)
+  ea:	data16 cs nopw 0x0(%rax,%rax,1)
+  f5:	data16 cs nopw 0x0(%rax,%rax,1)
+ 100:	mov    (%rsi),%ecx
+ 102:	add    $0x4,%rsi
+ 106:	mov    %ecx,(%rdx)
+ 108:	add    $0x4,%rdx
+ 10c:	cmp    %rdi,%rdx
+ 10f:	jne    100 <rebuild_ember_grid_array+0x100>
+ 111:	lea    0x0(%rip),%rdi        # 118 <rebuild_ember_grid_array+0x118>
+ 118:	nopl   0x0(%rax,%rax,1)
+ 120:	cmpb   $0x0,0xa(%rax)
+ 124:	je     184 <rebuild_ember_grid_array+0x184>
+ 126:	mov    0x4(%rax),%edx
+ 129:	mov    $0x9,%ecx
+ 12e:	mov    $0xc,%esi
+ 133:	sar    $0x6,%edx
+ 136:	cmp    %ecx,%edx
+ 138:	cmovg  %ecx,%edx
+ 13b:	xor    %ecx,%ecx
+ 13d:	test   %edx,%edx
+ 13f:	cmovs  %ecx,%edx
+ 142:	lea    (%rdx,%rdx,2),%ecx
+ 145:	lea    (%rdx,%rcx,4),%ecx
+ 148:	mov    (%rax),%edx
+ 14a:	sar    $0x6,%edx
+ 14d:	cmp    %esi,%edx
+ 14f:	cmovg  %esi,%edx
+ 152:	xor    %esi,%esi
+ 154:	test   %edx,%edx
+ 156:	cmovs  %esi,%edx
+ 159:	add    %ecx,%edx
+ 15b:	movslq %edx,%rdx
+ 15e:	mov    0x210(%rsp,%rdx,4),%ecx
+ 165:	lea    0x1(%rcx),%esi
+ 168:	mov    %esi,0x210(%rsp,%rdx,4)
+ 16f:	movslq %ecx,%rdx
+ 172:	mov    (%rax),%rcx
+ 175:	lea    (%rdx,%rdx,2),%rdx
+ 179:	mov    %rcx,(%rdi,%rdx,4)
+ 17d:	mov    0x8(%rax),%ecx
+ 180:	mov    %ecx,0x8(%rdi,%rdx,4)
+ 184:	add    $0xc,%rax
+ 188:	cmp    %r8,%rax
+ 18b:	jne    120 <rebuild_ember_grid_array+0x120>
+ 18d:	movb   $0x0,0x0(%rip)        # 194 <rebuild_ember_grid_array+0x194>
+ 194:	mov    0x418(%rsp),%rax
+ 19c:	sub    %fs:0x28,%rax
+ 1a5:	jne    1af <rebuild_ember_grid_array+0x1af>
+ 1a7:	add    $0x428,%rsp
+ 1ae:	ret
+ 1af:	call   1b4 <rebuild_ember_grid_array+0x1b4>
+ 1b4:	nop
+ 1b5:	data16 cs nopw 0x0(%rax,%rax,1)
+
+00000000000001c0 <rebuild_ember_grid_ring>:
+ 1c0:	push   %r13
+ 1c2:	mov    $0x1000,%esi
+ 1c7:	push   %r12
+ 1c9:	push   %rbp
+ 1ca:	push   %rbx
+ 1cb:	mov    $0x1,%ebx
+ 1d0:	sub    $0x438,%rsp
+ 1d7:	mov    0x0(%rip),%eax        # 1dd <rebuild_ember_grid_ring+0x1d>
+ 1dd:	mov    %fs:0x28,%r9
+ 1e6:	mov    %r9,0x428(%rsp)
+ 1ee:	mov    0x0(%rip),%r9d        # 1f5 <rebuild_ember_grid_ring+0x35>
+ 1f5:	add    %r9d,%eax
+ 1f8:	cmp    %esi,%eax
+ 1fa:	cmovle %eax,%esi
+ 1fd:	jle    215 <rebuild_ember_grid_ring+0x55>
+ 1ff:	sub    $0x1000,%eax
+ 204:	movl   $0x0,0x4(%rsp)
+ 20c:	mov    $0x2,%ebx
+ 211:	mov    %eax,0xc(%rsp)
+ 215:	mov    $0x41,%ecx
+ 21a:	xor    %eax,%eax
+ 21c:	lea    0x10(%rsp),%rdi
+ 221:	mov    %r9d,%ebp
+ 224:	rep stos %rax,(%rdi)
+ 227:	xor    %r8d,%r8d
+ 22a:	mov    %esi,%edi
+ 22c:	lea    0x0(%rip),%r11        # 233 <rebuild_ember_grid_ring+0x73>
+ 233:	lea    0x0(%rip),%r10        # 23a <rebuild_ember_grid_ring+0x7a>
+ 23a:	movslq %ebp,%rcx
+ 23d:	cmp    %edi,%ebp
+ 23f:	jge    29e <rebuild_ember_grid_ring+0xde>
+ 241:	nopl   0x0(%rax)
+ 245:	data16 cs nopw 0x0(%rax,%rax,1)
+ 250:	movswl (%r11,%rcx,2),%eax
+ 255:	mov    $0x9,%ebp
+ 25a:	mov    $0xc,%r12d
+ 260:	sar    $0x6,%eax
+ 263:	cmp    %ebp,%eax
+ 265:	cmovg  %ebp,%eax
+ 268:	xor    %ebp,%ebp
+ 26a:	test   %eax,%eax
+ 26c:	cmovs  %ebp,%eax
+ 26f:	lea    (%rax,%rax,2),%ebp
+ 272:	lea    (%rax,%rbp,4),%ebp
+ 275:	movswl (%r10,%rcx,2),%eax
+ 27a:	sar    $0x6,%eax
+ 27d:	cmp    %r12d,%eax
+ 280:	cmovg  %r12d,%eax
+ 284:	xor    %r12d,%r12d
+ 287:	test   %eax,%eax
+ 289:	cmovs  %r12d,%eax
+ 28d:	add    $0x1,%rcx
+ 291:	add    %ebp,%eax
+ 293:	cltq
+ 295:	addl   $0x1,0x10(%rsp,%rax,4)
+ 29a:	cmp    %ecx,%edi
+ 29c:	jg     250 <rebuild_ember_grid_ring+0x90>
+ 29e:	lea    0x1(%r8),%rax
+ 2a2:	cmp    %rax,%rbx
+ 2a5:	je     2b3 <rebuild_ember_grid_ring+0xf3>
+ 2a7:	mov    (%rsp,%rax,4),%ebp
+ 2aa:	mov    0x8(%rsp,%rax,4),%edi
+ 2ae:	mov    %rax,%r8
+ 2b1:	jmp    23a <rebuild_ember_grid_ring+0x7a>
+ 2b3:	lea    0x0(%rip),%rcx        # 2ba <rebuild_ember_grid_ring+0xfa>
+ 2ba:	lea    0x10(%rsp),%rdi
+ 2bf:	xor    %eax,%eax
+ 2c1:	movl   $0x0,0x0(%rip)        # 2cb <rebuild_ember_grid_ring+0x10b>
+ 2cb:	lea    0x218(%rsp),%r10
+ 2d3:	mov    %rcx,%rdx
+ 2d6:	cs nopw 0x0(%rax,%rax,1)
+ 2e0:	add    (%rdi),%eax
+ 2e2:	add    $0x4,%rdi
+ 2e6:	add    $0x4,%rdx
+ 2ea:	mov    %eax,-0x4(%rdx)
+ 2ed:	cmp    %rdi,%r10
+ 2f0:	jne    2e0 <rebuild_ember_grid_ring+0x120>
+ 2f2:	lea    0x220(%rsp),%rax
+ 2fa:	lea    0x428(%rsp),%rdi
+ 302:	xor    %edx,%edx
+ 304:	jmp    326 <rebuild_ember_grid_ring+0x166>
+ 306:	nopl   0x0(%rax)
+ 30a:	data16 cs nopw 0x0(%rax,%rax,1)
+ 315:	data16 cs nopw 0x0(%rax,%rax,1)
+ 320:	mov    (%rcx),%edx
+ 322:	add    $0x4,%rcx
+ 326:	mov    %edx,(%rax)
+ 328:	add    $0x4,%rax
+ 32c:	cmp    %rax,%rdi
+ 32f:	jne    320 <rebuild_ember_grid_ring+0x160>
+ 331:	xor    %ebp,%ebp
+ 333:	lea    0x0(%rip),%rbx        # 33a <rebuild_ember_grid_ring+0x17a>
+ 33a:	lea    0x0(%rip),%r11        # 341 <rebuild_ember_grid_ring+0x181>
+ 341:	lea    0x0(%rip),%r10        # 348 <rebuild_ember_grid_ring+0x188>
+ 348:	lea    0x0(%rip),%rdi        # 34f <rebuild_ember_grid_ring+0x18f>
+ 34f:	movslq %r9d,%rdx
+ 352:	cmp    %esi,%r9d
+ 355:	jge    3d7 <rebuild_ember_grid_ring+0x217>
+ 35b:	nopl   0x0(%rax,%rax,1)
+ 360:	movswl (%rbx,%rdx,2),%eax
+ 364:	mov    $0x9,%r12d
+ 36a:	movzwl (%r11,%rdx,2),%r9d
+ 36f:	mov    $0xc,%r13d
+ 375:	mov    %eax,%ecx
+ 377:	sar    $0x6,%eax
+ 37a:	cmp    %r12d,%eax
+ 37d:	cmovg  %r12d,%eax
+ 381:	xor    %r12d,%r12d
+ 384:	test   %eax,%eax
+ 386:	cmovs  %r12d,%eax
+ 38a:	lea    (%rax,%rax,2),%r12d
+ 38e:	lea    (%rax,%r12,4),%r12d
+ 392:	movswl %r9w,%eax
+ 396:	sar    $0x6,%eax
+ 399:	cmp    %r13d,%eax
+ 39c:	cmovg  %r13d,%eax
+ 3a0:	xor    %r13d,%r13d
+ 3a3:	test   %eax,%eax
+ 3a5:	cmovs  %r13d,%eax
+ 3a9:	add    $0x1,%rdx
+ 3ad:	add    %r12d,%eax
+ 3b0:	cltq
+ 3b2:	mov    0x220(%rsp,%rax,4),%r12d
+ 3ba:	lea    0x1(%r12),%r13d
+ 3bf:	mov    %r13d,0x220(%rsp,%rax,4)
+ 3c7:	movslq %r12d,%rax
+ 3ca:	mov    %r9w,(%r10,%rax,2)
+ 3cf:	mov    %cx,(%rdi,%rax,2)
+ 3d3:	cmp    %edx,%esi
+ 3d5:	jg     360 <rebuild_ember_grid_ring+0x1a0>
+ 3d7:	cmp    %rbp,%r8
+ 3da:	je     3ed <rebuild_ember_grid_ring+0x22d>
+ 3dc:	add    $0x1,%rbp
+ 3e0:	mov    (%rsp,%rbp,4),%r9d
+ 3e4:	mov    0x8(%rsp,%rbp,4),%esi
+ 3e8:	jmp    34f <rebuild_ember_grid_ring+0x18f>
+ 3ed:	movb   $0x0,0x0(%rip)        # 3f4 <rebuild_ember_grid_ring+0x234>
+ 3f4:	mov    0x428(%rsp),%rax
+ 3fc:	sub    %fs:0x28,%rax
+ 405:	jne    415 <rebuild_ember_grid_ring+0x255>
+ 407:	add    $0x438,%rsp
+ 40e:	pop    %rbx
+ 40f:	pop    %rbp
+ 410:	pop    %r12
+ 412:	pop    %r13
+ 414:	ret
+ 415:	call   41a <rebuild_ember_grid_ring+0x25a>
+ 41a:	nopw   0x0(%rax,%rax,1)
+
+0000000000000420 <hits_ember_grid_array>:
+ 420:	push   %r15
+ 422:	mov    %edi,%r9d
+ 425:	mov    %esi,%r8d
+ 428:	push   %r14
+ 42a:	push   %r13
+ 42c:	push   %r12
+ 42e:	push   %rbp
+ 42f:	push   %rbx
+ 430:	sub    $0x38,%rsp
+ 434:	cmpb   $0x0,0x0(%rip)        # 43b <hits_ember_grid_array+0x1b>
+ 43b:	jne    5e0 <hits_ember_grid_array+0x1c0>
+ 441:	lea    -0x5(%r8),%eax
+ 445:	xor    %edx,%edx
+ 447:	test   %eax,%eax
+ 449:	cmovs  %edx,%eax
+ 44c:	sar    $0x6,%eax
+ 44f:	mov    %eax,%edx
+ 451:	lea    0x32(%r8),%eax
+ 455:	sar    $0x6,%eax
+ 458:	mov    %eax,%ecx
+ 45a:	mov    $0x9,%eax
+ 45f:	cmp    %eax,%ecx
+ 461:	cmovg  %eax,%ecx
+ 464:	cmp    %ecx,%edx
+ 466:	jg     5d4 <hits_ember_grid_array+0x1b4>
+ 46c:	lea    -0x5(%r9),%eax
+ 470:	xor    %esi,%esi
+ 472:	lea    0x32(%r9),%edi
+ 476:	mov    %edx,0x24(%rsp)
+ 47a:	test   %eax,%eax
+ 47c:	movzbl 0x0(%rip),%ebx        # 483 <hits_ember_grid_array+0x63>
+ 483:	lea    0x31(%r9),%r11d
+ 487:	lea    0x31(%r8),%r10d
+ 48b:	cmovs  %esi,%eax
+ 48e:	sar    $0x6,%edi
+ 491:	lea    0x0(%rip),%r14        # 498 <hits_ember_grid_array+0x78>
+ 498:	mov    %ecx,%esi
+ 49a:	sar    $0x6,%eax
+ 49d:	mov    %eax,%ebp
+ 49f:	mov    $0xc,%eax
+ 4a4:	cmp    %eax,%edi
+ 4a6:	cmovg  %eax,%edi
+ 4a9:	lea    (%rdx,%rdx,2),%eax
+ 4ac:	lea    (%rdx,%rax,4),%r15d
+ 4b0:	movslq %ebp,%rax
+ 4b3:	mov    %rax,0x10(%rsp)
+ 4b8:	neg    %rax
+ 4bb:	mov    %edi,%edx
+ 4bd:	shl    $0x2,%rax
+ 4c1:	mov    %rax,0x18(%rsp)
+ 4c6:	cmp    %edx,%ebp
+ 4c8:	jg     5c1 <hits_ember_grid_array+0x1a1>
+ 4ce:	mov    0x18(%rsp),%rcx
+ 4d3:	lea    0x0(%rbp,%r15,1),%eax
+ 4d8:	lea    0x0(%rip),%rdi        # 4df <hits_ember_grid_array+0xbf>
+ 4df:	mov    %r15d,0x28(%rsp)
+ 4e4:	cltq
+ 4e6:	mov    %ebp,0x2c(%rsp)
+ 4ea:	mov    0x10(%rsp),%r13
+ 4ef:	lea    (%rcx,%rax,4),%rax
+ 4f3:	mov    %edx,0x20(%rsp)
+ 4f7:	add    %rdi,%rax
+ 4fa:	mov    %rax,0x8(%rsp)
+ 4ff:	lea    0x1(%r15,%rbp,1),%eax
+ 504:	cltq
+ 506:	lea    (%rcx,%rax,4),%rax
+ 50a:	mov    %esi,%ecx
+ 50c:	lea    (%rax,%rdi,1),%r12
+ 510:	mov    0x8(%rsp),%rax
+ 515:	mov    (%rax,%r13,4),%edi
+ 519:	mov    (%r12,%r13,4),%eax
+ 51d:	cmp    %eax,%edi
+ 51f:	jge    5a3 <hits_ember_grid_array+0x183>
+ 525:	movslq %edi,%rbp
+ 528:	sub    %edi,%eax
+ 52a:	add    %rbp,%rax
+ 52d:	lea    0x0(%rbp,%rbp,2),%rsi
+ 532:	lea    (%rax,%rax,2),%rax
+ 536:	lea    (%r14,%rsi,4),%rsi
+ 53a:	lea    (%r14,%rax,4),%rdi
+ 53e:	xchg   %ax,%ax
+ 540:	mov    (%rsi),%eax
+ 542:	mov    0x4(%rsi),%edx
+ 545:	cmp    %r11d,%eax
+ 548:	setle  %r15b
+ 54c:	add    $0x5,%eax
+ 54f:	cmp    %eax,%r9d
+ 552:	setle  %al
+ 555:	cmp    %r10d,%edx
+ 558:	setle  %bpl
+ 55c:	add    $0x5,%edx
+ 55f:	cmp    %edx,%r8d
+ 562:	setle  %dl
+ 565:	test   %bl,%bl
+ 567:	jne    590 <hits_ember_grid_array+0x170>
+ 569:	test   %r15b,%r15b
+ 56c:	je     59a <hits_ember_grid_array+0x17a>
+ 56e:	test   %al,%al
+ 570:	je     59a <hits_ember_grid_array+0x17a>
+ 572:	and    %bpl,%dl
+ 575:	je     59a <hits_ember_grid_array+0x17a>
+ 577:	mov    %edx,%eax
+ 579:	add    $0x38,%rsp
+ 57d:	pop    %rbx
+ 57e:	pop    %rbp
+ 57f:	pop    %r12
+ 581:	pop    %r13
+ 583:	pop    %r14
+ 585:	pop    %r15
+ 587:	ret
+ 588:	nopl   0x0(%rax,%rax,1)
+ 590:	and    %r15d,%ebp
+ 593:	and    %eax,%ebp
+ 595:	and    %bpl,%dl
+ 598:	jne    577 <hits_ember_grid_array+0x157>
+ 59a:	add    $0xc,%rsi
+ 59e:	cmp    %rsi,%rdi
+ 5a1:	jne    540 <hits_ember_grid_array+0x120>
+ 5a3:	add    $0x1,%r13
+ 5a7:	cmp    %r13d,0x20(%rsp)
+ 5ac:	jge    510 <hits_ember_grid_array+0xf0>
+ 5b2:	mov    0x28(%rsp),%r15d
+ 5b7:	mov    0x2c(%rsp),%ebp
+ 5bb:	mov    %ecx,%esi
+ 5bd:	mov    0x20(%rsp),%edx
+ 5c1:	addl   $0x1,0x24(%rsp)
+ 5c6:	add    $0xd,%r15d
+ 5ca:	cmp    %esi,0x24(%rsp)
+ 5ce:	jle    4c6 <hits_ember_grid_array+0xa6>
+ 5d4:	xor    %eax,%eax
+ 5d6:	jmp    579 <hits_ember_grid_array+0x159>
+ 5d8:	nopl   0x0(%rax,%rax,1)
+ 5e0:	mov    %esi,0x20(%rsp)
+ 5e4:	mov    %edi,0x8(%rsp)
+ 5e8:	call   0 <rebuild_ember_grid_array>
+ 5ed:	mov    0x20(%rsp),%r8d
+ 5f2:	mov    0x8(%rsp),%r9d
+ 5f7:	jmp    441 <hits_ember_grid_array+0x21>
+ 5fc:	nopl   0x0(%rax)
+
+0000000000000600 <collision_embers_clear>:
+ 600:	endbr64
+ 604:	lea    0x0(%rip),%rax        # 60b <collision_embers_clear+0xb>
+ 60b:	lea    0xc000(%rax),%rdx
+ 612:	nopl   (%rax)
+ 615:	data16 cs nopw 0x0(%rax,%rax,1)
+ 620:	movb   $0x0,(%rax)
+ 623:	add    $0x18,%rax
+ 627:	movb   $0x0,-0xc(%rax)
+ 62b:	cmp    %rax,%rdx
+ 62e:	jne    620 <collision_embers_clear+0x20>
+ 630:	mov    $0x41,%ecx
+ 635:	xor    %eax,%eax
+ 637:	lea    0x0(%rip),%rdi        # 63e <collision_embers_clear+0x3e>
+ 63e:	movl   $0x0,0x0(%rip)        # 648 <collision_embers_clear+0x48>
+ 648:	rep stos %rax,(%rdi)
+ 64b:	movb   $0x0,0x0(%rip)        # 652 <collision_embers_clear+0x52>
+ 652:	movl   $0x0,0x0(%rip)        # 65c <collision_embers_clear+0x5c>
+ 65c:	movl   $0x0,(%rdi)
+ 662:	ret
+ 663:	xchg   %ax,%ax
+ 665:	data16 cs nopw 0x0(%rax,%rax,1)
+
+0000000000000670 <collision_embers_spawn>:
+ 670:	endbr64
+ 674:	movzbl 0x0(%rip),%r9d        # 67c <collision_embers_spawn+0xc>
+ 67c:	movzwl %dx,%ecx
+ 67f:	test   %r9b,%r9b
+ 682:	je     78e <collision_embers_spawn+0x11e>
+ 688:	mov    0x0(%rip),%r8d        # 68f <collision_embers_spawn+0x1f>
+ 68f:	push   %r15
+ 691:	xor    %eax,%eax
+ 693:	lea    0x0(%rip),%r11        # 69a <collision_embers_spawn+0x2a>
+ 69a:	push   %r14
+ 69c:	lea    0x20(%r8),%r10d
+ 6a0:	push   %r13
+ 6a2:	mov    0x0(%rip),%r13d        # 6a9 <collision_embers_spawn+0x39>
+ 6a9:	push   %r12
+ 6ab:	mov    0x0(%rip),%r12d        # 6b2 <collision_embers_spawn+0x42>
+ 6b2:	push   %rbp
+ 6b3:	lea    0x0(%rip),%rbp        # 6ba <collision_embers_spawn+0x4a>
+ 6ba:	push   %rbx
+ 6bb:	lea    0x0(%rip),%rbx        # 6c2 <collision_embers_spawn+0x52>
+ 6c2:	jmp    764 <collision_embers_spawn+0xf4>
+ 6c7:	nopw   0x0(%rax,%rax,1)
+ 6d0:	imul   $0x19660d,%ecx,%eax
+ 6d6:	lea    0x0(%r13,%r8,1),%edx
+ 6db:	add    $0x1,%r8d
+ 6df:	and    $0xfff,%edx
+ 6e5:	mov    %r12d,(%r11,%rdx,4)
+ 6e9:	lea    0x3c6ef35f(%rax),%r15d
+ 6f0:	mov    %r15,%rax
+ 6f3:	imul   $0x19660d,%r15d,%ecx
+ 6fa:	imul   $0xecf56bf,%r15,%r15
+ 701:	mov    %eax,%r14d
+ 704:	add    $0x3c6ef35f,%ecx
+ 70a:	shr    $0x20,%r15
+ 70e:	sub    %r15d,%r14d
+ 711:	shr    $1,%r14d
+ 714:	add    %r15d,%r14d
+ 717:	shr    $0x6,%r14d
+ 71b:	imul   $0x79,%r14d,%r14d
+ 71f:	sub    %r14d,%eax
+ 722:	mov    %ecx,%r14d
+ 725:	imul   $0xecf56bf,%r14,%r14
+ 72c:	lea    -0x3c(%rax,%rdi,1),%eax
+ 730:	mov    %ax,0x0(%rbp,%rdx,2)
+ 735:	mov    %ecx,%eax
+ 737:	shr    $0x20,%r14
+ 73b:	sub    %r14d,%eax
+ 73e:	shr    $1,%eax
+ 740:	add    %r14d,%eax
+ 743:	mov    %ecx,%r14d
+ 746:	shr    $0x6,%eax
+ 749:	imul   $0x79,%eax,%eax
+ 74c:	sub    %eax,%r14d
+ 74f:	lea    -0x3c(%r14,%rsi,1),%eax
+ 754:	mov    %ax,(%rbx,%rdx,2)
+ 758:	cmp    %r8d,%r10d
+ 75b:	je     86f <collision_embers_spawn+0x1ff>
+ 761:	mov    %r9d,%eax
+ 764:	cmp    $0xfff,%r8d
+ 76b:	jle    6d0 <collision_embers_spawn+0x60>
+ 771:	test   %al,%al
+ 773:	je     77c <collision_embers_spawn+0x10c>
+ 775:	mov    %r8d,0x0(%rip)        # 77c <collision_embers_spawn+0x10c>
+ 77c:	pop    %rbx
+ 77d:	pop    %rbp
+ 77e:	movb   $0x1,0x0(%rip)        # 785 <collision_embers_spawn+0x115>
+ 785:	pop    %r12
+ 787:	pop    %r13
+ 789:	pop    %r14
+ 78b:	pop    %r15
+ 78d:	ret
+ 78e:	mov    $0x20,%r8d
+ 794:	lea    0x0(%rip),%r9        # 79b <collision_embers_spawn+0x12b>
+ 79b:	nopl   0x0(%rax,%rax,1)
+ 7a0:	lea    0x0(%rip),%rdx        # 7a7 <collision_embers_spawn+0x137>
+ 7a7:	xor    %eax,%eax
+ 7a9:	jmp    7d2 <collision_embers_spawn+0x162>
+ 7ab:	cs nopw 0x0(%rax,%rax,1)
+ 7b5:	data16 cs nopw 0x0(%rax,%rax,1)
+ 7c0:	add    $0x1,%eax
+ 7c3:	add    $0xc,%rdx
+ 7c7:	cmp    $0x1000,%eax
+ 7cc:	je     867 <collision_embers_spawn+0x1f7>
+ 7d2:	cmpb   $0x0,0xa(%rdx)
+ 7d6:	jne    7c0 <collision_embers_spawn+0x150>
+ 7d8:	imul   $0x19660d,%ecx,%r10d
+ 7df:	cltq
+ 7e1:	lea    (%rax,%rax,2),%rax
+ 7e5:	lea    (%r9,%rax,4),%rdx
+ 7e9:	lea    0x3c6ef35f(%r10),%r11d
+ 7f0:	movl   $0x0,0x8(%rdx)
+ 7f7:	mov    %r11,%r10
+ 7fa:	imul   $0x19660d,%r11d,%ecx
+ 801:	movb   $0x1,0xa(%rdx)
+ 805:	imul   $0xecf56bf,%r11,%r11
+ 80c:	mov    %r10d,%eax
+ 80f:	add    $0x3c6ef35f,%ecx
+ 815:	shr    $0x20,%r11
+ 819:	sub    %r11d,%eax
+ 81c:	shr    $1,%eax
+ 81e:	add    %r11d,%eax
+ 821:	shr    $0x6,%eax
+ 824:	imul   $0x79,%eax,%eax
+ 827:	sub    %eax,%r10d
+ 82a:	lea    -0x3c(%r10,%rdi,1),%eax
+ 82f:	mov    %ecx,%r10d
+ 832:	imul   $0xecf56bf,%r10,%r10
+ 839:	mov    %eax,(%rdx)
+ 83b:	mov    %ecx,%eax
+ 83d:	shr    $0x20,%r10
+ 841:	sub    %r10d,%eax
+ 844:	shr    $1,%eax
+ 846:	add    %r10d,%eax
+ 849:	mov    %ecx,%r10d
+ 84c:	shr    $0x6,%eax
+ 84f:	imul   $0x79,%eax,%eax
+ 852:	sub    %eax,%r10d
+ 855:	lea    -0x3c(%r10,%rsi,1),%eax
+ 85a:	mov    %eax,0x4(%rdx)
+ 85d:	sub    $0x1,%r8d
+ 861:	jne    7a0 <collision_embers_spawn+0x130>
+ 867:	movb   $0x1,0x0(%rip)        # 86e <collision_embers_spawn+0x1fe>
+ 86e:	ret
+ 86f:	mov    %r10d,0x0(%rip)        # 876 <collision_embers_spawn+0x206>
+ 876:	jmp    77c <collision_embers_spawn+0x10c>
+ 87b:	nopl   0x0(%rax,%rax,1)
+
+0000000000000880 <collision_embers_tick>:
+ 880:	endbr64
+ 884:	mov    0x0(%rip),%eax        # 88a <collision_embers_tick+0xa>
+ 88a:	movzbl 0x0(%rip),%edi        # 891 <collision_embers_tick+0x11>
+ 891:	lea    0x1(%rax),%esi
+ 894:	mov    %esi,0x0(%rip)        # 89a <collision_embers_tick+0x1a>
+ 89a:	test   %dil,%dil
+ 89d:	je     900 <collision_embers_tick+0x80>
+ 89f:	mov    0x0(%rip),%edx        # 8a5 <collision_embers_tick+0x25>
+ 8a5:	test   %edx,%edx
+ 8a7:	jle    8ff <collision_embers_tick+0x7f>
+ 8a9:	mov    0x0(%rip),%eax        # 8af <collision_embers_tick+0x2f>
+ 8af:	xor    %r9d,%r9d
+ 8b2:	lea    0x0(%rip),%r8        # 8b9 <collision_embers_tick+0x39>
+ 8b9:	jmp    8d3 <collision_embers_tick+0x53>
+ 8bb:	nopl   0x0(%rax,%rax,1)
+ 8c0:	add    $0x1,%eax
+ 8c3:	and    $0xfff,%eax
+ 8c8:	sub    $0x1,%edx
+ 8cb:	je     944 <collision_embers_tick+0xc4>
+ 8cd:	mov    %edx,%r10d
+ 8d0:	mov    %edi,%r9d
+ 8d3:	movslq %eax,%rcx
+ 8d6:	mov    %esi,%r11d
+ 8d9:	sub    (%r8,%rcx,4),%r11d
+ 8dd:	cmp    $0x1df,%r11d
+ 8e4:	ja     8c0 <collision_embers_tick+0x40>
+ 8e6:	test   %r9b,%r9b
+ 8e9:	je     8ff <collision_embers_tick+0x7f>
+ 8eb:	movb   $0x1,0x0(%rip)        # 8f2 <collision_embers_tick+0x72>
+ 8f2:	mov    %r10d,0x0(%rip)        # 8f9 <collision_embers_tick+0x79>
+ 8f9:	mov    %eax,0x0(%rip)        # 8ff <collision_embers_tick+0x7f>
+ 8ff:	ret
+ 900:	lea    0x0(%rip),%rax        # 907 <collision_embers_tick+0x87>
+ 907:	lea    0xc000(%rax),%rsi
+ 90e:	xchg   %ax,%ax
+ 910:	movzbl 0x2(%rax),%ecx
+ 914:	test   %cl,%cl
+ 916:	je     92e <collision_embers_tick+0xae>
+ 918:	movzwl (%rax),%edx
+ 91b:	add    $0x1,%edx
+ 91e:	mov    %dx,(%rax)
+ 921:	cmp    $0x1df,%dx
+ 926:	jbe    92e <collision_embers_tick+0xae>
+ 928:	movb   $0x0,0x2(%rax)
+ 92c:	mov    %ecx,%edi
+ 92e:	add    $0xc,%rax
+ 932:	cmp    %rsi,%rax
+ 935:	jne    910 <collision_embers_tick+0x90>
+ 937:	test   %dil,%dil
+ 93a:	je     8ff <collision_embers_tick+0x7f>
+ 93c:	movb   $0x1,0x0(%rip)        # 943 <collision_embers_tick+0xc3>
+ 943:	ret
+ 944:	movb   $0x1,0x0(%rip)        # 94b <collision_embers_tick+0xcb>
+ 94b:	movl   $0x0,0x0(%rip)        # 955 <collision_embers_tick+0xd5>
+ 955:	mov    %eax,0x0(%rip)        # 95b <collision_embers_tick+0xdb>
+ 95b:	ret
+ 95c:	nopl   0x0(%rax)
+
+0000000000000960 <collision_player_hits_ember_bruteforce>:
+ 960:	endbr64
+ 964:	push   %r15
+ 966:	push   %r14
+ 968:	push   %r13
+ 96a:	push   %r12
+ 96c:	push   %rbp
+ 96d:	push   %rbx
+ 96e:	mov    %edi,%ebx
+ 970:	sub    $0x38,%rsp
+ 974:	movzbl 0x0(%rip),%edx        # 97b <collision_player_hits_ember_bruteforce+0x1b>
+ 97b:	mov    %fs:0x28,%r8
+ 984:	mov    %r8,0x28(%rsp)
+ 989:	mov    %esi,%r8d
+ 98c:	test   %dl,%dl
+ 98e:	je     abe <collision_player_hits_ember_bruteforce+0x15e>
+ 994:	movslq 0x0(%rip),%r13        # 99b <collision_player_hits_ember_bruteforce+0x3b>
+ 99b:	mov    0x0(%rip),%eax        # 9a1 <collision_player_hits_ember_bruteforce+0x41>
+ 9a1:	mov    $0x1000,%r14d
+ 9a7:	mov    $0x1,%ecx
+ 9ac:	add    %r13d,%eax
+ 9af:	cmp    %r14d,%eax
+ 9b2:	cmovle %eax,%r14d
+ 9b6:	jle    9ce <collision_player_hits_ember_bruteforce+0x6e>
+ 9b8:	sub    $0x1000,%eax
+ 9bd:	movl   $0x0,0x1c(%rsp)
+ 9c5:	mov    $0x2,%ecx
+ 9ca:	mov    %eax,0x24(%rsp)
+ 9ce:	mov    %dl,0x7(%rsp)
+ 9d2:	lea    -0x5(%rbx),%r12d
+ 9d6:	xor    %esi,%esi
+ 9d8:	add    $0x31,%ebx
+ 9db:	mov    %rcx,0x8(%rsp)
+ 9e0:	lea    -0x5(%r8),%ebp
+ 9e4:	lea    0x31(%r8),%eax
+ 9e8:	lea    0x0(%rip),%r15        # 9ef <collision_player_hits_ember_bruteforce+0x8f>
+ 9ef:	cmp    %r14d,%r13d
+ 9f2:	jge    aa0 <collision_player_hits_ember_bruteforce+0x140>
+ 9f8:	mov    %r14d,(%rsp)
+ 9fc:	lea    0x0(%r13,%r13,1),%r10
+ a01:	lea    0x0(%rip),%rcx        # a08 <collision_player_hits_ember_bruteforce+0xa8>
+ a08:	lea    (%r10,%r15,1),%r11
+ a0c:	add    %rcx,%r10
+ a0f:	mov    %rsi,%rcx
+ a12:	nopl   (%rax)
+ a15:	data16 cs nopw 0x0(%rax,%rax,1)
+ a20:	mov    (%rsp),%r9d
+ a24:	mov    $0x40,%edx
+ a29:	sub    %r13d,%r9d
+ a2c:	cmp    %edx,%r9d
+ a2f:	cmovg  %edx,%r9d
+ a33:	xor    %edx,%edx
+ a35:	xor    %r8d,%r8d
+ a38:	movslq %r9d,%r9
+ a3b:	add    %r9,%r9
+ a3e:	xchg   %ax,%ax
+ a40:	movzwl (%r11,%rdx,1),%edi
+ a45:	movzwl (%r10,%rdx,1),%r14d
+ a4a:	cmp    %r12w,%di
+ a4e:	setge  %sil
+ a52:	cmp    %bx,%di
+ a55:	setle  %dil
+ a59:	and    %esi,%edi
+ a5b:	cmp    %bp,%r14w
+ a5f:	setge  %sil
+ a63:	and    %edi,%esi
+ a65:	xor    %edi,%edi
+ a67:	cmp    %ax,%r14w
+ a6b:	setle  %dil
+ a6f:	add    $0x2,%rdx
+ a73:	and    %esi,%edi
+ a75:	or     %edi,%r8d
+ a78:	cmp    %rdx,%r9
+ a7b:	jne    a40 <collision_player_hits_ember_bruteforce+0xe0>
+ a7d:	test   %r8w,%r8w
+ a81:	jne    b5d <collision_player_hits_ember_bruteforce+0x1fd>
+ a87:	add    $0x40,%r13
+ a8b:	sub    $0xffffffffffffff80,%r11
+ a8f:	sub    $0xffffffffffffff80,%r10
+ a93:	cmp    %r13d,(%rsp)
+ a97:	jg     a20 <collision_player_hits_ember_bruteforce+0xc0>
+ a9d:	mov    %rcx,%rsi
+ aa0:	add    $0x1,%rsi
+ aa4:	cmp    %rsi,0x8(%rsp)
+ aa9:	je     b66 <collision_player_hits_ember_bruteforce+0x206>
+ aaf:	movslq 0x18(%rsp,%rsi,4),%r13
+ ab4:	mov    0x20(%rsp,%rsi,4),%r14d
+ ab9:	jmp    9ef <collision_player_hits_ember_bruteforce+0x8f>
+ abe:	movzbl 0x0(%rip),%ebp        # ac5 <collision_player_hits_ember_bruteforce+0x165>
+ ac5:	lea    0x0(%rip),%rcx        # acc <collision_player_hits_ember_bruteforce+0x16c>
+ acc:	lea    0x31(%rdi),%r11d
+ ad0:	lea    0xc000(%rcx),%r9
+ ad7:	lea    0x31(%r8),%r10d
+ adb:	nopl   0x0(%rax,%rax,1)
+ ae0:	cmpb   $0x0,0xa(%rcx)
+ ae4:	je     b50 <collision_player_hits_ember_bruteforce+0x1f0>
+ ae6:	mov    (%rcx),%eax
+ ae8:	mov    0x4(%rcx),%edx
+ aeb:	cmp    %r11d,%eax
+ aee:	setle  %sil
+ af2:	add    $0x5,%eax
+ af5:	cmp    %eax,%ebx
+ af7:	setle  %r12b
+ afb:	cmp    %r10d,%edx
+ afe:	setle  %dil
+ b02:	add    $0x5,%edx
+ b05:	cmp    %edx,%r8d
+ b08:	setle  %al
+ b0b:	test   %bpl,%bpl
+ b0e:	jne    b40 <collision_player_hits_ember_bruteforce+0x1e0>
+ b10:	test   %sil,%sil
+ b13:	je     b50 <collision_player_hits_ember_bruteforce+0x1f0>
+ b15:	test   %r12b,%r12b
+ b18:	je     b50 <collision_player_hits_ember_bruteforce+0x1f0>
+ b1a:	and    %dil,%al
+ b1d:	je     b50 <collision_player_hits_ember_bruteforce+0x1f0>
+ b1f:	mov    0x28(%rsp),%rdx
+ b24:	sub    %fs:0x28,%rdx
+ b2d:	jne    b6c <collision_player_hits_ember_bruteforce+0x20c>
+ b2f:	add    $0x38,%rsp
+ b33:	pop    %rbx
+ b34:	pop    %rbp
+ b35:	pop    %r12
+ b37:	pop    %r13
+ b39:	pop    %r14
+ b3b:	pop    %r15
+ b3d:	ret
+ b3e:	xchg   %ax,%ax
+ b40:	and    %edi,%esi
+ b42:	and    %r12d,%esi
+ b45:	and    %sil,%al
+ b48:	jne    b1f <collision_player_hits_ember_bruteforce+0x1bf>
+ b4a:	nopw   0x0(%rax,%rax,1)
+ b50:	add    $0xc,%rcx
+ b54:	cmp    %rcx,%r9
+ b57:	jne    ae0 <collision_player_hits_ember_bruteforce+0x180>
+ b59:	xor    %eax,%eax
+ b5b:	jmp    b1f <collision_player_hits_ember_bruteforce+0x1bf>
+ b5d:	movzbl 0x7(%rsp),%edx
+ b62:	mov    %edx,%eax
+ b64:	jmp    b1f <collision_player_hits_ember_bruteforce+0x1bf>
+ b66:	xor    %edx,%edx
+ b68:	mov    %edx,%eax
+ b6a:	jmp    b1f <collision_player_hits_ember_bruteforce+0x1bf>
+ b6c:	call   b71 <collision_player_hits_ember_bruteforce+0x211>
+ b71:	nopl   0x0(%rax)
+ b75:	data16 cs nopw 0x0(%rax,%rax,1)
+
+0000000000000b80 <collision_player_hits_ember>:
+ b80:	endbr64
+ b84:	movzbl 0x0(%rip),%eax        # b8b <collision_player_hits_ember+0xb>
+ b8b:	test   %al,%al
+ b8d:	je     cf0 <collision_player_hits_ember+0x170>
+ b93:	push   %r15
+ b95:	mov    %edi,%r15d
+ b98:	push   %r14
+ b9a:	push   %r13
+ b9c:	mov    %esi,%r13d
+ b9f:	push   %r12
+ ba1:	push   %rbp
+ ba2:	push   %rbx
+ ba3:	sub    $0x18,%rsp
+ ba7:	cmpb   $0x0,0x0(%rip)        # bae <collision_player_hits_ember+0x2e>
+ bae:	jne    d06 <collision_player_hits_ember+0x186>
+ bb4:	lea    -0x5(%r13),%r14d
+ bb8:	xor    %edx,%edx
+ bba:	test   %r14d,%r14d
+ bbd:	cmovs  %edx,%r14d
+ bc1:	lea    0x32(%r13),%edx
+ bc5:	sar    $0x6,%edx
+ bc8:	mov    %edx,%ecx
+ bca:	mov    $0x9,%edx
+ bcf:	sar    $0x6,%r14d
+ bd3:	cmp    %edx,%ecx
+ bd5:	cmovg  %edx,%ecx
+ bd8:	cmp    %r14d,%ecx
+ bdb:	jl     cd7 <collision_player_hits_ember+0x157>
+ be1:	lea    (%r14,%r14,2),%edx
+ be5:	xor    %edi,%edi
+ be7:	lea    -0x5(%r15),%r12d
+ beb:	mov    %ecx,0xc(%rsp)
+ bef:	lea    (%r14,%rdx,4),%esi
+ bf3:	lea    -0x5(%r15),%edx
+ bf7:	test   %edx,%edx
+ bf9:	lea    0x31(%r15),%ebp
+ bfd:	lea    -0x5(%r13),%ebx
+ c01:	cmovs  %edi,%edx
+ c04:	lea    0x0(%rip),%rdi        # c0b <collision_player_hits_ember+0x8b>
+ c0b:	lea    0x31(%r13),%r10d
+ c0f:	add    $0x32,%r15d
+ c13:	sar    $0x6,%r15d
+ c17:	sar    $0x6,%edx
+ c1a:	add    %esi,%edx
+ c1c:	mov    %edx,%edx
+ c1e:	lea    (%rdi,%rdx,4),%r13
+ c22:	mov    $0xc,%edi
+ c27:	cmp    %edi,%r15d
+ c2a:	cmovg  %edi,%r15d
+ c2e:	lea    0x1(%rsi,%r15,1),%r15d
+ c33:	movslq %r15d,%r15
+ c36:	sub    %rdx,%r15
+ c39:	mov    %eax,%edx
+ c3b:	nopl   0x0(%rax,%rax,1)
+ c40:	movslq 0x0(%r13),%r8
+ c44:	mov    0x0(%r13,%r15,4),%r9d
+ c49:	sub    %r8d,%r9d
+ c4c:	test   %r9d,%r9d
+ c4f:	jle    cc4 <collision_player_hits_ember+0x144>
+ c51:	add    %r8,%r8
+ c54:	lea    0x0(%rip),%rax        # c5b <collision_player_hits_ember+0xdb>
+ c5b:	movslq %r9d,%r9
+ c5e:	xor    %edi,%edi
+ c60:	mov    %r14d,0x8(%rsp)
+ c65:	lea    (%r8,%rax,1),%r11
+ c69:	lea    0x0(%rip),%rax        # c70 <collision_player_hits_ember+0xf0>
+ c70:	add    %r9,%r9
+ c73:	add    %rax,%r8
+ c76:	xor    %eax,%eax
+ c78:	nopl   0x0(%rax,%rax,1)
+ c80:	movzwl (%r11,%rax,1),%esi
+ c85:	movzwl (%r8,%rax,1),%r14d
+ c8a:	cmp    %r12w,%si
+ c8e:	setge  %cl
+ c91:	cmp    %bp,%si
+ c94:	setle  %sil
+ c98:	and    %ecx,%esi
+ c9a:	cmp    %bx,%r14w
+ c9e:	setge  %cl
+ ca1:	and    %esi,%ecx
+ ca3:	xor    %esi,%esi
+ ca5:	cmp    %r10w,%r14w
+ ca9:	setle  %sil
+ cad:	add    $0x2,%rax
+ cb1:	and    %ecx,%esi
+ cb3:	or     %esi,%edi
+ cb5:	cmp    %rax,%r9
+ cb8:	jne    c80 <collision_player_hits_ember+0x100>
+ cba:	mov    0x8(%rsp),%r14d
+ cbf:	test   %di,%di
+ cc2:	jne    cf5 <collision_player_hits_ember+0x175>
+ cc4:	add    $0x1,%r14d
+ cc8:	add    $0x34,%r13
+ ccc:	cmp    0xc(%rsp),%r14d
+ cd1:	jle    c40 <collision_player_hits_ember+0xc0>
+ cd7:	add    $0x18,%rsp
+ cdb:	xor    %eax,%eax
+ cdd:	pop    %rbx
+ cde:	pop    %rbp
+ cdf:	pop    %r12
+ ce1:	pop    %r13
+ ce3:	pop    %r14
+ ce5:	pop    %r15
+ ce7:	ret
+ ce8:	nopl   0x0(%rax,%rax,1)
+ cf0:	jmp    420 <hits_ember_grid_array>
+ cf5:	add    $0x18,%rsp
+ cf9:	mov    %edx,%eax
+ cfb:	pop    %rbx
+ cfc:	pop    %rbp
+ cfd:	pop    %r12
+ cff:	pop    %r13
+ d01:	pop    %r14
+ d03:	pop    %r15
+ d05:	ret
+ d06:	mov    %al,0x8(%rsp)
+ d0a:	call   1c0 <rebuild_ember_grid_ring>
+ d0f:	movzbl 0x8(%rsp),%eax
+ d14:	jmp    bb4 <collision_player_hits_ember+0x34>
+ d19:	nopl   0x0(%rax)
+
+0000000000000d20 <collision_detect>:
+ d20:	endbr64
+ d24:	test   %esi,%esi
+ d26:	jle    dc5 <collision_detect+0xa5>
+ d2c:	push   %r13
+ d2e:	mov    %ecx,%r11d
+ d31:	mov    %esi,%r10d
+ d34:	mov    %rdi,%rcx
+ d37:	push   %r12
+ d39:	movzbl 0x0(%rip),%r12d        # d41 <collision_detect+0x21>
+ d41:	lea    -0x1(%rdx),%edi
+ d44:	xor    %edx,%edx
+ d46:	push   %rbp
+ d47:	lea    0x32(%r11),%ebp
+ d4b:	push   %rbx
+ d4c:	lea    0x32(%r8),%ebx
+ d50:	cmp    %edx,%edi
+ d52:	je     db0 <collision_detect+0x90>
+ d54:	cmpb   $0x0,(%rcx)
+ d57:	je     db0 <collision_detect+0x90>
+ d59:	mov    0x4(%rcx),%eax
+ d5c:	mov    0x8(%rcx),%r9d
+ d60:	lea    0x32(%rax),%esi
+ d63:	cmp    %esi,%r11d
+ d66:	setle  %r13b
+ d6a:	cmp    %ebp,%eax
+ d6c:	lea    0x32(%r9),%eax
+ d70:	setle  %sil
+ d74:	cmp    %eax,%r8d
+ d77:	setle  %al
+ d7a:	cmp    %ebx,%r9d
+ d7d:	setle  %r9b
+ d81:	test   %r12b,%r12b
+ d84:	jne    da0 <collision_detect+0x80>
+ d86:	test   %r13b,%r13b
+ d89:	je     db0 <collision_detect+0x90>
+ d8b:	test   %sil,%sil
+ d8e:	je     db0 <collision_detect+0x90>
+ d90:	and    %r9b,%al
+ d93:	je     db0 <collision_detect+0x90>
+ d95:	pop    %rbx
+ d96:	pop    %rbp
+ d97:	pop    %r12
+ d99:	pop    %r13
+ d9b:	ret
+ d9c:	nopl   0x0(%rax)
+ da0:	and    %r9d,%esi
+ da3:	and    %r13d,%esi
+ da6:	and    %sil,%al
+ da9:	jne    d95 <collision_detect+0x75>
+ dab:	nopl   0x0(%rax,%rax,1)
+ db0:	add    $0x1,%edx
+ db3:	add    $0xc,%rcx
+ db7:	cmp    %edx,%r10d
+ dba:	jne    d50 <collision_detect+0x30>
+ dbc:	pop    %rbx
+ dbd:	xor    %eax,%eax
+ dbf:	pop    %rbp
+ dc0:	pop    %r12
+ dc2:	pop    %r13
+ dc4:	ret
+ dc5:	xor    %eax,%eax
+ dc7:	ret

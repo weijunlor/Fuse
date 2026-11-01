@@ -21,8 +21,8 @@ Options:
                     (default PLAYER_TIMEOUT_S = 5; 0 = never). FUSE_LEAVE=off
                     in the environment turns Leave and the timeout off.
   --bots N         reserve N slots for chase/flee bots (0..4, default 0).
-  --wait, --publish, --collision, --branches, --reduction retain before paths
-                    for isolated profiling; see README.md.
+  --wait, --publish, --collision, --embers, --branches, --reduction retain
+                    before paths for isolated profiling; see README.md.
 
 Environment (to measure optimisations against the old behaviour):
   FUSE_SERVER_WAIT=spin      busy-poll in both threads as before #2
@@ -108,6 +108,11 @@ int main(int argc, char **argv)
 				b_ok = strcmp(str_value, "grid") == 0 || strcmp(str_value, "brute") == 0;
 				b_ember_grid = strcmp(str_value, "grid") == 0;
 			}
+			else if (strcmp(str_option, "--embers") == 0)
+			{
+				b_ok = strcmp(str_value, "ring") == 0 || strcmp(str_value, "array") == 0;
+				b_ember_ring = strcmp(str_value, "ring") == 0;
+			}
 			else if (strcmp(str_option, "--branches") == 0)
 			{
 				b_ok = strcmp(str_value, "branchless") == 0 || strcmp(str_value, "branchy") == 0;
@@ -123,7 +128,8 @@ int main(int argc, char **argv)
 		{
 			fprintf(stderr, "Usage: %s [--snapshot-hz H] [--player-timeout S] [--bots N]\n"
 			                "  [--wait sleep|busy] [--publish unlocked|locked]\n"
-			                "  [--collision grid|brute] [--branches branchless|branchy]\n"
+			                "  [--collision grid|brute] [--embers ring|array]\n"
+			                "  [--branches branchless|branchy]\n"
 			                "  [--reduction accum|serial]\n"
 			                "  H divides %d; S >= 0 (0 = never); bots 0..%d\n",
 			        argv[0], TICK_HZ, MAX_PLAYERS - 1);

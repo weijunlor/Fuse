@@ -1,0 +1,10 @@
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1221.289 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1037.064 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1044.810 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1025.365 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1030.376 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1039.578 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1033.657 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1024.236 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1050.341 checksum=0
+mode=game-array embers=0 players=5 ticks=1000000 spawn_every=0 hits=0 ns_per_tick=1048.425 checksum=0

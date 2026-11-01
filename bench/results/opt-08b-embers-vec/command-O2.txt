@@ -1,0 +1,1 @@
+gcc -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party -I/usr/include/stb -DLOG_LEVEL=LOG_LEVEL_INFO -DFUSE_CACHE_PADDING=1 -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"/usr/lib/x86_64-linux-gnu/libddsc0debian"'  -Iserver -c server/collision.c -fopt-info-vec-all
