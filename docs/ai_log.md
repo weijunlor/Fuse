@@ -2,6 +2,15 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, zhikai / Codex: replaced first-living-slot bomb assignment with a
+uniform random choice from active players who still have lives. This applies
+at round start and when a holder departs; sparse IDs and eliminated slots are
+handled explicitly. Uses the server's seeded PRNG with rejection sampling to
+avoid modulo bias. Validation: a fixed-seed regression exercises all 32 eligible
+player sets (0-5 players), rejects inactive/eliminated slots and checks every
+eligible ID is selectable. `make test` passed in SPSC and mutex modes, including
+existing game/input regressions; rebuilt build/server successfully.
+
 2026-11-02, zhikai / Codex: centred the arena status banner using measured font
 width, centred player/health labels on their character and reserved the bomb's
 50px cell above its holder before placing that label. Added small edge margins

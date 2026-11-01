@@ -171,9 +171,22 @@ static void count_players(int *a_p_active, int *a_p_alive)
 
 static uint8_t choose_bomb_holder(void)
 {
+	// Slots can have gaps after a leave or elimination. Draw from the actual
+	// living players, not a numeric ID range or the first occupied slot.
+	uint8_t arr_candidates[MAX_PLAYERS];
+	unsigned int u_count = 0;
 	for (int i = 0; i < MAX_PLAYERS; i++)
-		if (player_alive(i)) return (uint8_t)(i + 1);
-	return 0;
+		if (player_alive(i)) arr_candidates[u_count++] = (uint8_t)(i + 1);
+	if (u_count == 0) return 0;
+	if (u_count == 1) return arr_candidates[0];
+
+	// Reject the incomplete tail of rand()'s range so each candidate has the
+	// same chance, including with three or five living players. main seeds it.
+	unsigned int u_range = (unsigned int)RAND_MAX + 1u;
+	unsigned int u_limit = u_range - u_range % u_count;
+	unsigned int u_random;
+	do { u_random = (unsigned int)rand(); } while (u_random >= u_limit);
+	return arr_candidates[u_random % u_count];
 }
 
 static void finish_match(void)
