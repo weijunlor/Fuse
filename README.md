@@ -50,9 +50,10 @@ bash run-client.sh --player 2
 
 Run the first-time setup under **Build** above before using these scripts.
 Each script builds only its own target, sources the DDS environment, and starts
-its process with security enabled. `--player` accepts 1–5 (default 1); use a
-different identity for each client. Both launchers accept `--no-build` to skip
-compilation; the batch files forward these options to the Linux scripts.
+its process with security enabled. `--player` accepts 1–5; if omitted, the client
+asks for a player number. Use a different identity for each client. Both
+launchers accept `--no-build` to skip compilation; the batch files forward
+these options to the Linux scripts.
 Output stays in each terminal. Close a game window to stop that client; Ctrl+C
 in the server terminal stops the server independently. Movement is WASD/arrows;
 dash is Space/Shift. The game requires WSLg (or another graphical display).
