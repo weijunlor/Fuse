@@ -4,7 +4,7 @@ is the size of the window (800 x 600 = 16 x 12 tiles), so one tile is one cell
 of the floor grid and the size of a player's hitbox (SQ_WIDTH).
 Sprite IDs name the tiles, so drawing code never uses pixel coordinates, and
 the final art can replace atlas.png without code changes as long as the
-layout below stays the same (see assets/make_placeholder_atlas.py). */
+layout below stays the same (see assets/pack_ninja_atlas.py). */
 
 #ifndef CLIENT_ATLAS_H
 #define CLIENT_ATLAS_H
@@ -37,7 +37,11 @@ enum
     SPR_PICKUP_FUSE   = SPRITE(4, 4),
     SPR_SHIELD_BUBBLE = SPRITE(4, 5),
     SPR_FLOOR         = SPRITE(5, 0),
-    SPR_WALL          = SPRITE(5, 1)
+    SPR_WALL          = SPRITE(5, 1),
+    // Four rows: down, up, left, right. Each player occupies three columns.
+    SPR_PLAYER_WALK   = SPRITE(6, 0),
+    SPR_PORTRAIT      = SPRITE(10, 0), // + player index
+    SPR_PLAYER_RING   = SPRITE(11, 0)  // + player index
 };
 
 // Number of animation frames and the sprite-ID step between them
@@ -47,6 +51,8 @@ enum
 #define SPARK_FRAMES     2
 #define EXPLOSION_FRAMES 6
 #define EMBER_FRAMES     2
+#define WALK_FRAMES      3
+#define SHIELD_FRAMES    6
 
 // Load assets/atlas.png into an OpenGL texture with nearest-neighbour
 // filtering (crisp pixel art). Needs a current GL context. Exits on failure.

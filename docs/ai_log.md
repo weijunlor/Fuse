@@ -2,6 +2,34 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, zhikai / Codex: centred the arena status banner using measured font
+width, centred player/health labels on their character and reserved the bomb's
+50px cell above its holder before placing that label. Added small edge margins
+to keep labels on screen. Validation: client build and isolated render preview.
+
+2026-11-02, zhikai / Codex: diagnosed the recurring server buffer overflow with
+GDB inside Ubuntu's libddsc.so.0debian. The selected SDK was 0.10.5, but the
+existing binary still linked to the system library. Added a content-based DDS
+configuration stamp in Makefile so SDK version, library/plugin directory,
+pkg-config flags and idlc path changes regenerate types and rebuild both game
+binaries and particles.o. Validation: compiled with the system SDK, switched to
+the local SDK and ran normal make without -B; both binaries relinked correctly.
+A further make preserved binary/object timestamps and performed no compilation.
+The secure server remained running for a bounded six-second startup check.
+
+2026-11-02, zhikai / Codex: packed the user-supplied Ninja Adventure art into
+the existing 800x600 atlas of 50px cells. Added five character designs,
+directional walks, lobby portraits, player rings, ticking-bomb phases, effects,
+power-up icons and floor tiles. Kept the original atlas and curated CC0 source
+PNGs, licence, a reproducible Pillow packer and a cell/source manifest in assets/.
+Updated renderer/lobby sprite selection and expanded batch capacity for the
+additional layered sprites. Validation: client build; 105 nonempty, uniquely
+placed cells and an opaque floor; isolated ASan/UBSan render preview in immediate,
+float and short modes with five shielded players, four explosions/pickups and a
+full particle pool over 60 frames per mode. Checked lobby texture-matrix
+restoration and GL errors, and inspected game/menu/lobby screenshots in build/.
+No live server or network state was changed by the render preview.
+
 Concurrency #3/#4 GUI verification (30 Oct): two real WSLg clients completed
 6,000 frames each, showed both players with correct local ID banners, stopped
 their workers and sent authenticated Leave; the server freed both slots.

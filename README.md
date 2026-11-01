@@ -28,6 +28,10 @@ make            # build/server, build/client
 make baseline   # build/baseline_server, build/baseline_client (original programs)
 ```
 
+The game build tracks the selected Cyclone DDS version and installation path.
+After switching DDS installations, a normal `make` regenerates the message code
+and rebuilds the game binaries; source `env.sh` to select the pinned WSL SDK.
+
 ## Run
 
 On Windows, run these from separate terminals in this folder:
@@ -71,6 +75,9 @@ dependency build, security tests and explicit plaintext comparisons are document
 in [security/README.md](security/README.md).
 Application login setup, custom accounts and authentication tests are in
 [security/AUTH.md](security/AUTH.md).
+
+The Ninja Adventure sprites, atlas layout and regeneration instructions are in
+[assets/README.md](assets/README.md).
 
 Concurrency uses SPSC command queues and double-buffered snapshots by default.
 Set `FUSE_HANDOFF=mutex` on both server and clients for the comparison path.

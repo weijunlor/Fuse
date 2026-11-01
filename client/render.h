@@ -40,6 +40,10 @@ void render_reset_session(void);
 // and the banner. Does not swap buffers.
 void render_frame(void);
 
+// Draw a player's atlas portrait in the lobby (player index 0..4).
+// Restores GL texture state, including the short batch's texture matrix.
+void render_draw_portrait(int a_int_player, float x, float y, float a_f_size);
+
 // Save the last drawn frame (the back buffer, before glfwSwapBuffers) as a PNG,
 // at the framebuffer's size
 void render_save_screenshot(const char *a_str_path);

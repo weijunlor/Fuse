@@ -1,0 +1,749 @@
+{
+  "width": 800,
+  "height": 600,
+  "cell_size": 50,
+  "characters": [
+    "NinjaRed",
+    "GladiatorBlue",
+    "MaskFrog",
+    "KnightGold",
+    "SorcererBlack"
+  ],
+  "sprites": [
+    {
+      "name": "player-1-idle-0",
+      "row": 0,
+      "col": 0,
+      "sprite": 0,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-idle-1",
+      "row": 1,
+      "col": 0,
+      "sprite": 16,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-0-0",
+      "row": 6,
+      "col": 0,
+      "sprite": 96,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-0-1",
+      "row": 6,
+      "col": 1,
+      "sprite": 97,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-0-2",
+      "row": 6,
+      "col": 2,
+      "sprite": 98,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-1-0",
+      "row": 7,
+      "col": 0,
+      "sprite": 112,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-1-1",
+      "row": 7,
+      "col": 1,
+      "sprite": 113,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-1-2",
+      "row": 7,
+      "col": 2,
+      "sprite": 114,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-2-0",
+      "row": 8,
+      "col": 0,
+      "sprite": 128,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-2-1",
+      "row": 8,
+      "col": 1,
+      "sprite": 129,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-2-2",
+      "row": 8,
+      "col": 2,
+      "sprite": 130,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-3-0",
+      "row": 9,
+      "col": 0,
+      "sprite": 144,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-3-1",
+      "row": 9,
+      "col": 1,
+      "sprite": 145,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-walk-3-2",
+      "row": 9,
+      "col": 2,
+      "sprite": 146,
+      "source": "Actor/Character/NinjaRed/SpriteSheet.png"
+    },
+    {
+      "name": "player-1-portrait",
+      "row": 10,
+      "col": 0,
+      "sprite": 160,
+      "source": "Actor/Character/NinjaRed/Faceset.png"
+    },
+    {
+      "name": "player-1-ring",
+      "row": 11,
+      "col": 0,
+      "sprite": 176,
+      "source": "FUSE custom player accent"
+    },
+    {
+      "name": "player-2-idle-0",
+      "row": 0,
+      "col": 1,
+      "sprite": 1,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-idle-1",
+      "row": 1,
+      "col": 1,
+      "sprite": 17,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-0-0",
+      "row": 6,
+      "col": 3,
+      "sprite": 99,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-0-1",
+      "row": 6,
+      "col": 4,
+      "sprite": 100,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-0-2",
+      "row": 6,
+      "col": 5,
+      "sprite": 101,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-1-0",
+      "row": 7,
+      "col": 3,
+      "sprite": 115,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-1-1",
+      "row": 7,
+      "col": 4,
+      "sprite": 116,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-1-2",
+      "row": 7,
+      "col": 5,
+      "sprite": 117,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-2-0",
+      "row": 8,
+      "col": 3,
+      "sprite": 131,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-2-1",
+      "row": 8,
+      "col": 4,
+      "sprite": 132,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-2-2",
+      "row": 8,
+      "col": 5,
+      "sprite": 133,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-3-0",
+      "row": 9,
+      "col": 3,
+      "sprite": 147,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-3-1",
+      "row": 9,
+      "col": 4,
+      "sprite": 148,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-walk-3-2",
+      "row": 9,
+      "col": 5,
+      "sprite": 149,
+      "source": "Actor/Character/GladiatorBlue/SpriteSheet.png"
+    },
+    {
+      "name": "player-2-portrait",
+      "row": 10,
+      "col": 1,
+      "sprite": 161,
+      "source": "Actor/Character/GladiatorBlue/Faceset.png"
+    },
+    {
+      "name": "player-2-ring",
+      "row": 11,
+      "col": 1,
+      "sprite": 177,
+      "source": "FUSE custom player accent"
+    },
+    {
+      "name": "player-3-idle-0",
+      "row": 0,
+      "col": 2,
+      "sprite": 2,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-idle-1",
+      "row": 1,
+      "col": 2,
+      "sprite": 18,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-0-0",
+      "row": 6,
+      "col": 6,
+      "sprite": 102,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-0-1",
+      "row": 6,
+      "col": 7,
+      "sprite": 103,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-0-2",
+      "row": 6,
+      "col": 8,
+      "sprite": 104,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-1-0",
+      "row": 7,
+      "col": 6,
+      "sprite": 118,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-1-1",
+      "row": 7,
+      "col": 7,
+      "sprite": 119,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-1-2",
+      "row": 7,
+      "col": 8,
+      "sprite": 120,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-2-0",
+      "row": 8,
+      "col": 6,
+      "sprite": 134,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-2-1",
+      "row": 8,
+      "col": 7,
+      "sprite": 135,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-2-2",
+      "row": 8,
+      "col": 8,
+      "sprite": 136,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-3-0",
+      "row": 9,
+      "col": 6,
+      "sprite": 150,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-3-1",
+      "row": 9,
+      "col": 7,
+      "sprite": 151,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-walk-3-2",
+      "row": 9,
+      "col": 8,
+      "sprite": 152,
+      "source": "Actor/Character/MaskFrog/SpriteSheet.png"
+    },
+    {
+      "name": "player-3-portrait",
+      "row": 10,
+      "col": 2,
+      "sprite": 162,
+      "source": "Actor/Character/MaskFrog/Faceset.png"
+    },
+    {
+      "name": "player-3-ring",
+      "row": 11,
+      "col": 2,
+      "sprite": 178,
+      "source": "FUSE custom player accent"
+    },
+    {
+      "name": "player-4-idle-0",
+      "row": 0,
+      "col": 3,
+      "sprite": 3,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-idle-1",
+      "row": 1,
+      "col": 3,
+      "sprite": 19,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-0-0",
+      "row": 6,
+      "col": 9,
+      "sprite": 105,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-0-1",
+      "row": 6,
+      "col": 10,
+      "sprite": 106,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-0-2",
+      "row": 6,
+      "col": 11,
+      "sprite": 107,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-1-0",
+      "row": 7,
+      "col": 9,
+      "sprite": 121,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-1-1",
+      "row": 7,
+      "col": 10,
+      "sprite": 122,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-1-2",
+      "row": 7,
+      "col": 11,
+      "sprite": 123,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-2-0",
+      "row": 8,
+      "col": 9,
+      "sprite": 137,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-2-1",
+      "row": 8,
+      "col": 10,
+      "sprite": 138,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-2-2",
+      "row": 8,
+      "col": 11,
+      "sprite": 139,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-3-0",
+      "row": 9,
+      "col": 9,
+      "sprite": 153,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-3-1",
+      "row": 9,
+      "col": 10,
+      "sprite": 154,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-walk-3-2",
+      "row": 9,
+      "col": 11,
+      "sprite": 155,
+      "source": "Actor/Character/KnightGold/SpriteSheet.png"
+    },
+    {
+      "name": "player-4-portrait",
+      "row": 10,
+      "col": 3,
+      "sprite": 163,
+      "source": "Actor/Character/KnightGold/Faceset.png"
+    },
+    {
+      "name": "player-4-ring",
+      "row": 11,
+      "col": 3,
+      "sprite": 179,
+      "source": "FUSE custom player accent"
+    },
+    {
+      "name": "player-5-idle-0",
+      "row": 0,
+      "col": 4,
+      "sprite": 4,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-idle-1",
+      "row": 1,
+      "col": 4,
+      "sprite": 20,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-0-0",
+      "row": 6,
+      "col": 12,
+      "sprite": 108,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-0-1",
+      "row": 6,
+      "col": 13,
+      "sprite": 109,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-0-2",
+      "row": 6,
+      "col": 14,
+      "sprite": 110,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-1-0",
+      "row": 7,
+      "col": 12,
+      "sprite": 124,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-1-1",
+      "row": 7,
+      "col": 13,
+      "sprite": 125,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-1-2",
+      "row": 7,
+      "col": 14,
+      "sprite": 126,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-2-0",
+      "row": 8,
+      "col": 12,
+      "sprite": 140,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-2-1",
+      "row": 8,
+      "col": 13,
+      "sprite": 141,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-2-2",
+      "row": 8,
+      "col": 14,
+      "sprite": 142,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-3-0",
+      "row": 9,
+      "col": 12,
+      "sprite": 156,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-3-1",
+      "row": 9,
+      "col": 13,
+      "sprite": 157,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-walk-3-2",
+      "row": 9,
+      "col": 14,
+      "sprite": 158,
+      "source": "Actor/Character/SorcererBlack/SpriteSheet.png"
+    },
+    {
+      "name": "player-5-portrait",
+      "row": 10,
+      "col": 4,
+      "sprite": 164,
+      "source": "Actor/Character/SorcererBlack/Faceset.png"
+    },
+    {
+      "name": "player-5-ring",
+      "row": 11,
+      "col": 4,
+      "sprite": 180,
+      "source": "FUSE custom player accent"
+    },
+    {
+      "name": "bomb-0",
+      "row": 2,
+      "col": 0,
+      "sprite": 32,
+      "source": "Items/Projectile/Bomb.png + custom fuse/glow"
+    },
+    {
+      "name": "bomb-1",
+      "row": 2,
+      "col": 1,
+      "sprite": 33,
+      "source": "Items/Projectile/Bomb.png + custom fuse/glow"
+    },
+    {
+      "name": "bomb-2",
+      "row": 2,
+      "col": 2,
+      "sprite": 34,
+      "source": "Items/Projectile/Bomb.png + custom fuse/glow"
+    },
+    {
+      "name": "bomb-3",
+      "row": 2,
+      "col": 3,
+      "sprite": 35,
+      "source": "Items/Projectile/Bomb.png + custom fuse/glow"
+    },
+    {
+      "name": "spark-0",
+      "row": 2,
+      "col": 4,
+      "sprite": 36,
+      "source": "FX/Particle/Spark.png"
+    },
+    {
+      "name": "spark-1",
+      "row": 2,
+      "col": 5,
+      "sprite": 37,
+      "source": "FX/Particle/Spark.png"
+    },
+    {
+      "name": "explosion-0",
+      "row": 3,
+      "col": 0,
+      "sprite": 48,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "explosion-1",
+      "row": 3,
+      "col": 1,
+      "sprite": 49,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "explosion-2",
+      "row": 3,
+      "col": 2,
+      "sprite": 50,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "explosion-3",
+      "row": 3,
+      "col": 3,
+      "sprite": 51,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "explosion-4",
+      "row": 3,
+      "col": 4,
+      "sprite": 52,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "explosion-5",
+      "row": 3,
+      "col": 5,
+      "sprite": 53,
+      "source": "FX/Elemental/Explosion/SpriteSheet.png"
+    },
+    {
+      "name": "ember-0",
+      "row": 4,
+      "col": 0,
+      "sprite": 64,
+      "source": "FX/Particle/Fire.png"
+    },
+    {
+      "name": "ember-1",
+      "row": 4,
+      "col": 1,
+      "sprite": 65,
+      "source": "FX/Particle/Fire.png"
+    },
+    {
+      "name": "pickup-speed",
+      "row": 4,
+      "col": 2,
+      "sprite": 66,
+      "source": "Ui/Skill Icon/Items & Weapon/Boot.png + custom badge"
+    },
+    {
+      "name": "pickup-shield",
+      "row": 4,
+      "col": 3,
+      "sprite": 67,
+      "source": "FUSE custom icon"
+    },
+    {
+      "name": "pickup-fuse",
+      "row": 4,
+      "col": 4,
+      "sprite": 68,
+      "source": "FUSE custom icon"
+    },
+    {
+      "name": "shield-0",
+      "row": 4,
+      "col": 5,
+      "sprite": 69,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "shield-1",
+      "row": 4,
+      "col": 6,
+      "sprite": 70,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "shield-2",
+      "row": 4,
+      "col": 7,
+      "sprite": 71,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "shield-3",
+      "row": 4,
+      "col": 8,
+      "sprite": 72,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "shield-4",
+      "row": 4,
+      "col": 9,
+      "sprite": 73,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "shield-5",
+      "row": 4,
+      "col": 10,
+      "sprite": 74,
+      "source": "FX/Magic/Shield/SpriteSheetBlue.png + custom outline"
+    },
+    {
+      "name": "floor",
+      "row": 5,
+      "col": 0,
+      "sprite": 80,
+      "source": "Backgrounds/Tilesets/TilesetFloor.png [192,240,208,256]"
+    },
+    {
+      "name": "wall",
+      "row": 5,
+      "col": 1,
+      "sprite": 81,
+      "source": "Backgrounds/Tilesets/TilesetDungeon.png [0,32,16,48]"
+    }
+  ]
+}

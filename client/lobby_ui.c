@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "lobby_ui.h"
 #include "ui.h"
+#include "render.h"
 
 typedef struct
 {
@@ -161,7 +162,8 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
             else
                 snprintf(str_slot, sizeof str_slot, "Slot %d - waiting", i + 1);
             rectangle(180, 232 + i * 35, 440, 29, 0.11f, 0.15f, 0.22f);
-            text(193, 240 + i * 35, 1.5f, str_slot);
+            render_draw_portrait(i, 185, 232 + i * 35, 29);
+            text(225, 240 + i * 35, 1.5f, str_slot);
         }
         char str_count[96];
         if (a_frame->snapshot.timer_ms > 0)
@@ -178,8 +180,10 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
         text(180, 303, 1.5f, "Move: arrows / WASD");
         text(180, 334, 1.5f, "Dash: Space / Shift");
         text(180, 365, 1.5f, "Leave a game: Esc");
+        for (int i = 0; i < MAX_PLAYERS; i++)
+            render_draw_portrait(i, 180 + i * 80, 385, 40);
         if (a_str_message != NULL && *a_str_message != '\0')
-            text(180, 423, 1.3f, a_str_message);
+            text(180, 435, 1.3f, a_str_message);
     }
 
     bool b_retry = a_b_running && a_frame->connection == CLIENT_REJECTED;

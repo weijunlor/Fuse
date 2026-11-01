@@ -35,6 +35,7 @@ LDDDS   := $(shell pkg-config --libs CycloneDDS) -pthread
 # install them alongside it. Bake in the detected path, with a runtime override.
 DDS_LIBDIR := $(shell pkg-config --variable=libdir CycloneDDS)
 DDS_PLUGIN_DIR := $(shell if test -f "$(DDS_LIBDIR)/libddsc0debian/libdds_security_auth.so"; then printf '%s' "$(DDS_LIBDIR)/libddsc0debian"; else printf '%s' "$(DDS_LIBDIR)"; fi)
+DDS_STAMP := build/.dds-config
 # CFLAGS already has override origin from padding; retain it for this default too.
 override CFLAGS += -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"$(DDS_PLUGIN_DIR)"'
 LDDDS += -Wl,-rpath,$(DDS_LIBDIR)
@@ -83,7 +84,7 @@ build/test_server: tests/test_server.c server/game.c server/lobby.c $(TEST_SERVE
 # Regenerate DDS type code whenever the IDL changes. -x final: every struct is
 # "final" (fixed layout, no XTypes extension header), which is what idlc picks
 # by default today; saying so silences its warning that the default may change.
-$(GEN) generated/fuse.h &: idl/fuse.idl
+$(GEN) generated/fuse.h &: idl/fuse.idl $(DDS_STAMP)
 	mkdir -p generated && cd generated && idlc -x final -l c ../idl/fuse.idl
 
 build/server: $(wildcard server/*.c) $(COMMON) $(GAME_HEADERS)
@@ -297,4 +298,19 @@ PADDING_TARGETS := build/server build/client build/particles.o $(BENCHES) \
     build/test_server build/test_input build/test_dds
 $(PADDING_TARGETS): $(PADDING_STAMP) common/cache_padding.h
 
-.PHONY: all baseline bench bench-padding profile debug clean test test-network test-auth test-auth-integration test-concurrency test-concurrency-integration concurrency-tsan-dds FORCE_PADDING
+# Switching between the Ubuntu DDS package and the pinned local SDK changes
+# headers, generated types, plugin paths and the linked SONAME. Source mtimes
+# alone cannot detect that change. Refresh this signature on every make, but
+# only touch the stamp when the selected SDK actually changes (as for padding).
+$(DDS_STAMP): FORCE_DDS
+	@mkdir -p build
+	@printf '%s\n' '$(shell pkg-config --modversion CycloneDDS)' \
+	    '$(DDS_LIBDIR)' '$(DDS_PLUGIN_DIR)' \
+	    '$(shell pkg-config --cflags --libs CycloneDDS)' \
+	    '$(shell command -v idlc)' > $@.tmp
+	@cmp -s $@.tmp $@ || cp $@.tmp $@
+	@rm -f $@.tmp
+
+build/server build/client build/particles.o: $(DDS_STAMP)
+
+.PHONY: all baseline bench bench-padding profile debug clean test test-network test-auth test-auth-integration test-concurrency test-concurrency-integration concurrency-tsan-dds FORCE_PADDING FORCE_DDS
