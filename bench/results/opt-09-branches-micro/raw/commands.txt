@@ -1,0 +1,2 @@
+taskset -c 2 ./build/bench_branches branchy 10000000 
+taskset -c 2 ./build/bench_branches branchless 10000000 

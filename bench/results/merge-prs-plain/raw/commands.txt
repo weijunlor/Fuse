@@ -1,0 +1,33 @@
+# 2026-11-01T06:27:50+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 43631 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 43629 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 45667 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 45665 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 47631 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 47629 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 49632 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 49630 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 51591 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 51589 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 53592 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 53590 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 55598 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 55596 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 57601 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 57598 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 59596 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 59594 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 61574 -- sleep 30
+perf stat --append -o bench/results/merge-prs-plain/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 61572 -- sleep 30
+sudo perf lock record -o bench/results/merge-prs-plain/raw/lock_server.data -p 63647 -- sleep 30
+perf lock contention -i bench/results/merge-prs-plain/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/merge-prs-plain/raw/trace_server.txt -p 65615 -- sleep 30
+sudo perf trace -s -o bench/results/merge-prs-plain/raw/trace_client.txt -p 65617 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/merge-prs-plain/raw/record_server.data -p 67603 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/merge-prs-plain/raw/record_client.data -p 67605 -- sleep 10
+perf script -i bench/results/merge-prs-plain/raw/record_server.data
+perf report -i bench/results/merge-prs-plain/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/merge-prs-plain/raw/record_client.data
+perf report -i bench/results/merge-prs-plain/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/merge-prs-plain/raw/net_client.txt -p 69627 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/merge-prs-plain/raw/net_server.txt -p 69625 -- sleep 30

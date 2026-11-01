@@ -1,0 +1,2315 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 105  of event 'cpu_core/cycles/'
+# Event count (approx.): 136992362
+#
+# Overhead  Command  Shared Object              Symbol                                     
+# ........  .......  .........................  ...........................................
+#
+     4.62%  server   libc.so.6                  [.] __internal_syscall_cancel
+            |
+            ---__internal_syscall_cancel
+               |          
+               |--1.97%--__futex_abstimed_wait_common (inlined)
+               |          __futex_abstimed_wait_cancelable64 (inlined)
+               |          __pthread_cond_wait_common (inlined)
+               |          ___pthread_cond_wait (inlined)
+               |          ddsrt_cond_wait
+               |          ddsrt_cond_waituntil
+               |          0x7f6e7cc4ce41
+               |          net_server_worker
+               |          start_thread
+               |          __clone3 (inlined)
+               |          
+               |--1.67%--__clock_nanosleep (inlined)
+               |          __nanosleep
+               |          main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.98%--__nanosleep
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.61%  server   [kernel.kallsyms]          [k] __x64_sys_clock_nanosleep
+            |
+            ---__x64_sys_clock_nanosleep
+               |          
+               |--1.90%--x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __syscall_cancel_arch (inlined)
+               |          __clock_nanosleep (inlined)
+               |          __nanosleep
+               |          main
+               |          __libc_start_call_main
+               |          call_init (inlined)
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.72%--do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __syscall_cancel_arch (inlined)
+                          __clock_nanosleep (inlined)
+                          __nanosleep
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.29%  server   server                     [.] game_tick
+            |
+            ---game_tick
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.24%  server   server                     [.] collision_embers_tick
+            |
+            ---collision_embers_tick
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.98%  server   [kernel.kallsyms]          [k] wake_q_add_safe
+            |
+            ---wake_q_add_safe
+               futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wake (inlined)
+               ___pthread_cond_broadcast (inlined)
+               ddsrt_cond_broadcast
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_set_guardcondition
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.90%  recvUC   [kernel.kallsyms]          [k] propagate_entity_load_avg
+            |
+            ---propagate_entity_load_avg
+               pick_next_task_fair
+               pick_next_task
+               __schedule
+               schedule
+               schedule_timeout
+               __skb_wait_for_more_packets
+               __skb_recv_udp
+               udp_recvmsg
+               inet_recvmsg
+               sock_recvmsg
+               ____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               ddsrt_recvmsg
+               0x7f6e7cbb54b9
+               0x7f6e7cc208be
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     1.86%  server   [kernel.kallsyms]          [k] netdev_core_pick_tx
+            |
+            ---netdev_core_pick_tx
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.85%  recvUC   libddsc.so.0.10.5          [.] dds_stream_normalize
+            |
+            ---dds_stream_normalize
+               0x7f6e7cbc2153
+               0x7f6e7cc155bb
+               0x7f6e7cc15d2a
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     1.82%  server   libc.so.6                  [.] pthread_mutex_unlock@@GLIBC_2.2.5
+            |
+            ---lll_mutex_unlock_optimized (inlined)
+               __pthread_mutex_unlock_usercnt (inlined)
+               ___pthread_mutex_unlock (inlined)
+               ddsrt_mutex_unlock
+               |          
+               |--1.06%--0x7f6e7cc1bda3
+               |          0x7f6e7cc4dba8
+               |          0x7f6e7cc4e1e4
+               |          dds_write
+               |          net_server_worker
+               |          start_thread
+               |          __clone3 (inlined)
+               |          
+                --0.77%--0x7f6e7cbbfbcc
+                          0x7f6e7cc24070
+                          ddsrt_avl_walk
+                          0x7f6e7cbf9306
+                          0x7f6e7cc24d28
+                          0x7f6e7cc4dcaf
+                          0x7f6e7cc4e1e4
+                          dds_write
+                          net_server_worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.80%  server   [kernel.kallsyms]          [k] udp_unicast_rcv_skb
+            |
+            ---udp_unicast_rcv_skb
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.73%  server   [kernel.kallsyms]          [k] __sched_balance_update_blocked_averages
+            |
+            ---__sched_balance_update_blocked_averages
+               sched_balance_newidle
+               pick_next_task_fair
+               pick_next_task
+               __schedule
+               schedule
+               do_nanosleep
+               hrtimer_nanosleep
+               common_nsleep
+               __x64_sys_clock_nanosleep
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __clock_nanosleep (inlined)
+               __nanosleep
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.72%  server   libddsc.so.0.10.5          [.] ddsi_wctime_to_ddsi_time
+            |
+            ---ddsi_wctime_to_ddsi_time
+               0x7f6e7cc1caf7
+               0x7f6e7cc4dba8
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.72%  recvUC   [kernel.kallsyms]          [k] native_write_msr
+            |
+            ---native_write_msr
+               x86_pmu_disable
+               perf_ctx_disable
+               perf_event_context_sched_out
+               __perf_event_task_sched_out
+               prepare_task_switch
+               __schedule
+               schedule
+               schedule_timeout
+               __skb_wait_for_more_packets
+               __skb_recv_udp
+               udp_recvmsg
+               inet_recvmsg
+               sock_recvmsg
+               ____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               ddsrt_recvmsg
+               0x7f6e7cbb54b9
+               0x7f6e7cc208be
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     1.67%  server   libc.so.6                  [.] pthread_cond_broadcast@@GLIBC_2.3.2
+            |
+            ---___pthread_cond_broadcast (inlined)
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_set_guardcondition
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.64%  server   [kernel.kallsyms]          [k] psi_group_change
+            |
+            ---psi_group_change
+               psi_task_switch
+               __schedule
+               schedule
+               futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.54%  server   libcrypto.so.3             [.] 0x00000000000ef7c0
+            |
+            ---0x7f6e7c6597c0
+               |          
+               |--0.81%--0x7f6e7c968bce
+               |          0x7f6e7c9dcaa7
+               |          0x7f6e7c9dcb73
+               |          EVP_CipherInit_ex
+               |          0x7f6e781ab759
+               |          0x7f6e781af4ba
+               |          0x7f6e7cbbfd6c
+               |          0x7f6e7cc24070
+               |          ddsrt_avl_walk
+               |          0x7f6e7cbf9306
+               |          0x7f6e7cc24d28
+               |          0x7f6e7cc4dcaf
+               |          0x7f6e7cc4e1e4
+               |          dds_write
+               |          net_server_worker
+               |          start_thread
+               |          __clone3 (inlined)
+               |          
+                --0.73%--0x7f6e7c9688dd
+                          0x7f6e7c9dc0f1
+                          0x7f6e7c9dcbdd
+                          EVP_EncryptUpdate
+                          0x7f6e781ab795
+                          0x7f6e781af4ba
+                          0x7f6e7cbbfd6c
+                          0x7f6e7cc24070
+                          ddsrt_avl_walk
+                          0x7f6e7cbf9306
+                          0x7f6e7cc24d28
+                          0x7f6e7cc4dcaf
+                          0x7f6e7cc4e1e4
+                          dds_write
+                          net_server_worker
+                          start_thread
+                          __clone3 (inlined)
+
+     1.14%  server   [kernel.kallsyms]          [k] ip_finish_output2
+            |
+            ---ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.11%  server   [vdso]                     [.] 0x0000000000000a0f
+            |
+            ---0x7f6e7ccb7a0f
+               __clock_gettime (inlined)
+               timing_now_ns
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.11%  server   libc.so.6                  [.] pthread_mutex_lock@@GLIBC_2.2.5
+            |
+            ---lll_mutex_lock_optimized (inlined)
+               ___pthread_mutex_lock (inlined)
+               lobby_check_timeouts
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.07%  server   libc.so.6                  [.] __memcmp_avx2_movbe
+            |
+            ---__memcmp_avx2_movbe
+               0x7f6e7c7c762a
+               0x7f6e7c79751e
+               0x7f6e7c797a52
+               EVP_MAC_fetch
+               EVP_Q_mac
+               HMAC
+               crypto_hmac (inlined)
+               crypto_message_mac
+               valid_message
+               auth_input
+               lobby_receive_input
+               lobby_poll
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.04%  server   [kernel.kallsyms]          [k] ip_rcv_core
+            |
+            ---ip_rcv_core
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.04%  server   [kernel.kallsyms]          [k] __udp4_lib_lookup
+            |
+            ---__udp4_lib_lookup
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.03%  server   [kernel.kallsyms]          [k] futex_hash_put
+            |
+            ---futex_hash_put
+               futex_wait_setup
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.02%  server   [kernel.kallsyms]          [k] __wake_up_sync_key
+            |
+            ---__wake_up_sync_key
+               loopback_xmit
+               xmit_one.constprop.0
+               dev_hard_start_xmit
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.01%  server   libcrypto.so.3             [.] OSSL_PARAM_set_uint64
+            |
+            ---OSSL_PARAM_set_uint64
+               EVP_CIPHER_CTX_get_iv_length
+               0x7f6e7c795ab8
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.01%  server   [kernel.kallsyms]          [k] __netif_receive_skb_core.constprop.0
+            |
+            ---__netif_receive_skb_core.constprop.0
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.00%  server   libcrypto.so.3             [.] 0x00000000002033b2
+            |
+            ---0x7f6e7c76d3b2
+               0x7f6e7c7958f1
+               EVP_CipherInit_ex
+               0x7f6e781ab730
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     1.00%  server   [kernel.kallsyms]          [k] skb_set_owner_w
+            |
+            ---skb_set_owner_w
+               sock_alloc_send_pskb
+               __ip_append_data
+               ip_make_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.99%  server   libddsc.so.0.10.5          [.] 0x0000000000046911
+            |
+            ---0x7f6e7cbca911
+               dds_stream_write_sampleLE
+               0x7f6e7cbc263b
+               0x7f6e7cc4e1a6
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.99%  server   [kernel.kallsyms]          [k] __futex_wait
+            |
+            ---__futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.99%  server   libc.so.6                  [.] __memset_avx2_unaligned_erms
+            |
+            ---__memset_avx2_unaligned_erms
+               EVP_CIPHER_CTX_new
+               0x7f6e781ab712
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.99%  server   [kernel.kallsyms]          [k] arch_asym_cpu_priority
+            |
+            ---arch_asym_cpu_priority
+               sched_balance_trigger
+               sched_tick
+               update_process_times
+               tick_nohz_handler
+               __hrtimer_run_queues
+               hrtimer_interrupt
+               __sysvec_apic_timer_interrupt
+               sysvec_apic_timer_interrupt
+               asm_sysvec_apic_timer_interrupt
+               x64_sys_call
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.98%  server   libddsc.so.0.10.5          [.] 0x000000000003e5ef
+            |
+            ---0x7f6e7cbc25ef
+               0x7f6e7cc4e1a6
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.97%  server   server                     [.] lobby_take_result
+            |
+            ---lobby_take_result
+               start_thread
+               __clone3 (inlined)
+
+     0.97%  server   [kernel.kallsyms]          [k] ktime_get_with_offset
+            |
+            ---ktime_get_with_offset
+               netif_rx_internal
+               __netif_rx
+               loopback_xmit
+               xmit_one.constprop.0
+               dev_hard_start_xmit
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.97%  server   [kernel.kallsyms]          [k] ipv4_mtu
+            |
+            ---ipv4_mtu
+               ip_make_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.96%  server   libddsc.so.0.10.5          [.] 0x0000000000036b20
+            |
+            ---0x7f6e7cbbab20
+               0x7f6e7cc24db8
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.95%  server   [kernel.kallsyms]          [k] rcuref_put_slowpath
+            |
+            ---rcuref_put_slowpath
+               ipv4_pktinfo_prepare
+               udp_queue_rcv_one_skb
+               udp_queue_rcv_skb
+               udp_unicast_rcv_skb
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.94%  server   [kernel.kallsyms]          [k] futex_do_wait
+            |
+            ---futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.93%  server   [kernel.kallsyms]          [k] __ip_make_skb
+            |
+            ---__ip_make_skb
+               ip_make_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.91%  server   libddsc.so.0.10.5          [.] dds_take_guardcondition
+            |
+            ---dds_take_guardcondition
+               start_thread
+               __clone3 (inlined)
+
+     0.90%  server   [kernel.kallsyms]          [k] loopback_xmit
+            |
+            ---loopback_xmit
+               dev_hard_start_xmit
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.89%  server   [kernel.kallsyms]          [k] do_softirq.part.0
+            |
+            ---do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.89%  server   libc.so.6                  [.] pthread_mutex_trylock@@GLIBC_2.34
+            |
+            ---___pthread_mutex_trylock (inlined)
+               0x7f6e7cc24505
+               0x7f6e7cc25a59
+               0x7f6e7cc25b76
+               0x7f6e7cc1cab0
+               0x7f6e7cc4dba8
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.89%  server   libcrypto.so.3             [.] memset@plt
+            |
+            ---memset@plt
+               CRYPTO_gcm128_tag
+               0x7f6e7c9dceca
+               0x7f6e7c9dbf4a
+               0x7f6e7c9dccf3
+               EVP_EncryptFinal_ex
+               0x7f6e781ab7c7
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.89%  server   [kernel.kallsyms]          [k] udp_queue_rcv_one_skb
+            |
+            ---udp_queue_rcv_one_skb
+               udp_queue_rcv_skb
+               udp_unicast_rcv_skb
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.88%  server   libddsc.so.0.10.5          [.] 0x00000000000c5025
+            |
+            ---0x7f6e7cc49025
+               dds_take
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.87%  server   [kernel.kallsyms]          [k] __udp_enqueue_schedule_skb
+            |
+            ---__udp_enqueue_schedule_skb
+               udp_queue_rcv_one_skb
+               udp_queue_rcv_skb
+               udp_unicast_rcv_skb
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.86%  server   [kernel.kallsyms]          [k] udp_send_skb
+            |
+            ---udp_send_skb
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   [kernel.kallsyms]          [k] ____sys_sendmsg
+            |
+            ---____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   [kernel.kallsyms]          [k] __local_bh_enable_ip
+            |
+            ---__local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   [kernel.kallsyms]          [k] fib_table_lookup
+            |
+            ---fib_table_lookup
+               ip_route_output_key_hash_rcu
+               ip_route_output_flow
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   [kernel.kallsyms]          [k] kmem_cache_alloc_node_noprof
+            |
+            ---kmem_cache_alloc_node_noprof
+               kmalloc_reserve
+               __alloc_skb
+               alloc_skb_with_frags
+               sock_alloc_send_pskb
+               __ip_append_data
+               ip_make_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   [kernel.kallsyms]          [k] sched_balance_newidle
+            |
+            ---sched_balance_newidle
+               pick_next_task
+               __schedule
+               schedule
+               futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   libddsc.so.0.10.5          [.] 0x0000000000096210
+            |
+            ---0x7f6e7cc1a210
+               0x7f6e7cc4dba8
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.85%  server   libddsc.so.0.10.5          [.] 0x00000000000c8e49
+            |
+            ---0x7f6e7cc4ce49
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   libdds_security_crypto.so  [.] EVP_EncryptInit_ex@plt
+            |
+            ---EVP_EncryptInit_ex@plt
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   libddsc.so.0.10.5          [.] 0x00000000000a04f5
+            |
+            ---0x7f6e7cc244f5
+               0x7f6e7cc25a59
+               0x7f6e7cbbbade
+               0x7f6e7cbc25b1
+               0x7f6e7cc4e1a6
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   libcrypto.so.3             [.] CRYPTO_gcm128_init
+            |
+            ---CRYPTO_gcm128_init
+               0x7f6e7c9dcaa7
+               0x7f6e7c9dcb73
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   libcrypto.so.3             [.] 0x00000000000f3530
+            |
+            ---0x7f6e7c65d530
+               0x7f6e7c9dcaa7
+               0x7f6e7c9dcb73
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   [kernel.kallsyms]          [k] __ip_local_out
+            |
+            ---__ip_local_out
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.84%  server   [kernel.kallsyms]          [k] udp4_lib_lookup2
+            |
+            ---udp4_lib_lookup2
+               __udp4_lib_lookup
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.83%  server   [kernel.kallsyms]          [k] sync_regs
+            |
+            ---sync_regs
+               __lll_lock_wake (inlined)
+               0x7f6e7bbe0f80
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.83%  server   libc.so.6                  [.] __syscall_cancel
+            |
+            ---__syscall_cancel
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.83%  server   libcrypto.so.3             [.] 0x000000000026b8c5
+            |
+            ---0x7f6e7c7d58c5
+               0x7f6e7c9dc285
+               EVP_CIPHER_CTX_get_iv_length
+               0x7f6e7c795ab8
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.83%  server   [kernel.kallsyms]          [k] futex_wake
+            |
+            ---futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wake (inlined)
+               ___pthread_cond_broadcast (inlined)
+               ddsrt_cond_broadcast
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_set_guardcondition
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.83%  server   libcrypto.so.3             [.] 0x00000000003360c3
+            |
+            ---0x7f6e7c8a00c3
+               0x7f6e7c9dcaa7
+               0x7f6e7c9dcb73
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.82%  server   [kernel.kallsyms]          [k] inet_sendmsg
+            |
+            ---inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.81%  server   libddsc.so.0.10.5          [.] 0x000000000009fed8
+            |
+            ---0x7f6e7cc23ed8
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.81%  server   libddsc.so.0.10.5          [.] 0x0000000000044d76
+            |
+            ---0x7f6e7cbc8d76
+               0x7f6e7cbcad2b
+               0x7f6e7cbcafa4
+               dds_stream_write_sampleLE
+               0x7f6e7cbc263b
+               0x7f6e7cc4e1a6
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.80%  server   [kernel.kallsyms]          [k] __smp_call_single_queue
+            |
+            ---__smp_call_single_queue
+               ttwu_queue_wakelist
+               try_to_wake_up
+               default_wake_function
+               autoremove_wake_function
+               receiver_wake_function
+               __wake_up_common
+               __wake_up_sync_key
+               sock_def_readable
+               __udp_enqueue_schedule_skb
+               udp_queue_rcv_one_skb
+               udp_queue_rcv_skb
+               udp_unicast_rcv_skb
+               __udp4_lib_rcv
+               udp_rcv
+               ip_protocol_deliver_rcu
+               ip_local_deliver_finish
+               ip_local_deliver
+               ip_rcv
+               __netif_receive_skb_one_core
+               __netif_receive_skb
+               process_backlog
+               __napi_poll
+               net_rx_action
+               handle_softirqs
+               __do_softirq
+               do_softirq.part.0
+               __local_bh_enable_ip
+               __dev_queue_xmit
+               neigh_hh_output
+               ip_finish_output2
+               __ip_finish_output
+               ip_finish_output
+               ip_output
+               ip_send_skb
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.78%  server   libcrypto.so.3             [.] 0x00000000003feb90
+            |
+            ---0x7f6e7c968b90
+               0x7f6e7c9dcb73
+               EVP_CipherInit_ex
+               0x7f6e781ab759
+               0x7f6e781af4ba
+               0x7f6e7cbbfd6c
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.78%  server   [kernel.kallsyms]          [k] ip_output
+            |
+            ---ip_output
+               udp_send_skb
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.77%  server   [kernel.kallsyms]          [k] dequeue_task_fair
+            |
+            ---dequeue_task_fair
+               dequeue_task
+               try_to_block_task.constprop.0.isra.0
+               __schedule
+               schedule
+               futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.77%  server   [kernel.kallsyms]          [k] cpuacct_charge
+            |
+            ---cpuacct_charge
+               update_curr
+               dequeue_entity
+               dequeue_entities
+               dequeue_task_fair
+               dequeue_task
+               try_to_block_task.constprop.0.isra.0
+               __schedule
+               schedule
+               futex_do_wait
+               __futex_wait
+               futex_wait
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.77%  server   [kernel.kallsyms]          [k] common_nsleep
+            |
+            ---common_nsleep
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __clock_nanosleep (inlined)
+               __nanosleep
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.76%  server   [kernel.kallsyms]          [k] fpregs_assert_state_consistent
+            |
+            ---fpregs_assert_state_consistent
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __futex_abstimed_wait_common (inlined)
+               __futex_abstimed_wait_cancelable64 (inlined)
+               __pthread_cond_wait_common (inlined)
+               ___pthread_cond_wait (inlined)
+               ddsrt_cond_wait
+               ddsrt_cond_waituntil
+               0x7f6e7cc4ce41
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.75%  server   [kernel.kallsyms]          [k] _raw_spin_lock_bh
+            |
+            ---_raw_spin_lock_bh
+               rt_set_nexthop.isra.0
+               __mkroute_output
+               ip_route_output_key_hash_rcu
+               ip_route_output_flow
+               udp_sendmsg
+               inet_sendmsg
+               ____sys_sendmsg
+               ___sys_sendmsg
+               __sys_sendmsg
+               __x64_sys_sendmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_sendmsg
+               ddsrt_sendmsg
+               0x7f6e7cbb5901
+               0x7f6e7cbbfeb6
+               0x7f6e7cc24070
+               ddsrt_avl_walk
+               0x7f6e7cbf9306
+               0x7f6e7cc24d28
+               0x7f6e7cc4dcaf
+               0x7f6e7cc4e1e4
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.75%  server   libddsc.so.0.10.5          [.] 0x0000000000047723
+            |
+            ---0x7f6e7cbcb723
+               dds_stream_write_sampleLE
+               0x7f6e7cbc263b
+               0x7f6e7cc4e1a6
+               dds_write
+               net_server_worker
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   [kernel.kallsyms]          [k] aa_inet_msg_perm
+            |
+            ---aa_inet_msg_perm
+               apparmor_socket_recvmsg
+               security_socket_recvmsg
+               sock_recvmsg
+               ____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               ddsrt_recvmsg
+               0x7f6e7cbb54b9
+               0x7f6e7cc208be
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   [kernel.kallsyms]          [k] sched_clock_cpu
+            |
+            ---sched_clock_cpu
+               try_to_wake_up
+               wake_up_q
+               futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wake (inlined)
+               ___pthread_cond_broadcast (inlined)
+               ddsrt_cond_broadcast
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_entity_status_signal
+               0x7f6e7cc3b8cd
+               0x7f6e7cc3ccbb
+               0x7f6e7cc15dde
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   [kernel.kallsyms]          [k] x2apic_send_IPI
+            |
+            ---x2apic_send_IPI
+               __smp_call_single_queue
+               ttwu_queue_wakelist
+               try_to_wake_up
+               wake_up_q
+               futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wake (inlined)
+               ___pthread_cond_broadcast (inlined)
+               ddsrt_cond_broadcast
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_entity_status_signal
+               0x7f6e7cc3b8cd
+               0x7f6e7cc3ccbb
+               0x7f6e7cc15dde
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   libc.so.6                  [.] pthread_once@GLIBC_2.2.5
+            |
+            ---___pthread_once (inlined)
+               0x7f6e7c7c63d7
+               0x7f6e7c7c6924
+               0x7f6e7c797464
+               0x7f6e7c797a52
+               EVP_MAC_fetch
+               EVP_Q_mac
+               HMAC
+               0x7f6e781ae09a
+               crypto_calculate_session_key
+               0x7f6e781b08f0
+               0x7f6e7cbbd6f5
+               0x7f6e7cbbf72e
+               0x7f6e7cc1d422
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   libddsc.so.0.10.5          [.] nn_rmsg_setsize
+            |
+            ---nn_rmsg_setsize
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.74%  recvUC   libddsc.so.0.10.5          [.] 0x0000000000091a50
+            |
+            ---0x7f6e7cc15a50
+               0x7f6e7cbcd879
+               0x7f6e7cc15f76
+               0x7f6e7cc18216
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   [kernel.kallsyms]          [k] __sched_balance_update_blocked_averages
+            |
+            ---__sched_balance_update_blocked_averages
+               sched_balance_newidle
+               pick_next_task_fair
+               pick_next_task
+               __schedule
+               schedule
+               schedule_timeout
+               __skb_wait_for_more_packets
+               __skb_recv_udp
+               udp_recvmsg
+               inet_recvmsg
+               sock_recvmsg
+               ____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               ddsrt_recvmsg
+               0x7f6e7cbb54b9
+               0x7f6e7cc208be
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   [kernel.kallsyms]          [k] perf_event_context_sched_out
+            |
+            ---perf_event_context_sched_out
+               __perf_event_task_sched_out
+               prepare_task_switch
+               __schedule
+               schedule
+               schedule_timeout
+               __skb_wait_for_more_packets
+               __skb_recv_udp
+               udp_recvmsg
+               inet_recvmsg
+               sock_recvmsg
+               ____sys_recvmsg
+               ___sys_recvmsg
+               __sys_recvmsg
+               __x64_sys_recvmsg
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __syscall_cancel_arch (inlined)
+               __libc_recvmsg
+               ddsrt_recvmsg
+               0x7f6e7cbb54b9
+               0x7f6e7cc208be
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   libcrypto.so.3             [.] EVP_MD_get_size
+            |
+            ---EVP_MD_get_size
+               0x7f6e781ae09a
+               crypto_calculate_session_key
+               0x7f6e781b08f0
+               0x7f6e7cbbd6f5
+               0x7f6e7cbbf72e
+               0x7f6e7cc1d422
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   libcrypto.so.3             [.] HMAC_Init_ex
+            |
+            ---HMAC_Init_ex
+               EVP_Q_mac
+               HMAC
+               0x7f6e781ae09a
+               crypto_calculate_session_key
+               0x7f6e781b08f0
+               0x7f6e7cbbd6f5
+               0x7f6e7cbbf72e
+               0x7f6e7cc1d422
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   libddsc.so.0.10.5          [.] 0x00000000000367c0
+            |
+            ---0x7f6e7cbba7c0
+               ddsi_tkmap_find
+               0x7f6e7cc155e9
+               0x7f6e7cc15d2a
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   libddsc.so.0.10.5          [.] 0x0000000000051330
+            |
+            ---0x7f6e7cbd5330
+               0x7f6e7cbc1c2a
+               0x7f6e7cbc1e93
+               0x7f6e7cbc2153
+               0x7f6e7cc155bb
+               0x7f6e7cc15d2a
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  recvUC   libddsc.so.0.10.5          [.] 0x0000000000051ab6
+            |
+            ---0x7f6e7cbd5ab6
+               0x7f6e7cbd53e8
+               dds_stream_extract_key_from_data
+               0x7f6e7cbc1c2a
+               0x7f6e7cbc1e93
+               0x7f6e7cbc2153
+               0x7f6e7cc155bb
+               0x7f6e7cc15d2a
+               0x7f6e7cc18604
+               0x7f6e7cc18af8
+               0x7f6e7cc1dcfc
+               0x7f6e7cc209a1
+               0x7f6e7cc20a9f
+               0x7f6e7cc19c91
+               0x7f6e7cc60fad
+               start_thread
+               __clone3 (inlined)
+
+     0.73%  server   [kernel.kallsyms]          [k] wake_affine
+            |
+            ---wake_affine
+               select_task_rq_fair
+               select_task_rq
+               try_to_wake_up
+               wake_up_q
+               futex_wake
+               do_futex
+               __x64_sys_futex
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               futex_wake (inlined)
+               ___pthread_cond_broadcast (inlined)
+               ddsrt_cond_broadcast
+               0x7f6e7cc4583a
+               dds_entity_observers_signal
+               dds_set_guardcondition
+               main
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main_impl (inlined)
+               _start
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

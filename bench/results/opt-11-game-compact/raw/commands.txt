@@ -1,0 +1,33 @@
+# 2026-11-01T06:54:38+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 129984 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 129980 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 132036 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 132032 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 134055 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 134051 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 136151 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 136147 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 138215 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 138211 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 140279 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 140275 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 142372 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 142368 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 144428 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 144424 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 146534 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 146530 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 148595 -- sleep 30
+perf stat --append -o bench/results/opt-11-game-compact/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 148591 -- sleep 30
+sudo perf lock record -o bench/results/opt-11-game-compact/raw/lock_server.data -p 150693 -- sleep 30
+perf lock contention -i bench/results/opt-11-game-compact/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-11-game-compact/raw/trace_server.txt -p 152722 -- sleep 30
+sudo perf trace -s -o bench/results/opt-11-game-compact/raw/trace_client.txt -p 152726 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-11-game-compact/raw/record_server.data -p 154808 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-11-game-compact/raw/record_client.data -p 154812 -- sleep 10
+perf script -i bench/results/opt-11-game-compact/raw/record_server.data
+perf report -i bench/results/opt-11-game-compact/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-11-game-compact/raw/record_client.data
+perf report -i bench/results/opt-11-game-compact/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-11-game-compact/raw/net_client.txt -p 156883 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-11-game-compact/raw/net_server.txt -p 156879 -- sleep 30

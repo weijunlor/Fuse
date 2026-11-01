@@ -1,0 +1,33 @@
+# 2026-11-01T07:12:28+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="--branches branchy" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 188301 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 188297 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 190332 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 190328 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 192360 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 192356 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 194376 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 194372 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 196388 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 196384 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 198486 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 198482 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 200507 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 200503 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 202567 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 202563 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 204626 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 204622 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 206681 -- sleep 30
+perf stat --append -o bench/results/opt-09-branchy/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 206677 -- sleep 30
+sudo perf lock record -o bench/results/opt-09-branchy/raw/lock_server.data -p 208689 -- sleep 30
+perf lock contention -i bench/results/opt-09-branchy/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-09-branchy/raw/trace_server.txt -p 210724 -- sleep 30
+sudo perf trace -s -o bench/results/opt-09-branchy/raw/trace_client.txt -p 210728 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-09-branchy/raw/record_server.data -p 212821 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-09-branchy/raw/record_client.data -p 212825 -- sleep 10
+perf script -i bench/results/opt-09-branchy/raw/record_server.data
+perf report -i bench/results/opt-09-branchy/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-09-branchy/raw/record_client.data
+perf report -i bench/results/opt-09-branchy/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-09-branchy/raw/net_client.txt -p 214861 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-09-branchy/raw/net_server.txt -p 214857 -- sleep 30

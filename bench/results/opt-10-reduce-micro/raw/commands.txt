@@ -1,0 +1,2 @@
+taskset -c 2 ./build/bench_reduce serial 1000000 100 
+taskset -c 2 ./build/bench_reduce accum 1000000 100 

@@ -1,0 +1,10 @@
+mode=accum values=1000000 rounds=100 ns_per_value=0.147 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.147 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.147 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.148 checksum=506965504
+mode=accum values=1000000 rounds=100 ns_per_value=0.147 checksum=506965504

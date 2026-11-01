@@ -1,0 +1,10 @@
+Metrics: perf
+accum: 10 runs, mean=0.148 ns, stddev=0.001 ns
+  mean counters: cycles=83413584, instructions=394690296
+  IPC=4.732
+serial: 10 runs, mean=0.209 ns, stddev=0.003 ns
+  mean counters: cycles=114038936, instructions=617309546
+  IPC=5.413
+All checksums match: 506965504
+Raw commands, timings and available perf counters are in raw/.
+Compare only runs from the same machine; timing alone does not prove IPC/cache/branch changes.

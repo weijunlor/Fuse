@@ -1,0 +1,12 @@
+Metrics: perf
+branchless: 10 runs, mean=3.848 ns, stddev=0.002 ns
+  mean counters: cycles=193893051, instructions=934150992, branches=220838733, branch-misses=14175
+  IPC=4.818
+  branch misses=0.006%
+branchy: 10 runs, mean=8.467 ns, stddev=0.017 ns
+  mean counters: cycles=424614306, instructions=536321923, branches=79782373, branch-misses=13259249
+  IPC=1.263
+  branch misses=16.619%
+All checksums match: 6851791973
+Raw commands, timings and available perf counters are in raw/.
+Compare only runs from the same machine; timing alone does not prove IPC/cache/branch changes.

@@ -1,0 +1,6 @@
+# started on Sun Nov  1 07:34:25 2026
+
+193893051,,cpu_core/cycles/,0.08%,38931354,100.00,,
+934150992,,cpu_core/instructions/,0.10%,38931354,100.00,,
+220838733,,cpu_core/branches/,0.10%,38931354,100.00,,
+14175,,cpu_core/branch-misses/,4.67%,38931354,100.00,,

@@ -1,0 +1,10 @@
+Metrics: perf
+brute: 10 runs, mean=974.153 ns, stddev=1.113 ns
+  mean counters: cycles=48561022977, instructions=281270456707, L1-dcache-load-misses=54922354, LLC-load-misses=3277
+  IPC=5.792
+grid: 10 runs, mean=19.180 ns, stddev=0.077 ns
+  mean counters: cycles=961365994, instructions=3238980329, L1-dcache-load-misses=172759, LLC-load-misses=268
+  IPC=3.369
+All checksums match: 6966519
+Raw commands, timings and available perf counters are in raw/.
+Compare only runs from the same machine; timing alone does not prove IPC/cache/branch changes.

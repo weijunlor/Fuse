@@ -1,0 +1,33 @@
+# 2026-11-01T06:36:47+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 71870 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 71866 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 73926 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 73922 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 75983 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 75979 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 78012 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 78008 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 80072 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 80068 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 82130 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 82126 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84152 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 84148 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86203 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 86199 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88258 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 88254 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 90326 -- sleep 30
+perf stat --append -o bench/results/opt-merged-defaults/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 90322 -- sleep 30
+sudo perf lock record -o bench/results/opt-merged-defaults/raw/lock_server.data -p 92414 -- sleep 30
+perf lock contention -i bench/results/opt-merged-defaults/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-merged-defaults/raw/trace_server.txt -p 94482 -- sleep 30
+sudo perf trace -s -o bench/results/opt-merged-defaults/raw/trace_client.txt -p 94486 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-merged-defaults/raw/record_server.data -p 96611 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-merged-defaults/raw/record_client.data -p 96615 -- sleep 10
+perf script -i bench/results/opt-merged-defaults/raw/record_server.data
+perf report -i bench/results/opt-merged-defaults/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-merged-defaults/raw/record_client.data
+perf report -i bench/results/opt-merged-defaults/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-merged-defaults/raw/net_client.txt -p 98670 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-merged-defaults/raw/net_server.txt -p 98666 -- sleep 30

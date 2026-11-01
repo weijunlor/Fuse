@@ -1,0 +1,3 @@
+mode=counters padding=0 cache_line=64 iterations=10000000 cpu0=0 cpu1=2 elapsed_ns=131698695 ns_per_iteration=13.1699 checksum=20000000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.140 MB bench/results/opt-11-padding-micro/c2c/padding-0.data (1266 samples) ]

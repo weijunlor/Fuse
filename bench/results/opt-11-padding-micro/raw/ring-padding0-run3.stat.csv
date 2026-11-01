@@ -1,0 +1,11 @@
+# started on Sun Nov  1 07:34:29 2026
+
+174.07,msec,task-clock,174069290,100.00,,
+8,,context-switches,174069290,100.00,,
+2,,cpu-migrations,174069290,100.00,,
+1499510,,cpu_atom/cycles/,475944,100.00,,
+866152617,,cpu_core/cycles/,173593346,99.00,,
+1037804,,cpu_atom/instructions/,475944,100.00,,
+715242642,,cpu_core/instructions/,173593346,99.00,,
+4723,,cpu_atom/cache-misses/,475944,100.00,,
+1366,,cpu_core/cache-misses/,173593346,99.00,,

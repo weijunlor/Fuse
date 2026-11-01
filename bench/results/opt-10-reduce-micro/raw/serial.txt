@@ -1,0 +1,10 @@
+mode=serial values=1000000 rounds=100 ns_per_value=0.211 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.202 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.210 checksum=506965504
+mode=serial values=1000000 rounds=100 ns_per_value=0.211 checksum=506965504

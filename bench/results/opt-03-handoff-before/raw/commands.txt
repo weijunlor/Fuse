@@ -1,0 +1,33 @@
+# 2026-11-01T06:45:42+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="mutex" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 100970 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 100966 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 103053 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 103049 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 105064 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 105060 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 107089 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 107085 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 109106 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 109102 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 111186 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 111182 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 113294 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 113290 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 115314 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 115310 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 117374 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 117370 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 119389 -- sleep 30
+perf stat --append -o bench/results/opt-03-handoff-before/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 119385 -- sleep 30
+sudo perf lock record -o bench/results/opt-03-handoff-before/raw/lock_server.data -p 121449 -- sleep 30
+perf lock contention -i bench/results/opt-03-handoff-before/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-03-handoff-before/raw/trace_server.txt -p 123481 -- sleep 30
+sudo perf trace -s -o bench/results/opt-03-handoff-before/raw/trace_client.txt -p 123485 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-03-handoff-before/raw/record_server.data -p 125569 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-03-handoff-before/raw/record_client.data -p 125573 -- sleep 10
+perf script -i bench/results/opt-03-handoff-before/raw/record_server.data
+perf report -i bench/results/opt-03-handoff-before/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-03-handoff-before/raw/record_client.data
+perf report -i bench/results/opt-03-handoff-before/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-03-handoff-before/raw/net_client.txt -p 127677 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-03-handoff-before/raw/net_server.txt -p 127673 -- sleep 30

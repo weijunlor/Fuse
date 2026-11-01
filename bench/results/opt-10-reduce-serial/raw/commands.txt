@@ -1,0 +1,33 @@
+# 2026-11-01T07:21:23+00:00  STEPS="stat lock trace record net" RUNS=10 DURATION=30 CLIENTS=4 MOVE=1 SERVER_ARGS="--reduction serial" CLIENT_ARGS="" FUSE_QOS="" FUSE_HANDOFF="spsc" FUSE_SERVER_WAIT="" FUSE_WRITE_UNDER_LOCK="" FUSE_CLIENT_WAIT=""
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 217118 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 217114 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 219159 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 219155 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 221168 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 221164 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 223184 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 223180 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 225243 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 225239 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 227298 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 227294 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 229353 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 229349 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 231491 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 231487 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 233559 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 233555 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_client.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 235609 -- sleep 30
+perf stat --append -o bench/results/opt-10-reduce-serial/raw/stat_server.txt -e task-clock,context-switches,cpu-migrations,cycles,instructions,branches,branch-misses -p 235605 -- sleep 30
+sudo perf lock record -o bench/results/opt-10-reduce-serial/raw/lock_server.data -p 237662 -- sleep 30
+perf lock contention -i bench/results/opt-10-reduce-serial/raw/lock_server.data -t
+sudo perf trace -s -o bench/results/opt-10-reduce-serial/raw/trace_server.txt -p 239761 -- sleep 30
+sudo perf trace -s -o bench/results/opt-10-reduce-serial/raw/trace_client.txt -p 239765 -- sleep 30
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-10-reduce-serial/raw/record_server.data -p 241852 -- sleep 10
+perf record -q -e cpu_core/cycles/ -F 499 --call-graph fp -o bench/results/opt-10-reduce-serial/raw/record_client.data -p 241856 -- sleep 10
+perf script -i bench/results/opt-10-reduce-serial/raw/record_server.data
+perf report -i bench/results/opt-10-reduce-serial/raw/record_server.data --stdio --no-children --percent-limit 0.5
+perf script -i bench/results/opt-10-reduce-serial/raw/record_client.data
+perf report -i bench/results/opt-10-reduce-serial/raw/record_client.data --stdio --no-children --percent-limit 0.5
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-10-reduce-serial/raw/net_client.txt -p 243894 -- sleep 30
+sudo perf trace -e sendmsg,sendto -o bench/results/opt-10-reduce-serial/raw/net_server.txt -p 243890 -- sleep 30
