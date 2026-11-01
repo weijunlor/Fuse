@@ -1,0 +1,43 @@
+DDS security acceptance tests
+PASS participant-default-secure: exit=0
+PASS missing-client-identity: exit=1
+PASS invalid-mode: exit=1
+PASS wrong-role: exit=1
+PASS benchmark-launcher-on: 
+PASS benchmark-launcher-off: 
+PASS deny-writer-GameSnapshot: exit=0
+PASS GameSnapshot-security-denial: 
+PASS deny-writer-JoinResponse: exit=0
+PASS JoinResponse-security-denial: 
+PASS deny-writer-UnlistedTopic: exit=0
+PASS UnlistedTopic-security-denial: 
+PASS deny-read-input: exit=0
+PASS missing-key: exit=1
+PASS mismatched-key: exit=1
+PASS tampered-permissions: exit=1
+PASS expired-permissions: exit=1
+PASS fuse-secure-server-start: 
+PASS secure-play: exit=0
+PASS secure-movement-and-leave: 
+PASS reject-plaintext-peer: exit=1
+PASS plaintext-no-game-data: 
+PASS reject-untrusted-peer: exit=1
+PASS untrusted-no-game-data: 
+PASS authorized-peer-survives: 
+PASS downgrade-secure-server-start: 
+PASS external-xml-stays-secure: exit=0
+PASS fuse-insecure-server-start: 
+PASS plaintext-regression: exit=0
+PASS baseline-secure-server-start: 
+PASS baseline-secure-play: exit=0
+PASS baseline-plaintext-server-start: 
+PASS baseline-plaintext-play: exit=0
+PASS baseline-plaintext-pcap-decodes: 
+PASS baseline-plaintext-capture: 
+PASS baseline-secure-pcap-decodes: 
+PASS baseline-secure-capture: 
+PASS fuse-secure-pcap-decodes: 
+PASS fuse-secure-capture: 
+PASS plaintext-has-no-encrypted-frames: 
+PASS baseline-rtps-encrypted: 104
+PASS fuse-rtps-encrypted: 850

@@ -1,0 +1,10 @@
+DDS security: ON, identity client-1, domain 0
+1793351909.866402 [0] dq.builtin: Remote secure participant d6722091:5c9ef3ab:80394e45:1c1 not allowed
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+Join request sent
+Join response received
+Screenshot saved to /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests/gui-client-1.png (800x600)
+frames=6000 stress=0 mode=short fps=188.21 elapsed_s=33.493 render_us_mean=1095.9 render_us_p50=991.8 render_us_p99=2814.0 render_us_max=32484.3 gl_renderer="D3D12 (AMD Radeon(TM) Graphics)"
+Left the game

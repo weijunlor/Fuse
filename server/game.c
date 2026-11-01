@@ -8,6 +8,11 @@
 #include "bot.h"
 #include "timing.h"
 #include "log.h"
+#include "handoff.h"
+#include "double_buffer.h"
+
+DOUBLE_BUFFER_DEFINE(SnapshotBuffer, GameSnapshot)
+static SnapshotBuffer snapshot_buffer;
 
 Player arr_Players[MAX_PLAYERS] = {0};
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -65,16 +70,25 @@ static bool player_alive(int a_int_index)
 
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys)
 {
-	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS) return;
+	// The ID comes from the network: never index the table with an unchecked
+	// value (the baseline wrote arr_Players[id-1] for any id)
+	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS)
+		return;
+
 	pthread_mutex_lock(&mutex);
-	int int_index = a_int_player_id - 1;
-	if (arr_Players[int_index].b_active && !bot_is_player(int_index))
-	{
-		arr_u8_keys[int_index] = a_u8_keys &
-			(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KEY_DASH);
-		arr_u64_last_input_ns[int_index] = timing_now_ns();
-	}
+	game_set_keys_locked(a_int_player_id, a_u8_keys);
 	pthread_mutex_unlock(&mutex);
+}
+
+void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys)
+{
+	// Bots' keys come from bot_choose_keys(), never from the network
+	if (a_int_player_id < 1 || a_int_player_id > MAX_PLAYERS ||
+	    !arr_Players[a_int_player_id - 1].b_active || bot_is_player(a_int_player_id - 1))
+		return;
+	arr_u8_keys[a_int_player_id - 1] = a_u8_keys &
+		(KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KEY_DASH);
+	arr_u64_last_input_ns[a_int_player_id - 1] = timing_now_ns();
 }
 
 void game_reset_player(int a_int_index)
@@ -442,13 +456,24 @@ void game_tick(void)
 		LOG_INFO("Game phase changed: %u -> %u\n", u8_previous_phase, u8_phase);
 		u8_previous_phase = u8_phase;
 	}
-	if (u_tick % (uint32_t)int_snapshot_every == 0) b_snapshot_ready = true;
+
+	// Publish every int_snapshot_every-th tick (all of them at 60 Hz)
+	if (u_tick % (uint32_t)int_snapshot_every == 0)
+	{
+		if (handoff_spsc())
+			SnapshotBuffer_publish(&snapshot_buffer, &snapshot);
+		else
+			b_snapshot_ready = true;
+	}
 	pthread_mutex_unlock(&mutex);
 }
 
 bool game_take_snapshot(GameSnapshot *a_p_out)
 {
-	if (!b_snapshot_ready) return false;
+	if (handoff_spsc())
+		return SnapshotBuffer_take(&snapshot_buffer, a_p_out);
+	if (!b_snapshot_ready)
+		return false;
 	*a_p_out = snapshot;
 	b_snapshot_ready = false;
 	return true;

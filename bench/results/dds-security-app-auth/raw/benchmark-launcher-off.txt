@@ -1,0 +1,2 @@
+participant=ok
+DDS security: OFF (explicit plaintext comparison)

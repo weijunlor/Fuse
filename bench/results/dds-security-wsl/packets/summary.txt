@@ -1,0 +1,4 @@
+Plaintext Position samples decoded as CDR little-endian integers: 26.
+Observed x coordinates: 513 to 534.
+baseline-secure: 97 decoded encrypted RTPS frames.
+fuse-secure: 903 decoded encrypted RTPS frames.

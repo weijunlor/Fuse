@@ -1,0 +1,6 @@
+PASS invalid-handoff-rejected
+PASS gui-server-started
+PASS gui-two-clients-joined
+PASS gui-client-1-render-close-leave
+PASS gui-client-2-render-close-leave
+PASS gui-server-freed-both-slots

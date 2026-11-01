@@ -1,0 +1,3 @@
+1793349781.107656 [0] dds_securi: Error occurred while validating local permissions: Permissions validity period expired for CN=client-1,O=FUSE (expired: 2020-01-01T00:00:00Z)(code: 147)
+DDS security: Participant creation failed: Error
+DDS security: ON, identity client-1, domain 0

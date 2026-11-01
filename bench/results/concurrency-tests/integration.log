@@ -1,0 +1,43 @@
+mkdir -p build && gcc -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party -I/home/sy/.local/opt/cyclonedds-0.10.5/include -I/usr/include/stb -DLOG_LEVEL=LOG_LEVEL_INFO -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"/home/sy/.local/opt/cyclonedds-0.10.5/lib"' -Iserver bench/test_auth.c server/auth.c server/lobby.c server/game.c server/collision.c common/crypto.c common/app_client.c common/net.c common/dds_security.c common/timing.c common/handoff.c generated/fuse.c -o build/test_auth -L/home/sy/.local/opt/cyclonedds-0.10.5/lib -lddsc -pthread -Wl,-rpath,/home/sy/.local/opt/cyclonedds-0.10.5/lib -lcrypto
+FUSE_HANDOFF=spsc python3 security/scripts/test_auth.py --output bench/results/concurrency-tests/spsc
+PASS provision
+PASS provision-no-overwrite
+PASS unit
+PASS server-missing-database
+PASS client-missing-password
+PASS reject-auth-downgrade
+PASS reject-invalid-mode
+PASS wire-on
+PASS worker-on
+PASS worker-rejoin
+PASS probe-on
+PASS joiner-on
+PASS wrong-password-on
+PASS wire-off
+PASS worker-off
+PASS probe-off
+PASS joiner-off
+PASS wrong-password-off
+PASS plaintext-comparison
+PASS acceptance checks=19; logs: /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests/spsc
+FUSE_HANDOFF=mutex python3 security/scripts/test_auth.py --output bench/results/concurrency-tests/mutex
+PASS provision
+PASS provision-no-overwrite
+PASS unit
+PASS server-missing-database
+PASS client-missing-password
+PASS reject-auth-downgrade
+PASS reject-invalid-mode
+PASS wire-on
+PASS worker-on
+PASS worker-rejoin
+PASS probe-on
+PASS joiner-on
+PASS wrong-password-on
+PASS wire-off
+PASS worker-off
+PASS probe-off
+PASS joiner-off
+PASS wrong-password-off
+PASS plaintext-comparison
+PASS acceptance checks=19; logs: /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests/mutex

@@ -1,0 +1,30 @@
+PASS ring empty/full/FIFO/counter wrap
+PASS buffer empty/coalescing/pinned-reader/reuse
+PASS ring concurrent transfers=250000
+PASS buffer concurrent publications=250000 (coherent, monotonic, final delivered)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Cannot open login database; run python3 security/scripts/accounts.py demo
+Player 1 left
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+Player 1 timed out (no input for 1 s)
+Player 2 timed out (no input for 1 s)
+Player 1 timed out (no input for 1 s)
+Player 1 left
+PASS authentication unit/lifecycle checks=8773
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Invalid/private login database required (chmod 600, unique name:64-hex-key lines)
+Cannot open login database; run python3 security/scripts/accounts.py demo
+Player 1 left
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+Player 1 timed out (no input for 1 s)
+Player 2 timed out (no input for 1 s)
+PASS authentication unit/lifecycle checks=8387

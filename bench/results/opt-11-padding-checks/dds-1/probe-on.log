@@ -1,0 +1,5 @@
+DDS security: ON, identity client-2, domain 0
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+joined=1 id=1 states=141 moved=1 leave_sent=0 leave_confirmed=0 first_x=168 last_x=588

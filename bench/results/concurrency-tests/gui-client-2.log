@@ -1,0 +1,9 @@
+DDS security: ON, identity client-2, domain 0
+DDS QoS: per topic (#14)
+Join nonce: on
+Leave and timeout: on
+Join request sent
+Join response received
+Screenshot saved to /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests/gui-client-2.png (800x600)
+frames=6000 stress=0 mode=short fps=186.73 elapsed_s=33.728 render_us_mean=1098.6 render_us_p50=955.2 render_us_p99=3328.2 render_us_max=17428.4 gl_renderer="D3D12 (AMD Radeon(TM) Graphics)"
+Left the game

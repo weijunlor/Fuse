@@ -38,6 +38,7 @@ Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <pthread.h>
 #include <GLFW/glfw3.h>
 
@@ -47,6 +48,7 @@ Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
 #include "input.h"
 #include "render.h"
 #include "particles.h"
+#include "dds_security.h"
 #include "interp.h"
 
 // qsort comparison for frame times
@@ -137,9 +139,9 @@ int main(int argc, char **argv)
         }
     }
 
-    // Read FUSE_CLIENT_WAIT and set up the worker's wake-up before it starts
-    net_client_init();
-
+    dds_security_prepare();
+	if (!net_client_prepare())
+		return EXIT_FAILURE;
 	pthread_t thread;
 
     if (pthread_create(&thread, NULL, net_client_worker, NULL) != 0)
@@ -189,6 +191,21 @@ int main(int argc, char **argv)
     // Screenshots: F12 saves screenshot.png; FUSE_SCREENSHOT=<file> saves one
     // automatically after 2 s (for tests and slides)
     const char *str_auto_shot = getenv("FUSE_SCREENSHOT");
+    // Security handshakes can outlast the original two-second capture delay.
+    // Keep the existing default, but let acceptance demos wait for all joins.
+    double d_screenshot_delay = 2.0;
+    const char *str_shot_delay = getenv("FUSE_SCREENSHOT_DELAY");
+    if (str_shot_delay != NULL)
+    {
+        char *p_end;
+        d_screenshot_delay = strtod(str_shot_delay, &p_end);
+        if (*str_shot_delay == '\0' || *p_end != '\0' || !isfinite(d_screenshot_delay) ||
+            d_screenshot_delay < 0.0 || d_screenshot_delay > 60.0)
+        {
+            fprintf(stderr, "FUSE_SCREENSHOT_DELAY must be a number from 0 to 60 seconds\n");
+            return 1;
+        }
+    }
     int int_f12_prev = GLFW_RELEASE;
     double d_prev_s = glfwGetTime();
 
@@ -226,7 +243,7 @@ int main(int argc, char **argv)
         if (int_f12 == GLFW_PRESS && int_f12_prev == GLFW_RELEASE)
             render_save_screenshot("screenshot.png");
         int_f12_prev = int_f12;
-        if (str_auto_shot != NULL && glfwGetTime() > 2.0)
+        if (str_auto_shot != NULL && glfwGetTime() > d_screenshot_delay)
         {
             render_save_screenshot(str_auto_shot);
             str_auto_shot = NULL;

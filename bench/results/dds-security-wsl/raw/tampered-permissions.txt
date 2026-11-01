@@ -1,0 +1,5 @@
+1793347678.406898 [0] dds_securi: Error occurred while validating local permissions: Failed to parse PKCS7 SMIME document: 400FE5A8517C0000:error:10800065:PKCS7 routines:PKCS7_signatureVerify:digest failure:../crypto/pkcs7/pk7_doit.c:1096:
+400FE5A8517C0000:error:10800069:PKCS7 routines:PKCS7_verify:signature failure:../crypto/pkcs7/pk7_smime.c:343:
+(code: 127)
+DDS security: Participant creation failed: Error
+DDS security: ON, identity client-1, domain 0

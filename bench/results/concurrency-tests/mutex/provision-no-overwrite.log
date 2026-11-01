@@ -1,0 +1,2 @@
+usage: accounts.py [-h] [--directory DIRECTORY] {demo,add} [name]
+accounts.py: error: demo accounts already exist; no credentials were changed

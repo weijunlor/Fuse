@@ -1,0 +1,18 @@
+mkdir -p build && gcc -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party -I/home/sy/.local/opt/cyclonedds-0.10.5/include -I/usr/include/stb -DLOG_LEVEL=LOG_LEVEL_INFO -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"/home/sy/.local/opt/cyclonedds-0.10.5/lib"' server/auth.c server/bot.c server/collision.c server/game.c server/lobby.c server/main.c server/net_server.c common/app_client.c common/crypto.c common/dds_security.c common/handoff.c common/net.c common/timing.c common/worker_pool.c generated/fuse.c -o build/server -L/home/sy/.local/opt/cyclonedds-0.10.5/lib -lddsc -pthread -Wl,-rpath,/home/sy/.local/opt/cyclonedds-0.10.5/lib -lcrypto
+mkdir -p build && gcc -std=gnu11 -Wall -Wextra -O2 -Icommon -Igenerated -Ithird_party -I/home/sy/.local/opt/cyclonedds-0.10.5/include -I/usr/include/stb -DLOG_LEVEL=LOG_LEVEL_INFO -DFUSE_DDS_PLUGIN_DIR_DEFAULT='"/home/sy/.local/opt/cyclonedds-0.10.5/lib"' client/atlas.c client/input.c client/interp.c client/main.c client/net_client.c client/render.c client/ui.c build/particles.o common/app_client.c common/crypto.c common/dds_security.c common/handoff.c common/net.c common/timing.c common/worker_pool.c generated/fuse.c -o build/client -L/home/sy/.local/opt/cyclonedds-0.10.5/lib -lddsc -pthread -Wl,-rpath,/home/sy/.local/opt/cyclonedds-0.10.5/lib -lcrypto -lglfw -lstb -lGL -lm
+In file included from client/ui.c:7:
+third_party/stb_easy_font.h: In function ‘stb_easy_font_print’:
+third_party/stb_easy_font.h:205:29: warning: missing braces around initializer [-Wmissing-braces]
+  205 |     stb_easy_font_color c = { 255,255,255,255 }; // use structure copying to avoid needing depending on memcpy()
+      |                             ^
+      |                               {               }
+At top level:
+third_party/stb_easy_font.h:248:12: warning: ‘stb_easy_font_height’ defined but not used [-Wunused-function]
+  248 | static int stb_easy_font_height(char *text)
+      |            ^~~~~~~~~~~~~~~~~~~~
+third_party/stb_easy_font.h:230:12: warning: ‘stb_easy_font_width’ defined but not used [-Wunused-function]
+  230 | static int stb_easy_font_width(char *text)
+      |            ^~~~~~~~~~~~~~~~~~~
+third_party/stb_easy_font.h:194:13: warning: ‘stb_easy_font_spacing’ defined but not used [-Wunused-function]
+  194 | static void stb_easy_font_spacing(float spacing)
+      |             ^~~~~~~~~~~~~~~~~~~~~

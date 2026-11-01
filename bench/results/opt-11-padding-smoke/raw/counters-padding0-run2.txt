@@ -1,0 +1,1 @@
+mode=counters padding=0 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2588402 ns_per_iteration=25.8840 checksum=200000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8

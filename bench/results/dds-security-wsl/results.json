@@ -1,0 +1,262 @@
+[
+  {
+    "test": "participant-default-secure",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "missing-client-identity",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "invalid-mode",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "wrong-role",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "benchmark-launcher-on",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "benchmark-launcher-off",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "deny-writer-GameSnapshot",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "GameSnapshot-security-denial",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "deny-writer-JoinResponse",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "JoinResponse-security-denial",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "deny-writer-UnlistedTopic",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "UnlistedTopic-security-denial",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "deny-read-input",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "missing-key",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "mismatched-key",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "tampered-permissions",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "expired-permissions",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "fuse-secure-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "secure-play",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "secure-movement-and-leave",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "reject-plaintext-peer",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "plaintext-no-game-data",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "reject-untrusted-peer",
+    "passed": true,
+    "detail": "exit=1"
+  },
+  {
+    "test": "untrusted-no-game-data",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "authorized-peer-survives",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "downgrade-secure-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "external-xml-stays-secure",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "fuse-insecure-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "plaintext-regression",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "baseline-secure-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-secure-play",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "baseline-plaintext-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-plaintext-play",
+    "passed": true,
+    "detail": "exit=0"
+  },
+  {
+    "test": "fuse-gui-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-both-clients-joined",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-client-1-window",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-client-2-window",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-client-1",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-client-2",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "gui-both-clients-left",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-gui-server-start",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-real-window",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-real-client-traffic",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-plaintext-pcap-decodes",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-plaintext-capture",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-secure-pcap-decodes",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-secure-capture",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "fuse-secure-pcap-decodes",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "fuse-secure-capture",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "plaintext-has-no-encrypted-frames",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "test": "baseline-rtps-encrypted",
+    "passed": true,
+    "detail": "97"
+  },
+  {
+    "test": "fuse-rtps-encrypted",
+    "passed": true,
+    "detail": "903"
+  }
+]

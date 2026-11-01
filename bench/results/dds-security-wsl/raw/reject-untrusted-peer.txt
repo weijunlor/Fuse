@@ -1,0 +1,9 @@
+1793347687.690371 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+1793347687.690900 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+1793347688.690664 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+1793347688.691392 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+1793347689.690889 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+1793347689.691516 [0]        fsm: Begin handshake reply failed: Certificate not valid: error: authority and subject key identifier mismatch; subject: /O=FUSE/CN=server(code: 200)
+DDS security: ON, identity client-3, domain 0
+DDS QoS: per topic (#14)
+joined=0 id=0 states=0 moved=0 leave_sent=0 leave_confirmed=0 first_x=-1 last_x=-1

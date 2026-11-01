@@ -1,0 +1,9 @@
+DDS security: OFF (explicit plaintext comparison)
+Waiting... (60 ticks/s, a snapshot every 1 ticks)
+Leave and timeout: on
+DDS QoS: per topic (#14)
+Join request received (nonce 69210477e5f4511e)
+Join nonce: on
+Join response sent: player 1
+Leave received from player 1
+Player 1 left

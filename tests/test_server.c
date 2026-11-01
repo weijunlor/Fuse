@@ -25,7 +25,8 @@ static void reset_test(void)
 
 static JoinResult join(uint64_t a_nonce)
 {
-	assert(lobby_signal_join(a_nonce));
+	JoinRequest request = { .nonce = a_nonce };
+	assert(lobby_signal_join(&request));
 	lobby_poll();
 	JoinResult result;
 	assert(lobby_take_result(&result));
@@ -47,17 +48,20 @@ static GameSnapshot take_snapshot(void)
 static void setup_players(void)
 {
 	reset_test();
-	assert(join(100).u8_player_id == 1 && join(101).u8_player_id == 2);
+	assert(join(100).player_id == 1 && join(101).player_id == 2);
 	arr_Players[0].x = 100; arr_Players[0].y = 100;
 	arr_Players[1].x = 600; arr_Players[1].y = 400;
 }
 
 int main(void)
 {
+	// FUSE_HANDOFF=spsc (default) or mutex: make test runs both. Login is off
+	// (auth_init() not called), so joins take the nonce-only path.
+	assert(handoff_init());
 	setup_players();
 	tick_many(LOBBY_WAIT_TICKS);
 	assert(u8_phase == PHASE_COUNTDOWN);
-	assert(join(999).u8_status == JOIN_IN_GAME && join(100).u8_player_id == 1);
+	assert(join(999).status == JOIN_IN_GAME && join(100).player_id == 1);
 	tick_many(COUNTDOWN_TICKS);
 	assert(u8_phase == PHASE_PLAYING);
 	game_set_keys(0, KEY_RIGHT); game_set_keys(MAX_PLAYERS + 1, KEY_RIGHT);
@@ -80,14 +84,14 @@ int main(void)
 	game_tick(); assert(take_snapshot().bomb_holder == 2);
 	tick_many(PASS_COOLDOWN_TICKS - 1); assert(u8_bomb_holder == 2);
 	game_tick(); assert(u8_bomb_holder == 1);
-	assert(join(999).u8_status == JOIN_IN_GAME);
-	assert(lobby_signal_leave(2)); lobby_poll();
+	assert(join(999).status == JOIN_IN_GAME);
+	assert(lobby_submit_leave(&(Leave){ .player_id = 2 })); lobby_poll();
 	u_fuse_ticks = 1;
 	game_tick(); assert(u8_phase == PHASE_GAME_OVER && arr_u8_lives[0] == 3);
 	puts("PASS same-tick bomb snapshot, pass-back timing and departure win");
 
 	setup_players();
-	assert(join(102).u8_status == JOIN_OK);
+	assert(join(102).status == JOIN_OK);
 	u8_phase = PHASE_PLAYING; u8_bomb_holder = 1; u_fuse_ticks = FUSE_TICKS;
 	arr_u8_lives[1] = 0;
 	arr_Players[1].x = 153; arr_Players[1].y = 100;
@@ -95,7 +99,7 @@ int main(void)
 	game_set_keys(1, KEY_RIGHT); game_tick();
 	assert(arr_Players[0].x == 103 && !(take_snapshot().players[1].flags & PF_ALIVE));
 	reset_test(); assert(lobby_add_bots(1));
-	assert(join(100).u8_player_id == 2);
+	assert(join(100).player_id == 2);
 	arr_u64_last_input_ns[0] = arr_u64_last_input_ns[1] = 1;
 	lobby_check_timeouts(timing_now_ns());
 	assert(arr_Players[0].b_active && !arr_Players[1].b_active);

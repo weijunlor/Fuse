@@ -1,0 +1,13 @@
+{
+  "recorded_utc": "2026-10-30T08:42:57.163893+00:00",
+  "cyclonedds": "0.10.5",
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "packet_source": "Cyclone DDS built-in UDP capture; synthetic IP/UDP headers",
+  "binaries": {
+    "server": "eaf71cdae675df0c03de559656ee02a3fe0fcc3bea79d9d65acfca98cbe5abd2",
+    "client": "0438f5d02584bdb5c5419cdb60ca13c31695b09e6485406ddb68e0163ef0a501",
+    "baseline_server": "ed422d70ecb574529fb029a5297e256a7333806c7f257732815e0a8ca7f8869b",
+    "baseline_client": "b0f4d4d15091cd73ca2a6adb2e539be33a3b56e82f4bad9dd425e4b27e2075e0",
+    "dds_security_probe": "65ba181a8fa14e79a12e7621d7ba3fbd3fa35190ea8a58e3a43e1101c6150862"
+  }
+}

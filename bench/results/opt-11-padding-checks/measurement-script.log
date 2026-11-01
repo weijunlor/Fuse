@@ -1,0 +1,10 @@
+sort: cannot read: '/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor': No such file or directory
+mode=counters padding=0 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=3362868 ns_per_iteration=33.6287 checksum=200000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8
+mode=counters padding=1 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=679158 ns_per_iteration=6.7916 checksum=200000 counter_stride=64 ring_bytes=8320 head_offset=0 tail_offset=64 values_offset=128
+mode=counters padding=1 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=624769 ns_per_iteration=6.2477 checksum=200000 counter_stride=64 ring_bytes=8320 head_offset=0 tail_offset=64 values_offset=128
+mode=counters padding=0 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2588402 ns_per_iteration=25.8840 checksum=200000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8
+mode=ring padding=0 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2449007 ns_per_iteration=24.4901 checksum=5000050000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8
+mode=ring padding=1 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2208330 ns_per_iteration=22.0833 checksum=5000050000 counter_stride=64 ring_bytes=8320 head_offset=0 tail_offset=64 values_offset=128
+mode=ring padding=1 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2491897 ns_per_iteration=24.9190 checksum=5000050000 counter_stride=64 ring_bytes=8320 head_offset=0 tail_offset=64 values_offset=128
+mode=ring padding=0 cache_line=64 iterations=100000 cpu0=0 cpu1=1 elapsed_ns=2457558 ns_per_iteration=24.5756 checksum=5000050000 counter_stride=8 ring_bytes=8200 head_offset=0 tail_offset=4 values_offset=8
+Saved setup, commands, per-run results and checksums to bench/results/opt-11-padding-smoke

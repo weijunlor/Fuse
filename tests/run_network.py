@@ -28,6 +28,9 @@ for name, args, overrides, bots, wait_mode, publish_mode in cases:
     env = os.environ.copy()
     for key in ("FUSE_JOIN_NONCE", "FUSE_LEAVE", "FUSE_QOS", "FUSE_SERVER_WAIT", "FUSE_WRITE_UNDER_LOCK"):
         env.pop(key, None)
+    # These scenarios check the wait/publish modes, not security: run the
+    # explicit plaintext comparison mode (no certificates or login needed)
+    env.update({"FUSE_DDS_SECURITY": "off", "FUSE_AUTH": "off"})
     env.update(overrides)
     env["CYCLONEDDS_URI"] = (
         '<CycloneDDS><Domain id="any"><Discovery><Tag>'

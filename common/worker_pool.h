@@ -13,9 +13,17 @@ synchronisation at all (the single-thread "before"). */
 
 #include <pthread.h>
 #include <stdbool.h>
+#include "cache_padding.h"
 
 // Upper limit on threads per pool (the test laptop has 24 hardware threads)
 #define POOL_MAX_THREADS 32
+
+// Each particle worker writes one result per tick. PADDING=1 gives each
+// element its own cache line; PADDING=0 keeps adjacent ints for comparison.
+typedef struct
+{
+    FUSE_CACHE_ALIGN int int_live;
+} PoolChunkResult;
 
 // A job: called once on every worker with that worker's index (0 = caller)
 // and the number of workers, so each one can pick its own share of the data

@@ -1,0 +1,2 @@
+DDS security: ON, identity client-1, domain 0
+denied=1 topic=Input result=-13

@@ -18,7 +18,7 @@
 # The observer's window is open, so frames are paced by the display.
 #
 # Settings (environment): RATES ["60 30 20 10"], TRIALS [3], DURATION [12] s.
-# Runs on DDS domain 42 (CYCLONEDDS_URI) so a game already open is not joined.
+# Uses the security policy's domain 0; refuses to run beside an existing server.
 # Results: bench/results/<label>/{setup.txt, raw/smooth.txt, report.txt}
 
 set -euo pipefail
@@ -30,7 +30,14 @@ TRIALS=${TRIALS:-3}
 DURATION=${DURATION:-12}
 OUT=bench/results/$LABEL
 mkdir -p "$OUT/raw"
-export CYCLONEDDS_URI='<Domain Id="42"/>'
+source bench/security_env.sh
+dds_check_clients 3
+for str_server in server baseline_server; do
+    if pgrep -x "$str_server" > /dev/null; then
+        echo "Stop the existing $str_server before running the smoothness comparison" >&2
+        exit 1
+    fi
+done
 
 for bin in build/server build/client; do
     [ -x "$bin" ] || { echo "Missing $bin (make)" >&2; exit 1; }
@@ -52,15 +59,15 @@ RAW=$OUT/raw/smooth.txt
 for rate in $RATES; do
     for trial in $(seq "$TRIALS"); do
         for mode in off on; do
-            build/server --snapshot-hz "$rate" > /dev/null 2>&1 &
+            dds_run server build/server --snapshot-hz "$rate" > /dev/null 2>&1 &
             int_server_pid=$!
             arr_mover_pids=()
-            for _ in 1 2; do
-                FUSE_AUTO_MOVE=1 build/client > /dev/null 2>&1 &
+            for int_client in 1 2; do
+                FUSE_AUTO_MOVE=1 dds_run "client-$int_client" build/client > /dev/null 2>&1 &
                 arr_mover_pids+=($!)
             done
             sleep 1
-            str_line=$(build/client --interp "$mode" --smooth-stats "$DURATION" 2> /dev/null | grep '^interp=' || echo "interp=$mode failed")
+            str_line=$(dds_run client-3 build/client --interp "$mode" --smooth-stats "$DURATION" 2> /dev/null | grep '^interp=' || echo "interp=$mode failed")
             echo "rate=$rate trial=$trial $str_line" | tee -a "$RAW"
             cleanup
             int_server_pid=0

@@ -46,6 +46,16 @@ JOINERS=${JOINERS:-4}
 STAGGER=${STAGGER:-1.5}
 STAY=${STAY:-10}
 MODES=${MODES:-default qos nonce}
+source bench/security_env.sh
+dds_check_clients "$JOINERS"
+
+# A password proof requires a nonce, so disabling nonces is meaningful only
+# with both security layers explicitly off. Never silently measure the same
+# authenticated behavior under the labels "default", "qos" and "nonce".
+if [ "${FUSE_AUTH:-on}" != off ] && [[ " $MODES " =~ [[:space:]](default|qos|tuned)[[:space:]] ]]; then
+    echo 'Nonce-off comparisons require FUSE_DDS_SECURITY=off FUSE_AUTH=off; use MODES=nonce to test authenticated joins.' >&2
+    exit 1
+fi
 
 for bin in build/server build/dds_joiner; do
     [ -x "$bin" ] || { echo "Missing $bin (make && make build/dds_joiner)" >&2; exit 1; }
@@ -61,7 +71,14 @@ mkdir -p "$RAW"
 
 # Never leave the loopback dropping packets, whatever happens
 clear_loss() { sudo tc qdisc del dev lo root 2> /dev/null || true; }
-cleanup() { pkill -x server 2> /dev/null || true; pkill -x dds_joiner 2> /dev/null || true; clear_loss; }
+int_server_pid=0
+arr_joiner_pids=()
+cleanup() {
+    [ "$int_server_pid" -eq 0 ] || kill "$int_server_pid" 2>/dev/null || true
+    for int_pid in "${arr_joiner_pids[@]}"; do kill "$int_pid" 2>/dev/null || true; done
+    wait 2>/dev/null || true
+    clear_loss
+}
 trap cleanup EXIT
 
 source bench/setup_info.sh
@@ -83,17 +100,21 @@ for str_qos in $MODES; do
             esac
             # Loss applies to the whole trial, discovery included
             [ "$int_loss" = 0 ] || sudo tc qdisc add dev lo root netem loss "$int_loss%"
-            build/server > /dev/null 2>&1 &
+            dds_run server build/server > /dev/null 2>&1 &
+            int_server_pid=$!
             sleep 0.5
             : > "$str_file"
-            for _ in $(seq "$JOINERS"); do
-                build/dds_joiner "$STAY" 2> /dev/null >> "$str_file" &
+            arr_joiner_pids=()
+            for int_client in $(seq "$JOINERS"); do
+                dds_run "client-$int_client" build/dds_joiner "$STAY" 2> /dev/null >> "$str_file" &
+                arr_joiner_pids+=($!)
                 sleep "$STAGGER"
             done
-            wait $(jobs -p | grep -v "^$(pgrep -x server)$") 2> /dev/null || true
-            # wait above may return early; make sure every joiner has finished
-            while pgrep -x dds_joiner > /dev/null; do sleep 0.2; done
-            pkill -x server || true
+            for int_pid in "${arr_joiner_pids[@]}"; do wait "$int_pid"; done
+            arr_joiner_pids=()
+            kill "$int_server_pid" || true
+            wait "$int_server_pid" 2>/dev/null || true
+            int_server_pid=0
             sleep 0.5
             clear_loss
         done

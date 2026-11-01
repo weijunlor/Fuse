@@ -1,0 +1,20 @@
+PASS provision
+PASS provision-no-overwrite
+PASS unit
+PASS server-missing-database
+PASS client-missing-password
+PASS reject-auth-downgrade
+PASS reject-invalid-mode
+PASS wire-on
+PASS worker-on
+PASS worker-rejoin
+PASS probe-on
+PASS joiner-on
+PASS wrong-password-on
+PASS wire-off
+PASS worker-off
+PASS probe-off
+PASS joiner-off
+PASS wrong-password-off
+PASS plaintext-comparison
+PASS acceptance checks=19; logs: /mnt/c/Users/sy/Desktop/Fuse/bench/results/concurrency-tests/mutex

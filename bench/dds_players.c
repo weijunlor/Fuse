@@ -15,9 +15,10 @@ Last line:
   (tick_skips: snapshots whose tick is not the previous one + 1, i.e. a
   snapshot the server never sent; at --snapshot-hz below 60 every one counts)
 
-Run it on its own DDS domain to keep away from a game already running:
-  CYCLONEDDS_URI='<Domain Id="42"/>' build/server &
-  CYCLONEDDS_URI='<Domain Id="42"/>' build/dds_players 20 10 10 */
+Run with no other server on domain 0. Select a client DDS identity and
+provision the client-1/client-2 application accounts for its two players:
+  bash security/scripts/run_secure.sh server build/server
+  bash security/scripts/run_secure.sh client-1 build/dds_players 20 10 10 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -26,13 +27,26 @@ Run it on its own DDS domain to keep away from a game already running:
 #include "fuse.h"
 #include "types.h"
 #include "config.h"
+#include "app_client.h"
 
 int main(int argc, char **argv)
 {
     double d_seconds = argc > 1 ? atof(argv[1]) : 10.0;
     int arr_keys[2] = { argc > 2 ? atoi(argv[2]) : KEY_RIGHT, argc > 3 ? atoi(argv[3]) : KEY_LEFT };
+    AppClient clients[2];
+    JoinRequest req[2];
+    // Account selection happens before DDS starts any threads. The two
+    // application logins share one authorised client DDS participant.
+    for (int k = 0; k < 2; k++)
+    {
+        char name[16];
+        snprintf(name, sizeof name, "client-%d", k + 1);
+        setenv("FUSE_USERNAME", name, 1);
+        if (!app_client_init(&clients[k]) || !app_client_request(&clients[k], &req[k]))
+            return 2;
+    }
     NetTopics net;
-    net_create_topics(&net);
+    net_create_topics(&net, NET_ROLE_CLIENT);
     dds_entity_t join_writer = net_create_writer(&net, net.join_topic, NET_RELIABLE_ALL);
     dds_entity_t response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
     dds_entity_t snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
@@ -46,9 +60,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < JOIN_TAKE; i++) arr_p_resp[i] = JoinResponse__alloc();
     void *p_snap = GameSnapshot__alloc(); dds_sample_info_t info;
 
-    JoinRequest req[2] = {0};
     int ids[2] = {0, 0};
-    req[0].nonce = net_random_nonce(); req[1].nonce = net_random_nonce();
     dds_time_t start = dds_time(), end = start + (dds_duration_t)(d_seconds * 1e9);
     dds_time_t last_req = start, last_input = 0;
     dds_sleepfor(DDS_MSECS(1000));
@@ -70,7 +82,7 @@ int main(int argc, char **argv)
             const JoinResponse *r = arr_p_resp[i];
             if (!infos[i].valid_data) continue;
             for (int k = 0; k < 2; k++)
-                if (r->nonce == req[k].nonce && r->status == JOIN_OK && !ids[k])
+                if (!ids[k] && app_client_response(&clients[k], &req[k], r))
                 {
                     ids[k] = r->player_id;
                     printf("%6.2f s  joined as player %d (%.0f ms after start)\n",
@@ -82,6 +94,8 @@ int main(int argc, char **argv)
             for (int k = 0; k < 2; k++) if (ids[k])
             {
                 Input in = { .player_id = (uint8_t)ids[k], .keys = (uint8_t)arr_keys[k] };
+                if (!app_client_input(&clients[k], &in))
+                    return 2;
                 dds_write(input_writer, &in);
             }
             last_input = now;
@@ -121,5 +135,8 @@ int main(int argc, char **argv)
     double mean = n ? sum / n : 0;
     printf("snapshots=%d gap_ms mean=%.3f sd=%.3f min=%.3f max=%.3f gaps>25ms=%d tick_skips=%d\n",
            n + 1, mean, n ? sqrt(sum2 / n - mean * mean) : 0, gmin, gmax, big_gaps, tick_skips);
+    for (int k = 0; k < 2; k++)
+        crypto_clear(&clients[k], sizeof clients[k]);
+    dds_delete(net.participant);
     return 0;
 }

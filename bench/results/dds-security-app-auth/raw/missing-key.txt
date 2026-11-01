@@ -1,0 +1,1 @@
+DDS security: Cannot read /tmp/fuse-security-tests-lsnxats2/missing/identities/client-1/key.pem; run bash security/scripts/make_certs.sh

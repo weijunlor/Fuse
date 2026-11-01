@@ -3,13 +3,17 @@
 #include <stdio.h>
 #include "../client/input.c"
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static int arr_pressed[GLFW_KEY_LAST + 1];
+static uint8_t u8_keys;
 static int int_wakes;
 
-void net_client_wake(void)
+// Stand-in for client/net_client.c: same contract (store the keys, wake the
+// worker only when they changed), without DDS or the atomic
+void net_client_set_keys(uint8_t a_u8_keys)
 {
-	int_wakes++;
+	if (a_u8_keys != u8_keys)
+		int_wakes++;
+	u8_keys = a_u8_keys;
 }
 
 int glfwGetKey(GLFWwindow *a_p_window, int a_int_key)

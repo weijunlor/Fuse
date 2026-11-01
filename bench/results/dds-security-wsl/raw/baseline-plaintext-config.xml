@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<CycloneDDS xmlns="https://cdds.io/config"><Domain id="0"><Tracing><PacketCaptureFile>/mnt/c/Users/sy/Desktop/Fuse/bench/results/dds-security-wsl/packets/baseline-plaintext.pcap</PacketCaptureFile></Tracing></Domain></CycloneDDS>

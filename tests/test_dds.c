@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 	int bots = atoi(argv[1]);
 	assert(bots == 0 || bots == 1);
 	NetTopics net;
-	net_create_topics(&net);
+	net_create_topics(&net, NET_ROLE_CLIENT);
 	response_reader = net_create_reader(&net, net.response_topic, NET_RELIABLE_ALL);
 	snapshot_reader = net_create_reader(&net, net.snapshot_topic, NET_BEST_EFFORT);
 	join_writer = net_create_writer(&net, net.join_topic, NET_RELIABLE_ALL);

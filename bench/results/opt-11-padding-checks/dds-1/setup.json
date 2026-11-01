@@ -1,0 +1,13 @@
+{
+  "kernel": "6.18.54.1-microsoft-standard-WSL2",
+  "handoff": "spsc",
+  "openssl": "OpenSSL 3.0.2 15 Mar 2022 (Library: OpenSSL 3.0.2 15 Mar 2022)",
+  "cyclonedds": "0.10.5",
+  "binaries": {
+    "server": "f0148a3b4ca5600aed6d117b3d33f8dd1dd79d514bf7855a853c10f2ccf44bc6",
+    "client": "65fa9167c092fcb94a7d9df6cb743e715ee7221b74efd2320df4afb09b3b4241",
+    "test_auth": "166230468f9b2a61d6e20df7328630005f3d486e6b2d0647950d0ddaf5fd0b47",
+    "auth_probe": "48346547349ed828b29c3d0acf93e4f7831f6cf0517c5013d42b8cab7dc86957",
+    "auth_worker": "97fd75a8e6e9b9c5d1df1cde56adda10e844a4acde5c085d3cd8fcdff8da8a30"
+  }
+}

@@ -1,0 +1,2 @@
+DDS security: OFF (explicit plaintext comparison)
+joined=1 id=1 states=30 moved=1 leave_sent=0 leave_confirmed=0 first_x=611 last_x=584

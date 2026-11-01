@@ -1,0 +1,8 @@
+build/bench_false_share_0 counters 100000 0 1 
+build/bench_false_share_1 counters 100000 0 1 
+build/bench_false_share_1 counters 100000 0 1 
+build/bench_false_share_0 counters 100000 0 1 
+build/bench_false_share_0 ring 100000 0 1 
+build/bench_false_share_1 ring 100000 0 1 
+build/bench_false_share_1 ring 100000 0 1 
+build/bench_false_share_0 ring 100000 0 1 

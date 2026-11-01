@@ -1,0 +1,8 @@
+DDS security: OFF (explicit plaintext comparison)
+DDS QoS: per topic (#14)
+Join nonce: on
+Join request sent
+Join response received
+Leave and timeout: on
+Left the game
+worker_id=1 moved=1
