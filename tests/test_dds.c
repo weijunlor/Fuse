@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "net.h"
 #include "types.h"
 #include "config.h"
@@ -13,9 +14,18 @@ static uint32_t arr_seq[2];
 static dds_time_t last_send;
 static GameSnapshot latest;
 
+// DDS time is CLOCK_REALTIME. Test budgets must survive wall-clock corrections
+// (notably WSL host synchronization) without expiring before the game advances.
+static dds_time_t monotonic_now(void)
+{
+	struct timespec ts;
+	assert(clock_gettime(CLOCK_MONOTONIC, &ts) == 0);
+	return (dds_time_t)ts.tv_sec * DDS_NSECS_IN_SEC + ts.tv_nsec;
+}
+
 static void pump(void)
 {
-	if (dds_time() - last_send >= DDS_MSECS(50))
+	if (monotonic_now() - last_send >= DDS_MSECS(50))
 	{
 		for (int i = 0; i < 2; i++)
 		{
@@ -23,7 +33,7 @@ static void pump(void)
 			Input input = {.player_id = arr_ids[i], .seq = ++arr_seq[i], .keys = arr_keys[i]};
 			assert(dds_write(input_writer, &input) == DDS_RETCODE_OK);
 		}
-		last_send = dds_time();
+		last_send = monotonic_now();
 	}
 	GameSnapshot sample;
 	void *samples[] = {&sample};
@@ -37,13 +47,13 @@ static void pump(void)
 static JoinResponse join(uint64_t a_nonce)
 {
 	JoinRequest request = {.nonce = a_nonce};
-	dds_time_t deadline = dds_time() + DDS_SECS(4), last_request = 0;
-	while (dds_time() < deadline)
+	dds_time_t deadline = monotonic_now() + DDS_SECS(4), last_request = 0;
+	while (monotonic_now() < deadline)
 	{
-		if (dds_time() - last_request >= DDS_MSECS(200))
+		if (monotonic_now() - last_request >= DDS_MSECS(200))
 		{
 			assert(dds_write(join_writer, &request) == DDS_RETCODE_OK);
-			last_request = dds_time();
+			last_request = monotonic_now();
 		}
 		JoinResponse response;
 		void *samples[] = {&response};
@@ -59,8 +69,8 @@ static JoinResponse join(uint64_t a_nonce)
 
 static void wait_phase(uint8_t a_phase, int a_seconds)
 {
-	dds_time_t deadline = dds_time() + DDS_SECS(a_seconds);
-	while (dds_time() < deadline)
+	dds_time_t deadline = monotonic_now() + DDS_SECS(a_seconds);
+	while (monotonic_now() < deadline)
 	{
 		pump();
 		if (latest.tick && latest.phase == a_phase) return;
@@ -97,8 +107,8 @@ int main(int argc, char **argv)
 	arr_keys[0] = KEY_RIGHT | KEY_DASH;
 	last_send = 0;
 	bool dashed = false;
-	dds_time_t deadline = dds_time() + DDS_MSECS(180);
-	while (dds_time() < deadline)
+	dds_time_t deadline = monotonic_now() + DDS_MSECS(180);
+	while (monotonic_now() < deadline)
 	{
 		pump();
 		if ((latest.players[index].flags & PF_DASHING) &&

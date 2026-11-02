@@ -63,6 +63,11 @@ same account name on its client. Keep the database private: derived login keys
 are sufficient to generate valid login proofs. Neither passwords nor database
 files belong in source control or the submission zip.
 
+For the default `client-1` through `client-5` accounts, `lan.py export/import`
+transfers each client's matching DDS and application credentials together. Follow
+the [LAN setup instructions](../README.md#play-across-computers-on-the-same-lan);
+generate the demo accounts on the provisioning host, not independently on each PC.
+
 ## Protocol and lifecycle
 
 The existing fixed-size IDL layout is unchanged; its reserved proof/session/MAC

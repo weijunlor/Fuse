@@ -10,7 +10,7 @@ Packages (libssl-dev: OpenSSL headers for the login code in `common/crypto.c`
 and the certificate check in `common/dds_security.c`):
 
 ```bash
-sudo apt install -y pkg-config libssl-dev libgl1-mesa-dev libglfw3-dev libstb-dev cyclonedds-dev cyclonedds-tools
+sudo apt install -y pkg-config libssl-dev libgl1-mesa-dev libglfw3-dev libstb-dev cyclonedds-dev cyclonedds-tools iproute2
 ```
 
 On native Ubuntu 24.04 or later, the packaged Cyclone DDS 0.10.5 includes the
@@ -123,6 +123,132 @@ Server profiling options keep each slower path runnable:
 `--snapshot-hz H` selects a divisor of 60; `--player-timeout S` sets the
 heartbeat timeout (5 seconds by default, 0 disables it). Bots use the same
 game rules and are exempt from network timeouts.
+
+## Play across computers on the same LAN
+
+Run **one server** and use a different player number (1–5) for each client.
+Windows/WSL and native Ubuntu computers can play together. Use the same game
+revision on all computers. Connections stay on your LAN; no relay or internet
+server is involved. Keep DDS encryption and application authentication enabled.
+
+**1. Provision on the host only.** Follow the first-time Build/account setup above
+on the host, then export one personal bundle for each remote player in Ubuntu/WSL:
+
+```bash
+source security/scripts/env.sh
+python3 security/scripts/lan.py export --player 2 --output "$HOME/player-2.fuse-lan"
+```
+
+Bundles contain that player's password, identity key/certificate, signed permissions,
+governance and public CA certificates. They exclude the CA private keys, host account
+database and other players' credentials. Transfer each bundle privately to its intended
+player (for example using SSH or a USB drive), then delete the transfer copies.
+Bundles must be exported outside the source checkout and are ignored by Git.
+
+**2. Import on each client.** Install the Build dependencies and build the game on
+that computer, but **do not generate new CAs or demo accounts there**. Import the
+host's bundle instead, from an Ubuntu/WSL terminal in the project directory:
+
+```bash
+source security/scripts/env.sh
+python3 security/scripts/lan.py import /path/to/player-2.fuse-lan
+make -j4
+make build/dds_security_probe
+```
+
+Import validates the certificates and signed policies, installs private files on
+the Linux filesystem, and regenerates runtime paths for that computer. Reimporting
+an identical bundle is safe. Conflicting credentials are refused before installation.
+If the client already has independently generated credentials, preserve those and
+select fresh directories with `FUSE_SECURITY_DIR` and `FUSE_AUTH_DIR`; export the
+same variables in every terminal used to import, check or launch that client.
+
+**3. Start the host and connect.** The server prints available addresses and client
+commands. Use its LAN IPv4 address, such as `192.168.1.50`:
+
+```bat
+REM On the host:
+.\run-server.bat
+REM On the second computer:
+.\run-client.bat --player 2 --server 192.168.1.50
+```
+
+On native Ubuntu use `bash run-server.sh` and
+`bash run-client.sh --player 2 --server 192.168.1.50`. Click **Join Game** in the
+existing menu. The host can also run a client with its own unused player number.
+Explicit server connections use unicast DDS discovery, so multicast is unnecessary.
+Omitting `--server` retains automatic discovery. Both launchers accept
+`--interface NAME` (the Linux interface name, such as `eth0` or `wlan0`); otherwise
+an explicit-server client selects the interface from its route to that server.
+
+**4. Check connectivity before changing the network.** With the host running, run
+this on a client using its assigned player number:
+
+```bash
+source security/scripts/env.sh
+python3 security/scripts/lan.py check --server 192.168.1.50 --player 2
+```
+
+Run the check while that account is logged out of the game. It takes about 12 seconds
+and checks routing, WSL mode, credentials, secure DDS discovery, authenticated joining,
+movement, snapshots and Leave. Login rejection means the server was reached; import
+the matching host bundle. A full/in-progress lobby is reported separately. A discovery
+timeout can mean a wrong address, stopped server, different CAs, routing, a firewall
+or Wi-Fi client isolation; it does not establish which one caused the failure.
+
+**Windows/WSL setup, only if needed:** from PowerShell in the project directory:
+
+```powershell
+.\security\scripts\setup_lan.ps1                  # inspect only; no admin needed
+.\security\scripts\setup_lan.ps1 -EnableMirrored  # only if WSL currently uses NAT
+```
+
+NAT addresses printed inside WSL normally cannot be reached from another computer.
+Mirrored networking requires Windows 11 22H2 or later and a current WSL installation.
+The helper backs up `.wslconfig` and preserves unrelated settings. After enabling it,
+save your work in **all** WSL terminals, run `wsl --shutdown`, reopen Ubuntu, restart
+the host, and retry the check. The helper never shuts down WSL automatically.
+See [Microsoft's WSL networking documentation](https://learn.microsoft.com/en-us/windows/wsl/networking#mirrored-mode-networking).
+
+If connectivity checks indicate firewall filtering after the address, routing and
+credentials have been checked, run this in an **Administrator PowerShell** on the
+affected Windows computer, substituting your actual LAN subnet:
+
+```powershell
+.\security\scripts\setup_lan.ps1 -ConfigureFirewall -LanSubnet 192.168.1.0/24
+```
+
+This adds/updates only the `FUSE-LAN-UDP` Windows rule and `FUSE-LAN-UDP-WSL`
+Hyper-V rule, scoped to that subnet and **Private** networks. It allows inbound
+UDP 7400–7401 and 7410–7429 (domain 0, participant indices 0–9), and preserves
+firewall defaults. Use a trusted Private network; the helper does not change the
+network's category. `-WhatIf` previews either setup operation.
+
+On Ubuntu, inspect `sudo ufw status` first. If UFW is active and blocking the game,
+allow only your LAN subnet and the same UDP ports:
+
+```bash
+sudo ufw allow from 192.168.1.0/24 to any port 7400:7401 proto udp
+sudo ufw allow from 192.168.1.0/24 to any port 7410:7429 proto udp
+```
+
+Guest/school Wi-Fi may block direct device-to-device traffic. Use a LAN or hotspot
+that permits it. One host per session is supported; the server IP is a DDS discovery
+address, not a separate room identifier. Direct launch/configuration also accepts
+`FUSE_SERVER_IP` and `FUSE_DDS_INTERFACE`; launcher flags override these variables.
+
+LAN regressions (inside Ubuntu/WSL after building the probe):
+
+```bash
+python3 security/scripts/test_lan.py -v
+unshare -Urn python3 security/scripts/test_lan.py --integration
+```
+
+The second command uses temporary user/network namespaces and a private virtual
+Ethernet link, tests unicast gameplay and rejoining without changing the host's
+interfaces/firewall, and requires unprivileged user namespaces to be available.
+It supplements a real two-computer test; run `lan.py check` on the second computer
+and verify both game windows show the same players and movement.
 
 ## Checks
 

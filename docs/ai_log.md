@@ -2,6 +2,35 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, Codex: implemented the requested direct LAN multiplayer plan for
+Windows/WSL and native Ubuntu. Client launchers accept a server IPv4 address;
+both launchers accept a Linux interface name. Secure generated DDS configuration
+uses routed interface selection, unicast peers and bounded participant indices.
+Added per-player credential export/import, signed-policy validation, conflict and
+archive-path protection, secure connectivity diagnostics, and an inspection-first
+Windows helper with explicit mirrored-networking and subnet-scoped firewall options.
+Documented host/client provisioning, transfer, setup and troubleshooting. Diagnostic
+probes report DDS matching/login status and complete authenticated Leave even when
+their main measurement window expires. Replaced wall-clock diagnostic/test deadlines
+with monotonic time after intermittent phase-transition timeouts, preserving budgets.
+
+Validation: built game and probes in Ubuntu 22.04 WSL with Cyclone DDS 0.10.5.
+All 13 LAN unit regressions passed (including encrypted-key rejection without a
+prompt, credential permissions/conflicts, malformed bundles and symlink protection).
+An unprivileged user/network namespace test connected separate network stacks over
+a private veth link with multicast disabled: secure joining, movement, snapshots,
+Leave, rejoining, login rejection, and two concurrent clients observing both players
+with distinct IDs all passed. `make test` and all six `make test-network` scenarios
+passed; authentication acceptance passed 19 checks and final DDS security acceptance
+passed 42 checks, including decoded encrypted/plaintext packet captures. Regular
+secure launchers and the production client worker passed automatic same-computer
+discovery, movement and Leave using the existing local credentials. ShellCheck and
+Windows PowerShell syntax/config preservation/idempotence/duplicate checks passed;
+inspection and both setup operations' `-WhatIf` previews were exercised. System
+network/firewall settings were left unchanged. Two-physical-computer verification
+remains pending; this PC currently reports WSL NAT and a Public Ethernet profile.
+Evidence and preserved earlier timeout logs: ignored `build/lan-validation/`.
+
 2026-11-02, zhikai / Codex: replaced first-living-slot bomb assignment with a
 uniform random choice from active players who still have lives. This applies
 at round start and when a holder departs; sparse IDs and eliminated slots are

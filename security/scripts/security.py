@@ -14,6 +14,8 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
+import lan_network
+
 CONFIG = Path(__file__).resolve().parents[1] / "config"
 IDENTITIES = ("server", *(f"client-{i}" for i in range(1, 6)))
 
@@ -47,7 +49,8 @@ def write(path, data):
 
 def check_pair(cert, key, ca=None):
     run("openssl", "x509", "-checkend", "0", "-noout", "-in", cert)
-    public_key = run("openssl", "pkey", "-in", key, "-pubout")
+    # Imported credentials must never open an interactive passphrase prompt.
+    public_key = run("openssl", "pkey", "-in", key, "-passin", "pass:", "-pubout")
     if public_key != run("openssl", "x509", "-in", cert, "-pubkey", "-noout"):
         raise RuntimeError(f"Certificate and private key do not match: {cert}")
     run("openssl", "verify", "-CAfile", ca or cert, cert)
@@ -164,6 +167,7 @@ def make_config(root, identity):
         raise RuntimeError("Security plugins not found; source security/scripts/env.sh")
     document = ET.Element("CycloneDDS", xmlns="https://cdds.io/config")
     domain = ET.SubElement(document, "Domain", id="0")
+    lan_network.configure(domain, identity)
     security = ET.SubElement(domain, "Security")
     for section, plugin, init, finalize in (
             ("Authentication", "auth", "authentication", "authentication"),
@@ -189,6 +193,7 @@ def make_config(root, identity):
     output = root / "runtime" / f"{identity}.xml"
     write(output, ET.tostring(document, encoding="utf-8", xml_declaration=True))
     print(output)
+    return output
 
 
 def main():
