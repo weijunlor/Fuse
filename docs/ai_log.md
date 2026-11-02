@@ -2,43 +2,6 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
-2026-11-02, zhikai / Codex: replaced first-living-slot bomb assignment with a
-uniform random choice from active players who still have lives. This applies
-at round start and when a holder departs; sparse IDs and eliminated slots are
-handled explicitly. Uses the server's seeded PRNG with rejection sampling to
-avoid modulo bias. Validation: a fixed-seed regression exercises all 32 eligible
-player sets (0-5 players), rejects inactive/eliminated slots and checks every
-eligible ID is selectable. `make test` passed in SPSC and mutex modes, including
-existing game/input regressions; rebuilt build/server successfully.
-
-2026-11-02, zhikai / Codex: centred the arena status banner using measured font
-width, centred player/health labels on their character and reserved the bomb's
-50px cell above its holder before placing that label. Added small edge margins
-to keep labels on screen. Validation: client build and isolated render preview.
-
-2026-11-02, zhikai / Codex: diagnosed the recurring server buffer overflow with
-GDB inside Ubuntu's libddsc.so.0debian. The selected SDK was 0.10.5, but the
-existing binary still linked to the system library. Added a content-based DDS
-configuration stamp in Makefile so SDK version, library/plugin directory,
-pkg-config flags and idlc path changes regenerate types and rebuild both game
-binaries and particles.o. Validation: compiled with the system SDK, switched to
-the local SDK and ran normal make without -B; both binaries relinked correctly.
-A further make preserved binary/object timestamps and performed no compilation.
-The secure server remained running for a bounded six-second startup check.
-
-2026-11-02, zhikai / Codex: packed the user-supplied Ninja Adventure art into
-the existing 800x600 atlas of 50px cells. Added five character designs,
-directional walks, lobby portraits, player rings, ticking-bomb phases, effects,
-power-up icons and floor tiles. Kept the original atlas and curated CC0 source
-PNGs, licence, a reproducible Pillow packer and a cell/source manifest in assets/.
-Updated renderer/lobby sprite selection and expanded batch capacity for the
-additional layered sprites. Validation: client build; 105 nonempty, uniquely
-placed cells and an opaque floor; isolated ASan/UBSan render preview in immediate,
-float and short modes with five shielded players, four explosions/pickups and a
-full particle pool over 60 frames per mode. Checked lobby texture-matrix
-restoration and GL errors, and inspected game/menu/lobby screenshots in build/.
-No live server or network state was changed by the render preview.
-
 Concurrency #3/#4 GUI verification (30 Oct): two real WSLg clients completed
 6,000 frames each, showed both players with correct local ID banners, stopped
 their workers and sent authenticated Leave; the server freed both slots.
@@ -46,6 +9,11 @@ Screenshots and logs: `bench/results/concurrency-tests/gui-*`.
 
 | Date | Who | Tool | Prompt summary | Output used in | How it was tested |
 |---|---|---|---|---|---|
+| 2026-11-02 | zhikai | Codex | Document how to start a solo bot match using separate Ubuntu/WSL server and client terminals, secure launchers and the lobby menu | `README.md` | Checked commands against launcher argument parsing and existing lobby behavior; documented joining, countdown, bot/player limits and supported server wrapper options. Documentation-only change; no game tests rerun. |
+| 2026-11-02 | zhikai | Codex | Randomise bomb assignment among active players with lives remaining, instead of always selecting the first living slot; handle round starts, holder departures, sparse IDs and eliminations using the seeded PRNG with rejection sampling | `server/game.c`, `tests/test_server.c` | Fixed-seed regression covers all 32 eligible player sets (0-5 players), rejects inactive/eliminated slots and checks every eligible ID is selectable. `make test` passed in SPSC and mutex modes, including existing game/input regressions; rebuilt `build/server` successfully. |
+| 2026-11-02 | zhikai | Codex | Centre the arena status banner and player/health labels using measured font widths; place the holder's label above the bomb's 50px cell and keep labels inside screen margins | `client/ui.c/.h`, `client/render.c` | Client build passed; inspected an isolated render preview for centred banner text and player/health labels clearing the bomb. |
+| 2026-11-02 | zhikai | Codex | Diagnose recurring server buffer overflow and track DDS configuration changes so SDK version, library/plugin directory, pkg-config flags and idlc path changes regenerate types and rebuild both game binaries and `particles.o` | `Makefile`, `README.md` | GDB located the crash inside Ubuntu's `libddsc.so.0debian`; the binary still linked to the system library despite selecting SDK 0.10.5. Compiled with the system SDK, switched to the local SDK and ran normal `make` without `-B`; both binaries relinked correctly. A further `make` preserved binary/object timestamps and performed no compilation. Secure server stayed running for a bounded six-second startup check. |
+| 2026-11-02 | zhikai | Codex | Pack supplied Ninja Adventure art into the existing 800x600 atlas of 50px cells; add five characters, directional walks, lobby portraits, player rings, ticking bombs, effects, power-up icons and floor tiles; preserve original art, curated CC0 sources/licence, reproducible Pillow packer and cell/source manifest; expand sprite batch capacity | `assets/`, `client/atlas.h`, `client/render.c/.h`, `client/lobby_ui.c`, `README.md` | Client build passed; validated 105 nonempty, uniquely placed cells and an opaque floor. Isolated ASan/UBSan preview passed in immediate, float and short modes with five shielded players, four explosions/pickups and a full particle pool over 60 frames per mode. Checked lobby texture-matrix restoration and GL errors; inspected game/menu/lobby screenshots in `build/`. No live server or network state was changed. |
 | 2026-11-02 | zhikai | Codex | Restore the client lobby menu after its removal during debugging; no tests or Makefile changes requested | `client/lobby_ui.c/.h`, client entry/network/render/interpolation modules, `bench/security_env.sh` | Restored Join/Cancel/Leave/Exit controls, five-slot waiting room, server countdown, fresh authenticated sessions and single-consumer frame sharing. No builds or tests run at the user's request. Makefile unchanged; its existing client source wildcard includes the menu module. |
 | 2026-11-01 | | Codex | Prompt for a client player number when omitted | `run-client.sh`, `README.md` | Bash syntax and ShellCheck passed. Temporary launch-stub smoke checks verified chosen identity, retries for invalid/empty numbers, explicit `--player` bypassing the prompt, EOF handling, and invalid option rejection. |
 | 2026-11-01 | | Codex | Add separate Windows batch launchers that call Linux server/client scripts | `run-server.bat`, `run-client.bat`, `run-server.sh`, `run-client.sh`, `.gitattributes`, `README.md` | Bash syntax and ShellCheck passed. Batch wrappers forwarded help and invalid-player errors with correct exit codes. Started the real server and client through the batch files with normal builds; a second client ran directly through the Linux script with `--player 2 --no-build`. Both WSLg clients authenticated, closed normally with Leave and zero exit codes, and left the server running until Ctrl+C. Help also worked from outside the project directory. |

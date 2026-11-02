@@ -102,12 +102,43 @@ countdown begins. Each player starts with 3 lives. The last survivor wins;
 after a 5-second win screen, connected players automatically enter a new
 lobby with lives restored. Eliminated players spectate until the next match.
 
-For a solo game against a bot:
+### Solo match against a bot
+
+Complete the first-time **Build (WSL / Ubuntu)** setup above, including
+certificates and demo accounts. Run the following commands from the project
+folder in **two separate Ubuntu/WSL terminals**. If a server is already running,
+stop it with **Ctrl+C** first.
+
+1. In the first terminal, build and start the secure server with one bot:
 
 ```bash
-./build/server --bots 1   # 0..4 bots; bots count toward the 5 player limit
-./build/client            # with the security setup above (FUSE_DDS_IDENTITY, login)
+source security/scripts/env.sh
+make -j4 build/server
+bash security/scripts/run_secure.sh server ./build/server --bots 1
 ```
+
+2. In the second terminal, start your client:
+
+```bash
+bash run-client.sh --player 1
+```
+
+The client launcher builds the client and selects its DDS identity and login
+credentials automatically. `--player 1` selects the `client-1` account; the
+server assigns your in-game player slot separately.
+
+3. Press **Enter** or click **Join Game** in the game window. You and the bot
+   make two players, so the five-second lobby wait and three-second countdown
+   lead into the match. Move with WASD/arrows and dash with Space/Shift.
+
+Use `--bots 1` for a one-human, one-bot match. The server accepts `--bots 0..4`;
+bots count toward the five-player limit. With two or more bots, they can start
+playing before you join, so you may need to wait for the next admission lobby.
+
+Pass `--bots` to `./build/server` through `run_secure.sh` as shown above.
+`run-server.sh` and `run-server.bat` currently accept only `--no-build`, not
+the `--bots` option. Close the client window to leave, and press **Ctrl+C** in
+the server terminal to stop the server.
 
 Server profiling options keep each slower path runnable:
 
