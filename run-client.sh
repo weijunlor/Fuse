@@ -28,6 +28,7 @@ while (($#)); do
         -h|--help)
             echo 'Usage: bash run-client.sh [--player 1..5] [--server IPv4] [--interface NAME] [--no-build]'
             echo 'Without --player, opens the saved connection or in-game pairing screen.'
+            echo 'Simultaneous windows use separate saved player profiles; pair each new player once.'
             echo 'Omit --server for automatic discovery; use the host LAN IPv4 for direct connections.'
             exit 0 ;;
         *) echo "Unknown option: $1. Use --help for usage." >&2; exit 1 ;;
@@ -46,4 +47,4 @@ fi
 if [[ -n $player ]]; then
     exec bash security/scripts/run_secure.sh "client-$player" ./build/client
 fi
-exec ./build/client
+exec python3 security/scripts/client_session.py ./build/client

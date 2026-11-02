@@ -140,7 +140,7 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
         snprintf(str_host_status, sizeof str_host_status, "Ready to join %s", pairing_ui_host());
         str_status = str_host_status;
     }
-    if (!a_b_running && !pairing_ui_ready()) str_status = "Pair this PC with your host to get started.";
+    if (!a_b_running && !pairing_ui_ready()) str_status = "Pair this player with your host to get started.";
     if (a_b_running)
     {
         switch (a_frame->connection)
@@ -197,7 +197,7 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
     }
 
     bool b_retry = a_b_running && a_frame->connection == CLIENT_REJECTED;
-    const char *str_primary = !a_b_running ? (pairing_ui_ready() ? "Join Game [Enter]" : "Pair PC [Enter]") :
+    const char *str_primary = !a_b_running ? (pairing_ui_ready() ? "Join Game [Enter]" : "Pair player [Enter]") :
                               b_retry ? "Retry [Enter]" :
                               a_frame->int_player_id > 0 ? "Leave Game [Esc]" : "Cancel [Esc]";
     draw_button(button_primary, str_primary, !a_b_running || b_retry);

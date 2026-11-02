@@ -249,7 +249,7 @@ void pairing_ui_draw(void)
     glDisable(GL_TEXTURE_2D);
     box(0,0,800,600,.035f,.055f,.09f); box(140,55,520,490,.075f,.105f,.16f);
     box(140,55,520,5,.25f,.85f,.60f);
-    label(180,95,3.2f,"Pair this PC"); label(180,150,1.4f,"Use the code displayed in the host's terminal.");
+    label(180,95,3.2f,"Pair this player"); label(180,150,1.4f,"Use the next code displayed by the host.");
     label(180,196,1.5f,"Host IP"); label(180,286,1.5f,"Pairing code");
     for (int i = 0; i < 2; i++) {
         float y = i == 0 ? 220 : 310;

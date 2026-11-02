@@ -139,9 +139,17 @@ server is involved. Keep DDS encryption and application authentication enabled.
    generate CAs or demo accounts on the player PC.** Run `.\run-client.bat` or
    `bash run-client.sh` without a player-number argument.
 3. Enter the host's LAN IPv4 address and paste its complete `FUSE-...` code into
-   the game's **Pair this PC** screen. Click **Pair**. The host assigns an unused
+   the game's **Pair this player** screen. Click **Pair**. The host assigns an unused
    identity automatically; the game validates and privately saves its credentials.
 4. Click **Join Game**. On subsequent launches, just click **Join Game** again.
+
+For multiple players on one PC/WSL user, run the client launcher once per game
+window. Each open window uses a separate saved player profile. The first keeps
+your existing pairing; the second through fifth windows pair once with the
+host's next code, then reuse their own credentials on later launches. Do not
+copy the first player's credentials into another profile: simultaneous logins
+with the same account are rejected. After updating from the older launcher,
+close all client windows once before reopening them.
 
 The code is a random, single-use, five-minute secret. Pairing uses mutually
 authenticated TLS 1.3 with ephemeral key exchange on TCP **7440**; it does not
@@ -157,10 +165,10 @@ pairing, and `devices` lists assignments. The next code appears after successful
 pairing until all five identities are assigned. Pairing failures leave the game
 server running. `--no-pairing` starts the server without the enrollment service.
 
-Each PC retains a private Ed25519 device key, so retrying an interrupted pairing
-with a fresh host code recovers that PC's existing identity. Host assignments
-survive server restarts. Identities are never automatically recycled; a sixth PC
-receives a full-capacity message. Replacing a PC whose private data has been lost
+Each player profile retains a private Ed25519 device key, so retrying interrupted
+pairing with a fresh host code recovers that profile's existing identity. Host
+assignments survive server restarts. Identities are never automatically recycled;
+a sixth player receives a full-capacity message. Replacing a PC whose private data has been lost
 requires deliberate host reprovisioning. Deleting the registry alone does not
 invalidate credentials previously given to that PC.
 
@@ -168,6 +176,9 @@ Client profiles live under `~/.local/share/fuse/pairings/`, grouped by host CA
 fingerprint; `FUSE_PAIRING_DIR` can select another private Linux directory. The
 host registry is `<FUSE_SECURITY_DIR>/pairing/devices.json`. Private directories
 use mode 700 and files mode 600, outside Windows mounts and the source checkout.
+Additional local players' profiles live in `players/2` through `players/5` below
+the pairing directory. Closing a window releases its local launch slot; its
+device key, credentials and host assignment remain saved.
 Failed/cancelled enrollment preserves an existing working connection. **Pair with
 another host** opens the form again; the last successful profile becomes active.
 
@@ -310,8 +321,9 @@ unshare -Urn python3 security/scripts/test_pairing.py --integration
 The second command uses temporary user/network namespaces and a private virtual
 Ethernet link, tests unicast gameplay and rejoining without changing the host's
 interfaces/firewall, and requires unprivileged user namespaces to be available.
-The pairing integration also joins a client on the host computer alongside the
-two remote clients, with automatic adapter selection and multicast disabled.
+The pairing integration also joins three windows sharing one local profile root
+alongside two remote players, then restarts all five using saved profiles, with
+automatic adapter selection and multicast disabled.
 It supplements a real two-computer test; run `lan.py check` on the second computer
 and verify both game windows show the same players and movement.
 

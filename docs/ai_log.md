@@ -2,6 +2,30 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, Codex: fixed second and later game windows under the same Linux/WSL
+user reusing the first window's paired login. The ordinary client launcher now
+reserves a private player profile with a nonblocking kernel lock and supervises
+only its own game process. The first profile retains the existing pairing;
+additional windows have independent persistent device keys and pair once using
+the next host code. Later launches reuse those saved profiles. Closing/crashing
+a game releases its local window slot without recycling the host assignment.
+Additional profiles prefill the first profile's host only before their first
+pairing. Explicit player launch options remain supported. Updated UI wording,
+login rejection guidance, launcher help and README setup instructions.
+
+Validation: five new launcher tests passed for concurrent allocation/capacity,
+saved profile reuse, credential isolation, private modes, symlink/insecure-lock
+rejection, crash and signal cleanup. All 18 existing enrollment/UI tests and
+16 LAN tests passed; the rendered pairing screen was inspected. The isolated
+multicast-disabled integration paired two remote players and three simultaneous
+windows sharing one profile root, then verified five distinct authenticated
+players, movement, snapshots and Leave. After restarting the server and client
+sessions, all five rejoined using only saved profiles. The encrypted enrollment
+capture still excludes codes/passwords. Client build, game regressions,
+ShellCheck and Python compilation passed. Physical two-computer verification
+remains pending; actual network/firewall settings and existing credentials were
+unchanged. Evidence: ignored `build/pairing-validation/multi-window-*.log`.
+
 2026-11-02, Codex: fixed repeated "Join request sent" after successful pairing
 when the client runs on the host computer. Linux routes a computer's own LAN
 address through loopback; selecting that route's adapter made the client DDS

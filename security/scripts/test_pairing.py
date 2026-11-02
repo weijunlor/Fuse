@@ -346,12 +346,13 @@ class PairingTests(unittest.TestCase):
 
 
 def integration():
-    """Private veth LAN: pair two PCs, then use only their saved profiles to play."""
+    """Private veth LAN: two remote players plus three windows on one computer."""
     import lan_network
     if os.getuid() != 0 or any(name != 'lo' for name in lan_network.interfaces()):
         raise RuntimeError('Run inside a fresh user/network namespace: unshare -Urn python3 security/scripts/test_pairing.py --integration')
     child = subprocess.Popen(['unshare','-n','sleep','180'])
     game = host = capture = None
+    local_windows = []
     stop_capture = threading.Event()
     def run(*args, **kwargs):
         return subprocess.run(list(args),check=True,text=True,cwd=ROOT,**kwargs)
@@ -413,37 +414,92 @@ def integration():
         fresh=host.code()
         run(*enter,'./build/pairing','client','10.208.0.1',env=clients[0],input=fresh+'\n',capture_output=True,timeout=40)
         assert len(json.loads((source/'pairing/devices.json').read_text()))==2
-        # A client on the host computer uses the same advertised LAN address.
-        # Its kernel route points at lo, but DDS must select the owning adapter.
+        # These three windows start from ONE shared profile root, just like
+        # repeated run-client launches under the same WSL user. The supervisor
+        # must give them separate keys/profiles, while retaining their leases
+        # through pairing and joining. Codes travel only over the stdin pipe.
         local_env = dict(env,FUSE_PAIRING_DIR=str(Path(PairingTests.base.name)/'pc-local'))
         local_env.pop('FUSE_DDS_INTERFACE')
-        run('./build/pairing','client','10.208.0.1',env=local_env,input=host.code()+'\n',capture_output=True,timeout=40)
+        gate = Path(PairingTests.base.name)/'join-ready'
+        window_command = [sys.executable,'security/scripts/client_session.py']
+        enroll_then_check = '''
+import os, pathlib, subprocess, sys, time
+result = subprocess.run(['./build/pairing', 'client', '10.208.0.1'],
+    input=sys.stdin.readline(), capture_output=True, text=True, timeout=40)
+if result.returncode:
+    sys.exit(result.stdout + result.stderr)
+pathlib.Path(sys.argv[1]).write_text(os.environ['FUSE_PAIRING_DIR'])
+deadline = time.monotonic() + 30
+while not pathlib.Path(sys.argv[2]).exists():
+    if time.monotonic() > deadline: sys.exit('Game start deadline exceeded')
+    time.sleep(.01)
+sys.exit(subprocess.call([sys.executable, 'security/scripts/lan.py', 'check']))
+'''
+        local_profiles = []
+        for index in range(3):
+            ready = Path(PairingTests.base.name)/f'window-{index}-ready'
+            process = subprocess.Popen([*window_command,sys.executable,'-c',enroll_then_check,str(ready),str(gate)],
+                    cwd=ROOT,env=local_env,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+            local_windows.append(process)
+            process.stdin.write(host.code()+'\n'); process.stdin.close(); process.stdin=None
+            deadline = time.monotonic()+15
+            while not ready.exists():
+                if process.poll() is not None or time.monotonic()>deadline:
+                    raise AssertionError('Additional window failed to pair')
+                time.sleep(.01)
+            local_profiles.append(ready.read_text())
+        assert len(set(local_profiles))==3
+        assert len(json.loads((source/'pairing/devices.json').read_text()))==5
         with (out/'game-server.log').open('w') as log:
             game=subprocess.Popen(['bash','security/scripts/run_secure.sh','server','./build/server'],cwd=ROOT,
                                   env=env,stdout=log,stderr=subprocess.STDOUT)
             checks=[subprocess.Popen([*enter,sys.executable,'security/scripts/lan.py','check'],cwd=ROOT,
                     env=item,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True) for item in clients]
-            checks.append(subprocess.Popen([sys.executable,'security/scripts/lan.py','check'],cwd=ROOT,
-                    env=local_env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True))
+            checks.extend(local_windows)
+            gate.touch()
             try:
                 ids=set()
                 for index,process in enumerate(checks):
                     output,_=process.communicate(timeout=25)
                     (out/f'paired-player-{index+1}.log').write_text(output)
-                    assert process.returncode==0 and 'max_players=3' in output,output
-                    if index == 2:
+                    assert process.returncode==0 and 'max_players=5' in output,output
+                    if index >= 2:
                         assert 'interface: fuse-host;' in output, output
                     ids.add(re.search(r'joined=1 id=(\d+)',output)[1])
-                assert len(ids)==3
+                assert len(ids)==5
             finally:
                 for process in checks:
                     if process.poll() is None: process.terminate();process.wait(timeout=5)
-        print('PASS two remote clients and a same-computer client automatically select their LAN adapters and join using saved profiles',flush=True)
-        print('PASS distinct IDs, movement, shared snapshots and Leave, without IP/code/player flags',flush=True)
+        print('PASS two remote players and three windows sharing one PC pair and join with five distinct identities',flush=True)
+        game.terminate(); game.wait(timeout=5); game=None
+        # Restart both the server and launcher sessions. No pairing code, IP or
+        # player-number argument is provided; all five saved identities survive.
+        with (out/'game-server-restart.log').open('w') as log:
+            game=subprocess.Popen(['bash','security/scripts/run_secure.sh','server','./build/server'],cwd=ROOT,
+                                  env=env,stdout=log,stderr=subprocess.STDOUT)
+            checks=[subprocess.Popen([*enter,sys.executable,'security/scripts/lan.py','check'],cwd=ROOT,
+                    env=item,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True) for item in clients]
+            local_windows=[subprocess.Popen([*window_command,sys.executable,'security/scripts/lan.py','check'],
+                    cwd=ROOT,env=local_env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True) for _ in range(3)]
+            checks.extend(local_windows)
+            try:
+                ids=set()
+                for index,process in enumerate(checks):
+                    output,_=process.communicate(timeout=25)
+                    (out/f'saved-player-{index+1}.log').write_text(output)
+                    assert process.returncode==0 and 'max_players=5' in output,output
+                    ids.add(re.search(r'joined=1 id=(\d+)',output)[1])
+                assert len(ids)==5
+            finally:
+                for process in checks:
+                    if process.poll() is None: process.terminate();process.wait(timeout=5)
+        print('PASS all five rejoin after restart with saved profiles, movement, snapshots and Leave, without IP/code/player flags',flush=True)
     finally:
         stop_capture.set()
         if 'recorder' in locals(): recorder.join(timeout=2)
         if capture is not None: capture.close()
+        for process in local_windows:
+            if process.poll() is None: process.terminate();process.wait(timeout=5)
         if host is not None: host.stop()
         if game is not None: game.terminate();game.wait(timeout=5)
         child.terminate();child.wait(timeout=5)
