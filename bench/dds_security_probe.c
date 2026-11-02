@@ -5,6 +5,7 @@ client; the separate baseline build retains the lecturer's original messages. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "dds_security.h"
 #ifdef FUSE_PROBE_BASELINE
@@ -16,6 +17,18 @@ client; the separate baseline build retains the lecturer's original messages. */
 #include "config.h"
 #include "app_client.h"
 #endif
+
+// Connectivity checks measure elapsed time, independently of NTP/WSL clock sync.
+static dds_time_t monotonic_now(void)
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+    {
+        perror("clock_gettime");
+        exit(2);
+    }
+    return (dds_time_t)ts.tv_sec * DDS_NSECS_IN_SEC + ts.tv_nsec;
+}
 
 static dds_entity_t checked(dds_entity_t a_entity)
 {
@@ -99,10 +112,17 @@ int main(int argc, char **argv)
     dds_sample_info_t info;
     int int_id = 0, int_states = 0, int_first_x = -1, int_last_x = -1;
     bool b_moved = false, b_left = false, b_leave_confirmed = false;
-    dds_time_t start = dds_time(), last_join = 0, last_input = 0;
-    while (dds_time() - start < (dds_duration_t)(d_seconds * 1e9))
+    bool b_discovered = false;
+    int int_join_status = -1;
+    int int_max_players = 0;
+    dds_time_t start = monotonic_now(), last_join = 0, last_input = 0;
+    while (monotonic_now() - start < (dds_duration_t)(d_seconds * 1e9))
     {
-        dds_time_t now = dds_time();
+        dds_time_t now = monotonic_now();
+        dds_publication_matched_status_t matched;
+        if (dds_get_publication_matched_status(join_writer, &matched) == DDS_RETCODE_OK &&
+            matched.current_count > 0)
+            b_discovered = true;
         if (int_id == 0 && now - last_join > DDS_SECS(1))
         {
             checked(dds_write(join_writer, &request));
@@ -114,6 +134,8 @@ int main(int argc, char **argv)
 #ifdef FUSE_PROBE_BASELINE
             int_id = response.int_player_id;
 #else
+            if (response.nonce == request.nonce)
+                int_join_status = response.status;
             if (int_id == 0 && app_client_response(&client_auth, &request, &response))
                 int_id = response.player_id;
 #endif
@@ -126,6 +148,12 @@ int main(int argc, char **argv)
             if (state.int_player_id == int_id)
                 int_last_x = state.int_x;
 #else
+            int int_active = 0;
+            for (int i = 0; i < MAX_PLAYERS; i++)
+                if (state.players[i].flags & PF_ACTIVE)
+                    int_active++;
+            if (int_active > int_max_players)
+                int_max_players = int_active;
             int_last_x = state.players[int_id - 1].x;
             if (b_left && !(state.players[int_id - 1].flags & PF_ACTIVE))
             {
@@ -165,8 +193,32 @@ int main(int argc, char **argv)
 #endif
         dds_sleepfor(DDS_MSECS(2));
     }
+#ifndef FUSE_PROBE_BASELINE
+    // A blocking DDS call or scheduler pause can cross the final half-second
+    // window. Always clean up an authenticated session before reporting success.
+    if (int_id > 0 && !b_left)
+    {
+        Leave leave = {.player_id = (uint8_t)int_id};
+        if (!app_client_leave(&client_auth, &leave))
+            return 2;
+        checked(dds_write(leave_writer, &leave));
+        dds_wait_for_acks(leave_writer, DDS_MSECS(300));
+        b_left = true;
+    }
+    dds_time_t leave_deadline = monotonic_now() + DDS_SECS(1);
+    while (b_left && !b_leave_confirmed && monotonic_now() < leave_deadline)
+    {
+        void *p_state = &state;
+        if (dds_take(state_reader, &p_state, &info, 1, 1) > 0 && info.valid_data &&
+            !(state.players[int_id - 1].flags & PF_ACTIVE))
+            b_leave_confirmed = true;
+        else
+            dds_sleepfor(DDS_MSECS(2));
+    }
+#endif
     printf("joined=%d id=%d states=%d moved=%d leave_sent=%d leave_confirmed=%d first_x=%d last_x=%d\n",
            int_id > 0, int_id, int_states, b_moved, b_left, b_leave_confirmed, int_first_x, int_last_x);
+    printf("discovered=%d join_status=%d max_players=%d\n", b_discovered, int_join_status, int_max_players);
     dds_delete(participant);
     return int_id > 0 && int_states > 0 && b_moved ? 0 : 1;
 }

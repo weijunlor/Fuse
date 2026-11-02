@@ -2,6 +2,7 @@
 # Also works for the unchanged baseline: DDS reads the generated configuration.
 set -euo pipefail
 str_script_dir=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=security/scripts/env.sh
 source "$str_script_dir/env.sh"
 if [ $# -lt 2 ]; then
     echo 'Usage: run_secure.sh <server|client-1..client-5> <executable> [args...]' >&2
