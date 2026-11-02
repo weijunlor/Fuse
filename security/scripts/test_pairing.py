@@ -394,7 +394,8 @@ def integration():
         host = Host(env,address='10.208.0.1',port=7440)
         clients, codes = [], []
         for index in (1,2):
-            client_env = dict(env,FUSE_PAIRING_DIR=str(Path(PairingTests.base.name)/f'pc-{index}'),FUSE_DDS_INTERFACE='fuse-client')
+            client_env = dict(env,FUSE_PAIRING_DIR=str(Path(PairingTests.base.name)/f'pc-{index}'))
+            client_env.pop('FUSE_DDS_INTERFACE')  # Exercise automatic remote route selection.
             code=host.code(); codes.append(code)
             paired=run(*enter,'./build/pairing','client','10.208.0.1',env=client_env,input=code+'\n',capture_output=True,timeout=40)
             assert 'connection is saved' in paired.stdout
@@ -412,23 +413,33 @@ def integration():
         fresh=host.code()
         run(*enter,'./build/pairing','client','10.208.0.1',env=clients[0],input=fresh+'\n',capture_output=True,timeout=40)
         assert len(json.loads((source/'pairing/devices.json').read_text()))==2
+        # A client on the host computer uses the same advertised LAN address.
+        # Its kernel route points at lo, but DDS must select the owning adapter.
+        local_env = dict(env,FUSE_PAIRING_DIR=str(Path(PairingTests.base.name)/'pc-local'))
+        local_env.pop('FUSE_DDS_INTERFACE')
+        run('./build/pairing','client','10.208.0.1',env=local_env,input=host.code()+'\n',capture_output=True,timeout=40)
         with (out/'game-server.log').open('w') as log:
             game=subprocess.Popen(['bash','security/scripts/run_secure.sh','server','./build/server'],cwd=ROOT,
                                   env=env,stdout=log,stderr=subprocess.STDOUT)
             checks=[subprocess.Popen([*enter,sys.executable,'security/scripts/lan.py','check'],cwd=ROOT,
                     env=item,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True) for item in clients]
+            checks.append(subprocess.Popen([sys.executable,'security/scripts/lan.py','check'],cwd=ROOT,
+                    env=local_env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True))
             try:
                 ids=set()
                 for index,process in enumerate(checks):
                     output,_=process.communicate(timeout=25)
                     (out/f'paired-player-{index+1}.log').write_text(output)
-                    assert process.returncode==0 and 'max_players=2' in output,output
+                    assert process.returncode==0 and 'max_players=3' in output,output
+                    if index == 2:
+                        assert 'interface: fuse-host;' in output, output
                     ids.add(re.search(r'joined=1 id=(\d+)',output)[1])
-                assert len(ids)==2
+                assert len(ids)==3
             finally:
                 for process in checks:
                     if process.poll() is None: process.terminate();process.wait(timeout=5)
-        print('PASS saved profiles join with distinct IDs, movement, shared snapshots and Leave, without IP/code/player flags',flush=True)
+        print('PASS two remote clients and a same-computer client automatically select their LAN adapters and join using saved profiles',flush=True)
+        print('PASS distinct IDs, movement, shared snapshots and Leave, without IP/code/player flags',flush=True)
     finally:
         stop_capture.set()
         if 'recorder' in locals(): recorder.join(timeout=2)

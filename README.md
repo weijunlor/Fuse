@@ -176,6 +176,12 @@ the game is logged out. LAN reachability is still required: follow the Windows/
 Ubuntu networking steps below if WSL NAT, firewall rules or Wi-Fi isolation block
 connections. On the host, include `-PairingHost` when firewall changes are needed.
 
+A client running on the host computer can use the same LAN IP as the other PCs.
+It selects the adapter that owns that address; other clients select the adapter
+on their route to the host. If an older client repeatedly printed `Join request
+sent` after pairing, close and relaunch it to regenerate the connection settings,
+then click **Join Game**. Its saved credentials do not need to be paired again.
+
 ### Manual credential transfer (optional)
 
 The existing `--player 1..5` launch option and bundle tools remain available for
@@ -304,6 +310,8 @@ unshare -Urn python3 security/scripts/test_pairing.py --integration
 The second command uses temporary user/network namespaces and a private virtual
 Ethernet link, tests unicast gameplay and rejoining without changing the host's
 interfaces/firewall, and requires unprivileged user namespaces to be available.
+The pairing integration also joins a client on the host computer alongside the
+two remote clients, with automatic adapter selection and multicast disabled.
 It supplements a real two-computer test; run `lan.py check` on the second computer
 and verify both game windows show the same players and movement.
 

@@ -186,6 +186,29 @@ class LanTests(unittest.TestCase):
         self.assertEqual(domain.findtext("General/AllowMulticast"), "spdp")
         self.assertIsNone(domain.find("Discovery/Peers"))
 
+    def test_local_lan_address_uses_owning_adapter(self):
+        available = {"lo": ["127.0.0.1"], "eth0": ["192.168.1.50"],
+                     "wlan0": ["10.0.0.50"]}
+        with patch.object(lan_network, "interfaces", return_value=available), \
+                patch.object(lan_network, "ip_json", return_value=[{"dev": "lo", "type": "local"}]):
+            for address, expected in (("192.168.1.50", "eth0"), ("10.0.0.50", "wlan0"),
+                                      ("127.0.0.1", "lo")):
+                self.assertEqual(lan_network.select_interface(address), expected)
+            self.assertEqual(lan_network.select_interface("192.168.1.50", "wlan0"), "wlan0")
+            os.environ["FUSE_SERVER_IP"] = "192.168.1.50"
+            domain = ET.Element("Domain")
+            lan_network.configure(domain, "client-1")
+            self.assertEqual(domain.find("General/Interfaces/NetworkInterface").get("name"), "eth0")
+            self.assertEqual(domain.find("Discovery/Peers/Peer").get("Address"), "192.168.1.50")
+            self.assertEqual(domain.findtext("General/AllowMulticast"), "false")
+
+    def test_remote_server_uses_route_adapter(self):
+        available = {"lo": ["127.0.0.1"], "eth0": ["192.168.1.50"], "tun0": ["10.0.0.1"]}
+        with patch.object(lan_network, "interfaces", return_value=available), \
+                patch.object(lan_network, "ip_json", return_value=[{"dev": "tun0"}]) as route:
+            self.assertEqual(lan_network.select_interface("10.0.0.2"), "tun0")
+            route.assert_called_once_with("route", "get", "10.0.0.2")
+
     def test_invalid_network_options(self):
         for address in ("localhost", "::1", "0.0.0.0", "239.1.1.1", "255.255.255.255", "1.2.3.999"):
             with self.assertRaises(ValueError):

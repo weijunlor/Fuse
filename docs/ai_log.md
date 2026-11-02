@@ -2,6 +2,26 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, Codex: fixed repeated "Join request sent" after successful pairing
+when the client runs on the host computer. Linux routes a computer's own LAN
+address through loopback; selecting that route's adapter made the client DDS
+participant advertise loopback while the server used Ethernet. Local destinations
+now select the adapter owning the exact address. Remote destinations still use
+their route, and explicit interface overrides remain authoritative. Existing saved
+profiles regenerate the corrected configuration on client restart, without pairing
+again. Added regression coverage and README troubleshooting instructions.
+
+Validation: reproduced the saved-profile failure against the running WSL host
+(loopback selected, no secure endpoint match), then verified the fix selected
+Ethernet and passed secure discovery, authenticated join, movement, snapshots and
+confirmed Leave. All 16 LAN bundle/configuration tests passed. The isolated pairing
+integration enrolled two remote clients plus one client on the host computer;
+automatic adapter selection with multicast disabled produced three distinct player
+IDs, shared snapshots, movement and Leave using saved profiles. The enrollment
+capture still showed encrypted traffic without codes or passwords. Real network
+and firewall settings were unchanged; physical two-computer verification remains
+pending. Evidence: ignored `build/pairing-validation/`.
+
 2026-11-02, Codex: implemented the approved one-time LAN pairing plan for a
 dedicated host and five remote player PCs. The supervised native pairing helper
 uses TLS 1.3 external PSKs with ephemeral key exchange, 256-bit single-use codes,
