@@ -2,6 +2,46 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-02, Codex: implemented the approved one-time LAN pairing plan for a
+dedicated host and five remote player PCs. The supervised native pairing helper
+uses TLS 1.3 external PSKs with ephemeral key exchange, 256-bit single-use codes,
+monotonic expiry/deadlines, four connection slots and per-address rate limits.
+Codes appear only on the terminal or an explicitly supplied private pipe, rather
+than redirected game logs. Ed25519 device proofs are bound to the TLS connection;
+the private, durable host registry assigns/reuses identities by verified device
+key and records ownership before credential delivery. Existing preprovisioned
+DDS/login bundles are validated and transferred without exporting CA private keys.
+Archive decompression is bounded before tar metadata parsing.
+
+The native client now opens without credentials and provides Host IP/code fields,
+paste/focus controls and background enrollment/cancellation. Per-host private
+profiles activate atomically; cancellation before commit preserves the prior
+address, credentials and DDS configuration, while completion after commit is
+reported as successful. Saved profiles prepare secure DDS before Join Game.
+Legacy player flags, bundle tools and benchmark paths remain supported. Server
+terminal commands manage codes/assignments; launcher cleanup owns only its child
+processes. Added host-only TCP 7440 firewall previews and updated setup documents.
+
+Validation: built game, pairing helper and probes in Ubuntu 22.04 WSL using
+Cyclone DDS 0.10.5/OpenSSL 3.0. Native TLS/expiry/concurrent-consumption tests and
+18 enrollment/UI checks passed: all five assignments/capacity, persistence,
+incorrect/noncanonical/used/cancelled codes, concurrent reuse, forged/replayed
+device proofs, rogue certificate fallback, rate/concurrency bounds, invalid and
+oversized transfers, interrupted-delivery recovery, activation cancellation
+boundaries, log redaction, and offscreen form/paste/restart/cancellation checks.
+The rendered pairing screen was inspected. Fourteen LAN bundle/config tests
+passed, including bounded compressed-archive expansion. Two private network
+stacks enrolled over a veth link with multicast disabled, retained assignments
+across service restart, and joined using saved profiles without IP/code/player
+flags; both saw the two-player match with distinct IDs, movement, snapshots and
+Leave. The TLS capture decodes as encrypted records and contains neither codes
+nor passwords. Normal/disabled/occupied-port launcher cases retained gameplay;
+Ctrl+C collected their owned processes. Existing game tests, all six network
+scenarios, 19 authentication checks and 42 DDS security checks passed. ShellCheck,
+Windows PowerShell syntax and host TCP firewall `-WhatIf` checks passed. Network
+and firewall settings were left unchanged; physical two-computer verification
+remains pending. Evidence: ignored `build/pairing-validation/`.
+
 2026-11-02, sheeyang / Codex: implemented the requested direct LAN multiplayer plan for
 Windows/WSL and native Ubuntu. Client launchers accept a server IPv4 address;
 both launchers accept a Linux interface name. Secure generated DDS configuration

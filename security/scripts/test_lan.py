@@ -2,6 +2,7 @@
 """LAN transfer/config regressions; --integration runs inside an isolated user/net namespace."""
 from contextlib import redirect_stdout
 import io
+import gzip
 import json
 import os
 from pathlib import Path
@@ -143,6 +144,12 @@ class LanTests(unittest.TestCase):
             with self.assertRaises((ValueError, KeyError)):
                 lan.read_bundle(output)
         self.assertFalse((self.directory.parent / "escape").exists())
+
+    def test_compressed_archive_expansion_is_bounded(self):
+        output = self.directory / 'oversized.fuse-lan'
+        output.write_bytes(gzip.compress(b'\0' * (2 * 1024 * 1024 + 1)))
+        with self.assertRaisesRegex(ValueError, 'Expanded credential bundle'):
+            lan.read_bundle(output)
 
     def test_tampered_policy_rejected(self):
         _, payload = lan.read_bundle(self.export())

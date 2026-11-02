@@ -55,7 +55,22 @@ BENCHES := $(patsubst bench/%.c,build/%,$(wildcard bench/bench_*.c))
 # scalar. It does not change any result. Override with SIMD_FLAGS=...
 SIMD_FLAGS ?= -O3 -march=native -fno-trapping-math
 
-all: build/server build/client
+all: build/server build/client build/pairing
+
+# Enrollment is a separate process: a failed pairing never stops an active match.
+build/pairing: common/pairing_tool.c
+	mkdir -p build && $(CC) $(CFLAGS) -DFUSE_PAIRING_TOOL $< -o $@ -pthread $(shell pkg-config --libs openssl)
+
+build/test_pairing: tests/test_pairing.c common/pairing_tool.c
+	mkdir -p build && $(CC) $(CFLAGS) $< -o $@ -pthread $(shell pkg-config --libs openssl)
+
+build/test_pairing_ui: tests/test_pairing_ui.c client/pairing_ui.c client/pairing_ui.h client/ui.c
+	mkdir -p build && $(CC) $(CFLAGS) -Iclient tests/test_pairing_ui.c client/ui.c -o $@ -pthread $(LDGL) $(shell pkg-config --libs libcrypto)
+
+test-pairing: build/pairing build/test_pairing build/test_pairing_ui
+	./build/test_pairing
+	python3 security/scripts/test_pairing.py -v
+.PHONY: test-pairing
 
 # Deterministic game/lobby regressions; no window or running DDS server needed.
 # Run in both thread handoff modes (sheeyang's #3/#4).

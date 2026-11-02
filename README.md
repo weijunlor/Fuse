@@ -39,7 +39,6 @@ On Windows, run these from separate terminals in this folder:
 ```bat
 .\run-server.bat
 .\run-client.bat
-.\run-client.bat --player 2
 ```
 
 The batch files call the Linux scripts through your default WSL distribution.
@@ -49,13 +48,14 @@ On Linux or inside Ubuntu/WSL, use the same scripts directly in separate termina
 ```bash
 bash run-server.sh
 bash run-client.sh
-bash run-client.sh --player 2
 ```
 
 Run the first-time setup under **Build** above before using these scripts.
-Each script builds only its own target, sources the DDS environment, and starts
-its process with security enabled. `--player` accepts 1–5; if omitted, the client
-asks for a player number. Use a different identity for each client. Both
+Each script builds its target and the pairing helper, sources the DDS environment,
+and starts its process with security enabled. The server displays a temporary
+pairing code. On a new PC, the client opens a form for the host IP and that code;
+after pairing, **Join Game** uses the saved connection. The host runs only the
+server, leaving all five player identities available to remote PCs. Both
 launchers accept `--no-build` to skip compilation; the batch files forward
 these options to the Linux scripts.
 Output stays in each terminal. Close a game window to stop that client; Ctrl+C
@@ -126,10 +126,61 @@ game rules and are exempt from network timeouts.
 
 ## Play across computers on the same LAN
 
-Run **one server** and use a different player number (1–5) for each client.
+Run **one server** and pair each player PC once.
 Windows/WSL and native Ubuntu computers can play together. Use the same game
 revision on all computers. Connections stay on your LAN; no relay or internet
 server is involved. Keep DDS encryption and application authentication enabled.
+
+### One-time pairing (recommended)
+
+1. On the host, complete the first-time Build/certificate/account setup above and
+   run `.\run-server.bat` (Windows) or `bash run-server.sh` (Ubuntu).
+2. On each player PC, install the Build dependencies and build the game. **Do not
+   generate CAs or demo accounts on the player PC.** Run `.\run-client.bat` or
+   `bash run-client.sh` without a player-number argument.
+3. Enter the host's LAN IPv4 address and paste its complete `FUSE-...` code into
+   the game's **Pair this PC** screen. Click **Pair**. The host assigns an unused
+   identity automatically; the game validates and privately saves its credentials.
+4. Click **Join Game**. On subsequent launches, just click **Join Game** again.
+
+The code is a random, single-use, five-minute secret. Pairing uses mutually
+authenticated TLS 1.3 with ephemeral key exchange on TCP **7440**; it does not
+trust an arbitrary self-signed certificate. Share the displayed code only with
+the PC you intend to pair. Gameplay continues to use encrypted DDS over UDP.
+This is game-specific credential enrollment, not an RFC 7030 EST implementation.
+Keep the generated client identities and password files on the provisioning host;
+pairing reads these files and never sends CA private keys. Codes are displayed
+on the controlling terminal and excluded from redirected game logs.
+
+In the host terminal, `pair` replaces the current code, `cancel` cancels pending
+pairing, and `devices` lists assignments. The next code appears after successful
+pairing until all five identities are assigned. Pairing failures leave the game
+server running. `--no-pairing` starts the server without the enrollment service.
+
+Each PC retains a private Ed25519 device key, so retrying an interrupted pairing
+with a fresh host code recovers that PC's existing identity. Host assignments
+survive server restarts. Identities are never automatically recycled; a sixth PC
+receives a full-capacity message. Replacing a PC whose private data has been lost
+requires deliberate host reprovisioning. Deleting the registry alone does not
+invalidate credentials previously given to that PC.
+
+Client profiles live under `~/.local/share/fuse/pairings/`, grouped by host CA
+fingerprint; `FUSE_PAIRING_DIR` can select another private Linux directory. The
+host registry is `<FUSE_SECURITY_DIR>/pairing/devices.json`. Private directories
+use mode 700 and files mode 600, outside Windows mounts and the source checkout.
+Failed/cancelled enrollment preserves an existing working connection. **Pair with
+another host** opens the form again; the last successful profile becomes active.
+
+Use `python3 security/scripts/lan.py check` to test the saved connection while
+the game is logged out. LAN reachability is still required: follow the Windows/
+Ubuntu networking steps below if WSL NAT, firewall rules or Wi-Fi isolation block
+connections. On the host, include `-PairingHost` when firewall changes are needed.
+
+### Manual credential transfer (optional)
+
+The existing `--player 1..5` launch option and bundle tools remain available for
+manually managed setups and benchmarks. Use `--no-pairing` for a manually managed
+group so its identities are not also allocated by the automatic pairing registry.
 
 **1. Provision on the host only.** Follow the first-time Build/account setup above
 on the host, then export one personal bundle for each remote player in Ubuntu/WSL:
@@ -215,14 +266,16 @@ credentials have been checked, run this in an **Administrator PowerShell** on th
 affected Windows computer, substituting your actual LAN subnet:
 
 ```powershell
-.\security\scripts\setup_lan.ps1 -ConfigureFirewall -LanSubnet 192.168.1.0/24
+.\security\scripts\setup_lan.ps1 -ConfigureFirewall -PairingHost -LanSubnet 192.168.1.0/24
 ```
 
 This adds/updates only the `FUSE-LAN-UDP` Windows rule and `FUSE-LAN-UDP-WSL`
 Hyper-V rule, scoped to that subnet and **Private** networks. It allows inbound
 UDP 7400–7401 and 7410–7429 (domain 0, participant indices 0–9), and preserves
 firewall defaults. Use a trusted Private network; the helper does not change the
-network's category. `-WhatIf` previews either setup operation.
+network's category. `-PairingHost` additionally permits TCP 7440 in host-only rules
+`FUSE-LAN-PAIR-TCP` and `FUSE-LAN-PAIR-TCP-WSL`; omit it on player PCs. `-WhatIf`
+previews either setup operation.
 
 On Ubuntu, inspect `sudo ufw status` first. If UFW is active and blocking the game,
 allow only your LAN subnet and the same UDP ports:
@@ -230,6 +283,8 @@ allow only your LAN subnet and the same UDP ports:
 ```bash
 sudo ufw allow from 192.168.1.0/24 to any port 7400:7401 proto udp
 sudo ufw allow from 192.168.1.0/24 to any port 7410:7429 proto udp
+# On the pairing host only:
+sudo ufw allow from 192.168.1.0/24 to any port 7440 proto tcp
 ```
 
 Guest/school Wi-Fi may block direct device-to-device traffic. Use a LAN or hotspot
@@ -242,6 +297,8 @@ LAN regressions (inside Ubuntu/WSL after building the probe):
 ```bash
 python3 security/scripts/test_lan.py -v
 unshare -Urn python3 security/scripts/test_lan.py --integration
+make test-pairing
+unshare -Urn python3 security/scripts/test_pairing.py --integration
 ```
 
 The second command uses temporary user/network namespaces and a private virtual

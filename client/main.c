@@ -52,6 +52,7 @@ Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
 #include "particles.h"
 #include "interp.h"
 #include "lobby_ui.h"
+#include "pairing_ui.h"
 
 // Each Join starts a fresh authenticated session. Never reset handoffs or
 // credentials until the previous worker has stopped and pthread_join finished.
@@ -180,6 +181,10 @@ int main(int argc, char **argv)
     b_auto_join = b_auto_join || int_frames > 0 || int_stress > 0 ||
                   int_particles > 0 || b_interp_stats;
 
+    bool b_legacy_ready = getenv("FUSE_DDS_IDENTITY") != NULL ||
+        (getenv("FUSE_DDS_SECURITY") && strcmp(getenv("FUSE_DDS_SECURITY"), "off") == 0);
+    if (!b_auto_join && !b_legacy_ready) pairing_profile_load();
+
     if (!glfwInit())
         return 1;
 
@@ -207,6 +212,7 @@ int main(int argc, char **argv)
     if (!b_auto_join)
     {
         lobby_ui_init(window);
+        pairing_ui_init(window, b_legacy_ready);
         glfwSwapInterval(1);
     }
 
@@ -286,15 +292,23 @@ int main(int argc, char **argv)
 
         if (!b_auto_join)
         {
-            LobbyAction action = lobby_ui_poll(window, &client_frame, b_running);
+            bool b_was_pairing = pairing_ui_visible();
+            pairing_ui_poll(window);
+            // Do not let a Pair/Cancel click fall through to a lobby button.
+            LobbyAction action = b_was_pairing || pairing_ui_visible() ? LOBBY_NONE : lobby_ui_poll(window, &client_frame, b_running);
             if (action == LOBBY_EXIT)
                 break;
-            if (action == LOBBY_JOIN || action == LOBBY_LEAVE)
+            if (action == LOBBY_JOIN || action == LOBBY_LEAVE || action == LOBBY_PAIR)
             {
                 stop_client(thread, &b_running);
                 client_frame = (ClientFrame){ .int_player_id = -1 };
                 render_reset_session();
                 str_menu_message = "";
+                if (action == LOBBY_PAIR || (action == LOBBY_JOIN && !pairing_ui_ready()))
+                {
+                    pairing_ui_open();
+                    action = LOBBY_NONE;
+                }
                 if (action == LOBBY_JOIN)
                 {
                     b_running = start_client(&thread);
@@ -320,8 +334,10 @@ int main(int argc, char **argv)
 
         uint64_t u_t0 = timing_now_ns();
         render_frame();
-        if (!b_auto_join)
-            lobby_ui_draw(&client_frame, b_running, str_menu_message);
+        if (!b_auto_join) {
+            if (pairing_ui_visible()) pairing_ui_draw();
+            else lobby_ui_draw(&client_frame, b_running, str_menu_message);
+        }
         if (arr_frame_ns != NULL)
         {
             arr_frame_ns[int_frame++] = timing_now_ns() - u_t0;
@@ -356,6 +372,7 @@ int main(int argc, char **argv)
 
     // Leave the game (the worker sends a Leave and closes DDS)
     stop_client(thread, &b_running);
+    if (!b_auto_join) pairing_ui_shutdown();
 
     free(arr_frame_ns);
     particles_free();
