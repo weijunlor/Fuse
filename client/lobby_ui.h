@@ -10,6 +10,7 @@ typedef enum
     LOBBY_NONE,
     LOBBY_JOIN,
     LOBBY_LEAVE,
+    LOBBY_PAIR,
     LOBBY_EXIT
 } LobbyAction;
 

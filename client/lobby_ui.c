@@ -5,6 +5,7 @@
 #include "lobby_ui.h"
 #include "ui.h"
 #include "render.h"
+#include "pairing_ui.h"
 
 typedef struct
 {
@@ -31,6 +32,7 @@ static void on_key(GLFWwindow *a_window, int a_int_key, int a_int_scancode,
 {
     (void)a_window;
     (void)a_int_scancode;
+    if (pairing_ui_visible()) { pairing_ui_key(a_window, a_int_key, a_int_action, a_int_mods); return; }
     (void)a_int_mods;
     if (a_int_action != GLFW_PRESS)
         return;
@@ -78,6 +80,8 @@ LobbyAction lobby_ui_poll(GLFWwindow *a_window, const ClientFrame *a_frame, bool
         return LOBBY_JOIN;
     if (!b_click)
         return LOBBY_NONE;
+    if (!a_b_running && pairing_ui_ready() && d_mouse_x >= 180 && d_mouse_x <= 620 &&
+        d_mouse_y >= 535 && d_mouse_y <= 570) return LOBBY_PAIR;
     bool b_arena = in_arena(a_frame, a_b_running);
     if (in_button(b_arena ? button_exit : button_secondary))
         return LOBBY_EXIT;
@@ -131,6 +135,12 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
     text(180, 146, 1.5f, "Pass the bomb. Survive the fuse.");
 
     const char *str_status = "Join a game to enter the waiting room.";
+    char str_host_status[96];
+    if (!a_b_running && pairing_ui_ready() && *pairing_ui_host()) {
+        snprintf(str_host_status, sizeof str_host_status, "Ready to join %s", pairing_ui_host());
+        str_status = str_host_status;
+    }
+    if (!a_b_running && !pairing_ui_ready()) str_status = "Pair this player with your host to get started.";
     if (a_b_running)
     {
         switch (a_frame->connection)
@@ -187,9 +197,13 @@ void lobby_ui_draw(const ClientFrame *a_frame, bool a_b_running, const char *a_s
     }
 
     bool b_retry = a_b_running && a_frame->connection == CLIENT_REJECTED;
-    const char *str_primary = !a_b_running ? "Join Game [Enter]" :
+    const char *str_primary = !a_b_running ? (pairing_ui_ready() ? "Join Game [Enter]" : "Pair player [Enter]") :
                               b_retry ? "Retry [Enter]" :
                               a_frame->int_player_id > 0 ? "Leave Game [Esc]" : "Cancel [Esc]";
     draw_button(button_primary, str_primary, !a_b_running || b_retry);
     draw_button(button_secondary, "Exit", false);
+    if (!a_b_running && pairing_ui_ready()) {
+        const Button pair_button = {180, 535, 440, 34};
+        draw_button(pair_button, "Pair with another host", false);
+    }
 }

@@ -27,29 +27,24 @@ while (($#)); do
         --no-build) build=0; shift ;;
         -h|--help)
             echo 'Usage: bash run-client.sh [--player 1..5] [--server IPv4] [--interface NAME] [--no-build]'
-            echo 'Prompts for a player number when --player is omitted.'
+            echo 'Without --player, opens the saved connection or in-game pairing screen.'
+            echo 'Simultaneous windows use separate saved player profiles; pair each new player once.'
             echo 'Omit --server for automatic discovery; use the host LAN IPv4 for direct connections.'
             exit 0 ;;
         *) echo "Unknown option: $1. Use --help for usage." >&2; exit 1 ;;
     esac
 done
 
-while [[ ! $player =~ ^[1-5]$ ]]; do
-    printf 'Player number (1-5): ' >&2
-    if ! IFS= read -r player; then
-        printf '\nNo player number supplied. Use --player 1..5 for noninteractive runs.\n' >&2
-        exit 1
-    fi
-    if [[ ! $player =~ ^[1-5]$ ]]; then
-        echo 'Enter a number from 1 to 5.' >&2
-    fi
-done
-
 # shellcheck source=security/scripts/env.sh
 source security/scripts/env.sh
 # Validate networking before compiling or opening a window.
-python3 security/scripts/lan.py network --player "$player"
-if ((build)); then
-    make -j4 build/client
+if [[ -n $player ]]; then
+    python3 security/scripts/lan.py network --player "$player"
 fi
-exec bash security/scripts/run_secure.sh "client-$player" ./build/client
+if ((build)); then
+    make -j4 build/client build/pairing
+fi
+if [[ -n $player ]]; then
+    exec bash security/scripts/run_secure.sh "client-$player" ./build/client
+fi
+exec python3 security/scripts/client_session.py ./build/client

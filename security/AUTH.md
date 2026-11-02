@@ -1,5 +1,11 @@
 # Application authentication
 
+The default launchers now support [one-time in-game LAN pairing](../README.md#one-time-pairing-recommended).
+The dedicated host provisions the five existing accounts once; each player PC
+receives only its automatically assigned identity and matching password over
+code-authenticated TLS. Player PCs need dependency setup, but no local CA/account
+generation. The manual account and bundle workflows below remain supported.
+
 FUSE now requires both a DDS participant identity and an application login by
 default. Certificate setup remains in [README.md](README.md). The original
 lecturer programs in `baseline/` are unchanged and do not use application login.

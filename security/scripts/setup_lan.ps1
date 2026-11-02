@@ -12,6 +12,7 @@ Inspect Windows/WSL LAN readiness. System changes require explicit switches.
 param(
     [switch]$EnableMirrored,
     [switch]$ConfigureFirewall,
+    [switch]$PairingHost,
     [string]$LanSubnet
 )
 
@@ -55,10 +56,10 @@ Get-NetConnectionProfile | Select-Object InterfaceAlias, NetworkCategory | Forma
 Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike '*Loopback*' } |
     Select-Object InterfaceAlias, IPAddress, PrefixLength | Format-Table
 Write-Output 'Existing FUSE firewall rules:'
-Get-NetFirewallRule -Name 'FUSE-LAN-UDP' -ErrorAction SilentlyContinue |
+Get-NetFirewallRule -Name 'FUSE-LAN-UDP','FUSE-LAN-PAIR-TCP' -ErrorAction SilentlyContinue |
     Select-Object Name, Enabled, Profile, Direction, Action | Format-Table
 if (Get-Command Get-NetFirewallHyperVRule -ErrorAction SilentlyContinue) {
-    Get-NetFirewallHyperVRule -Name 'FUSE-LAN-UDP-WSL' -ErrorAction SilentlyContinue |
+    Get-NetFirewallHyperVRule -Name 'FUSE-LAN-UDP-WSL','FUSE-LAN-PAIR-TCP-WSL' -ErrorAction SilentlyContinue |
         Select-Object Name, Enabled, Profiles, LocalPorts, RemoteAddresses | Format-Table
 }
 
@@ -117,6 +118,23 @@ if ($ConfigureFirewall) {
             New-NetFirewallHyperVRule @wslRule -DisplayName 'FUSE direct LAN multiplayer (WSL)' | Out-Null
         }
         Write-Output 'FUSE rules configured for this subnet on Private networks. Firewall defaults remain unchanged.'
+    }
+    if ($PairingHost -and $PSCmdlet.ShouldProcess("Private LAN $LanSubnet", 'Allow host pairing TCP 7440 in Windows and WSL')) {
+        $hostPairRule = @{ Name='FUSE-LAN-PAIR-TCP'; Direction='Inbound'; Action='Allow'; Enabled='True';
+                           Profile='Private'; Protocol='TCP'; LocalPort='7440'; RemoteAddress=$LanSubnet }
+        if (Get-NetFirewallRule -Name $hostPairRule.Name -ErrorAction SilentlyContinue) {
+            Set-NetFirewallRule @hostPairRule | Out-Null
+        } else {
+            New-NetFirewallRule @hostPairRule -DisplayName 'FUSE LAN pairing host' | Out-Null
+        }
+        $wslPairRule = @{ Name='FUSE-LAN-PAIR-TCP-WSL'; VMCreatorId='{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}';
+                          Direction='Inbound'; Action='Allow'; Enabled='True'; Profiles='Private'; Protocol='TCP';
+                          LocalPorts='7440'; RemoteAddresses=$LanSubnet }
+        if (Get-NetFirewallHyperVRule -Name $wslPairRule.Name -ErrorAction SilentlyContinue) {
+            Set-NetFirewallHyperVRule @wslPairRule | Out-Null
+        } else {
+            New-NetFirewallHyperVRule @wslPairRule -DisplayName 'FUSE LAN pairing host (WSL)' | Out-Null
+        }
     }
 }
 Write-Output 'Run the secure LAN check against the host before considering further changes.'

@@ -278,7 +278,8 @@ void *net_client_worker(void *arg)
 				// If server responded with an invalid player ID
 				if (response->status == JOIN_BAD_LOGIN && client_auth.b_enabled)
 				{
-					LOG_WARN("Login rejected (credentials, active account, or replay check)\n");
+					LOG_WARN("Login rejected (credentials, active account, or replay check). "
+					         "Each simultaneous client needs its own paired identity.\n");
 					frame.connection = CLIENT_REJECTED;
 					// This is the final publication. Retry if the consumer has a
 					// slot pinned, so the menu always receives the rejection.

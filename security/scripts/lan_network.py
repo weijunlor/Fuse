@@ -33,7 +33,14 @@ def select_interface(server=None, interface=None):
             raise ValueError(f"Interface {interface!r} has no IPv4 address")
         return interface
     if server:
-        routes = ip_json("route", "get", ipv4(server))
+        server = ipv4(server)
+        # Linux routes this computer's own LAN addresses through lo. DDS must
+        # advertise the adapter that owns the address, matching the host's LAN
+        # participant, rather than switching a same-computer client to loopback.
+        for name, addresses in available.items():
+            if server in addresses:
+                return name
+        routes = ip_json("route", "get", server)
         if not routes or not routes[0].get("dev"):
             raise RuntimeError(f"No route to {server}")
         return routes[0]["dev"]

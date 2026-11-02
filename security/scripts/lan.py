@@ -4,6 +4,7 @@ import argparse
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 import hashlib
+import gzip
 import hmac
 import io
 import json
@@ -121,8 +122,14 @@ def read_bundle(bundle):
     if bundle.stat().st_size > 2 * 1024 * 1024:
         raise ValueError("Bundle is too large")
     payload = {}
+    # Bound decompression before tarfile processes extended headers. A small
+    # network response must not expand into an unbounded credential archive.
+    with gzip.open(bundle, 'rb') as compressed:
+        expanded = compressed.read(2 * 1024 * 1024 + 1)
+    if len(expanded) > 2 * 1024 * 1024:
+        raise ValueError('Expanded credential bundle is too large')
     # Never extract archive paths. Accept only the exact allowlist below.
-    with tarfile.open(bundle, "r:gz") as archive:
+    with tarfile.open(fileobj=io.BytesIO(expanded), mode="r:") as archive:
         for member in archive:
             if len(payload) >= 8 or not member.isfile() or member.name in payload or not 0 <= member.size <= MAX_FILE:
                 raise ValueError("Bundle has duplicate, oversized or non-regular entries")
@@ -258,8 +265,8 @@ def main():
     install = commands.add_parser("import", help="validate and install a transferred bundle")
     install.add_argument("bundle", type=Path)
     diagnostic = commands.add_parser("check", help="exercise a running host using secure DDS")
-    diagnostic.add_argument("--server", required=True)
-    diagnostic.add_argument("--player", type=int, choices=range(1, 6), required=True)
+    diagnostic.add_argument("--server")
+    diagnostic.add_argument("--player", type=int, choices=range(1, 6))
     commands.add_parser("host", help="show host addresses and launch commands")
     network = commands.add_parser("network", help="validate launcher network options")
     network.add_argument("--player", type=int, choices=range(1, 6))
@@ -269,6 +276,14 @@ def main():
     elif args.command == "import":
         import_bundle(args.bundle)
     elif args.command == "check":
+        if args.player is None:
+            import pairing_store
+            if args.server:
+                os.environ['FUSE_SERVER_IP'] = args.server
+            saved_server, args.player = pairing_store.activate(emit=False)
+            args.server = args.server or saved_server
+        if not args.server:
+            parser.error('--server is required with an explicit --player')
         return check(args.server, args.player)
     elif args.command == "host":
         host()
