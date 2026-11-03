@@ -64,6 +64,9 @@ function Invoke-FuseNetworkSetup {
     }
     $old = if (Test-Path -LiteralPath $ConfigPath) { [IO.File]::ReadAllText($ConfigPath) } else { '' }
     $updated = Get-FuseWslConfig $old
+    # Host firewall rules also appear in this view as HostFirewallLocal entries.
+    # They are managed through NetFirewallRule, not NetFirewallHyperVRule.
+    $localHypervRules = @(Get-NetFirewallHyperVRule -PolicyStore PersistentStore -PolicyStoreSourceType Local -ErrorAction Stop)
 
     foreach ($rule in @(
             @{ Name='FUSEPairing'; DisplayName='FUSE Pairing'; Protocol='TCP'; Ports=@('7440') },
@@ -73,18 +76,19 @@ function Invoke-FuseNetworkSetup {
                           Action='Allow'; Enabled='True'; Profile='Any'; Protocol=$rule.Protocol;
                           LocalPort=$rule.Ports; RemoteAddress=$Subnet }
             if (Get-NetFirewallRule -Name $rule.Name -ErrorAction SilentlyContinue) {
-                Set-NetFirewallRule @windows -NewDisplayName $rule.DisplayName | Out-Null
+                Set-NetFirewallRule @windows -NewDisplayName $rule.DisplayName -ErrorAction Stop | Out-Null
             } else {
-                New-NetFirewallRule @windows -DisplayName $rule.DisplayName | Out-Null
+                New-NetFirewallRule @windows -DisplayName $rule.DisplayName -ErrorAction Stop | Out-Null
             }
-            $hyperv = @{ Name=$rule.Name; Direction='Inbound';
+            # Separate names avoid colliding with the host rules mirrored above.
+            $hyperv = @{ Name=($rule.Name + '-WSL'); PolicyStore='PersistentStore'; Direction='Inbound';
                          Action='Allow'; Enabled='True'; Profiles='Any'; Protocol=$rule.Protocol;
                          VMCreatorId='{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}';
                          LocalPorts=$rule.Ports; RemoteAddresses=$Subnet }
-            if (Get-NetFirewallHyperVRule -Name $rule.Name -ErrorAction SilentlyContinue) {
-                Set-NetFirewallHyperVRule @hyperv -NewDisplayName $rule.DisplayName | Out-Null
+            if ($localHypervRules | Where-Object { $_.Name -eq $hyperv.Name }) {
+                Set-NetFirewallHyperVRule @hyperv -NewDisplayName $rule.DisplayName -ErrorAction Stop | Out-Null
             } else {
-                New-NetFirewallHyperVRule @hyperv -DisplayName $rule.DisplayName | Out-Null
+                New-NetFirewallHyperVRule @hyperv -DisplayName $rule.DisplayName -ErrorAction Stop | Out-Null
             }
         }
     }

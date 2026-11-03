@@ -59,6 +59,10 @@ Windows 11 22H2 or later and a current WSL installation are required.
 For a different subnet use `.\run-setup.bat -LanSubnet 192.168.1.0/24`.
 Use `-NoRestart` to defer WSL shutdown, or `-WhatIf` to preview changes.
 Rerunning setup updates the same named rules and preserves saved pairings.
+Windows rules use `FUSEPairing` / `FUSEDDS`; WSL rules use
+`FUSEPairing-WSL` / `FUSEDDS-WSL` to avoid colliding with inherited Windows rules.
+Any firewall write failure stops setup before editing `.wslconfig` or shutting
+down WSL; correct the reported error and rerun setup.
 This handles Windows/WSL networking; complete the **Build** prerequisites above
 on each PC, generating certificates and demo accounts on the host only.
 

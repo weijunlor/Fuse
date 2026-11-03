@@ -39,36 +39,55 @@ $script:creates = 0
 $script:updates = 0
 $script:shutdowns = 0
 $script:shutdownExit = 0
+$script:failureOperation = ''
+function Test-FirewallFailure($Operation, $RequestedErrorAction) {
+    Assert-True ($RequestedErrorAction -eq 'Stop') "$Operation must explicitly stop on errors."
+    if ($script:failureOperation -eq $Operation) {
+        Write-Error "Mock access denied during $Operation" -ErrorAction $RequestedErrorAction
+    }
+}
 function Get-NetFirewallRule {
     [CmdletBinding()] param($Name)
     if ($script:windowsRules.ContainsKey($Name)) { return $script:windowsRules[$Name] }
 }
 function Get-NetFirewallHyperVRule {
-    [CmdletBinding()] param($Name)
-    if ($script:hypervRules.ContainsKey($Name)) { return $script:hypervRules[$Name] }
+    [CmdletBinding()] param($PolicyStore, $PolicyStoreSourceType)
+    Assert-True ($PolicyStore -eq 'PersistentStore' -and $PolicyStoreSourceType -eq 'Local') 'Only local persistent Hyper-V rules should be queried.'
+    $script:hypervRules.Values | Where-Object { $_.PolicyStoreSourceType -eq 'Local' }
 }
 function New-NetFirewallRule {
     [CmdletBinding()] param($Name, $DisplayName, $Direction, $Action, $Enabled, $Profile, $Protocol, $LocalPort, $RemoteAddress)
+    Test-FirewallFailure 'NewWindows' $PSBoundParameters.ErrorAction
     Assert-True (-not $script:windowsRules.ContainsKey($Name)) 'Duplicate Windows rule.'
     $script:windowsRules[$Name] = @{} + $PSBoundParameters
+    # Windows mirrors host rules into the Hyper-V view, with the SAME name.
+    $script:hypervRules[$Name] = @{ Name=$Name; PolicyStoreSourceType='HostFirewallLocal'; VMCreatorId='Any' }
     $script:creates++
 }
 function Set-NetFirewallRule {
     [CmdletBinding()] param($Name, $NewDisplayName, $Direction, $Action, $Enabled, $Profile, $Protocol, $LocalPort, $RemoteAddress)
+    Test-FirewallFailure 'SetWindows' $PSBoundParameters.ErrorAction
     Assert-True ($script:windowsRules.ContainsKey($Name)) 'Updating nonexistent Windows rule.'
     $script:windowsRules[$Name] = @{} + $PSBoundParameters
     $script:updates++
 }
 function New-NetFirewallHyperVRule {
-    [CmdletBinding()] param($Name, $DisplayName, $Direction, $Action, $Enabled, $Profiles, $Protocol, $LocalPorts, $RemoteAddresses, $VMCreatorId)
+    [CmdletBinding()] param($Name, $DisplayName, $Direction, $Action, $Enabled, $Profiles, $Protocol, $LocalPorts, $RemoteAddresses, $VMCreatorId, $PolicyStore)
+    Test-FirewallFailure 'NewHyperv' $PSBoundParameters.ErrorAction
+    Assert-True ($PolicyStore -eq 'PersistentStore') 'Hyper-V writes must target PersistentStore.'
     Assert-True (-not $script:hypervRules.ContainsKey($Name)) 'Duplicate Hyper-V rule.'
     $script:hypervRules[$Name] = @{} + $PSBoundParameters
+    $script:hypervRules[$Name].PolicyStoreSourceType = 'Local'
     $script:creates++
 }
 function Set-NetFirewallHyperVRule {
-    [CmdletBinding()] param($Name, $NewDisplayName, $Direction, $Action, $Enabled, $Profiles, $Protocol, $LocalPorts, $RemoteAddresses, $VMCreatorId)
+    [CmdletBinding()] param($Name, $NewDisplayName, $Direction, $Action, $Enabled, $Profiles, $Protocol, $LocalPorts, $RemoteAddresses, $VMCreatorId, $PolicyStore)
+    Test-FirewallFailure 'SetHyperv' $PSBoundParameters.ErrorAction
+    Assert-True ($PolicyStore -eq 'PersistentStore') 'Hyper-V writes must target PersistentStore.'
     Assert-True ($script:hypervRules.ContainsKey($Name)) 'Updating nonexistent Hyper-V rule.'
+    Assert-True ($script:hypervRules[$Name].PolicyStoreSourceType -eq 'Local') 'Cannot update a mirrored Windows rule through Hyper-V.'
     $script:hypervRules[$Name] = @{} + $PSBoundParameters
+    $script:hypervRules[$Name].PolicyStoreSourceType = 'Local'
     $script:updates++
 }
 function wsl.exe {
@@ -96,7 +115,8 @@ try {
     Assert-True ([IO.File]::ReadAllText($backups[0].FullName) -eq $original) 'Backup does not match original.'
     foreach ($name in @('FUSEPairing', 'FUSEDDS')) {
         $windows = $script:windowsRules[$name]
-        $hyperv = $script:hypervRules[$name]
+        $hyperv = $script:hypervRules[$name + '-WSL']
+        Assert-True ($script:hypervRules[$name].PolicyStoreSourceType -eq 'HostFirewallLocal') 'Inherited Windows rule was replaced.'
         Assert-True ($windows.RemoteAddress -eq '10.243.66.0/24' -and $hyperv.RemoteAddresses -eq '10.243.66.0/24') 'Incorrect subnet scope.'
         Assert-True ($windows.Profile -eq 'Any' -and $hyperv.Profiles -eq 'Any') 'Incorrect profile scope.'
         Assert-True ($windows.Direction -eq 'Inbound' -and $hyperv.Direction -eq 'Inbound') 'Incorrect direction.'
@@ -114,9 +134,31 @@ try {
     Assert-True ($script:shutdowns -eq 1) 'SkipRestart shut down WSL.'
     Assert-True (@(Get-ChildItem -LiteralPath $directory -Force -Filter '*.fuse-setup-backup-*').Count -eq 1) 'Unchanged config was backed up again.'
 
+    # Reproduce nonterminating CIM failures for every firewall mutation path.
+    # Failure must leave the pending config untouched and never shut down WSL
+    # or print the success message, even with a caller preference of Continue.
+    foreach ($operation in @('SetWindows', 'SetHyperv', 'NewWindows', 'NewHyperv')) {
+        [IO.File]::WriteAllText($configPath, $original)
+        if ($operation -eq 'NewWindows') { $script:windowsRules.Remove('FUSEPairing') }
+        if ($operation -eq 'NewHyperv') { $script:hypervRules.Remove('FUSEPairing-WSL') }
+        $script:failureOperation = $operation
+        $shutdownsBefore = $script:shutdowns
+        $backupCountBefore = @(Get-ChildItem -LiteralPath $directory -Force -Filter '*.fuse-setup-backup-*').Count
+        $messages = [Collections.Generic.List[object]]::new()
+        $ErrorActionPreference = 'Continue'
+        Assert-Throws { Invoke-FuseNetworkSetup -Subnet '10.243.66.0/24' -ConfigPath $configPath 6>&1 |
+            ForEach-Object { $messages.Add($_) } } "*Mock access denied during $operation*"
+        $ErrorActionPreference = 'Stop'
+        Assert-True ($script:shutdowns -eq $shutdownsBefore) "$operation failure shut down WSL."
+        Assert-True ([IO.File]::ReadAllText($configPath) -eq $original) "$operation failure changed config."
+        Assert-True (-not (($messages | Out-String).Contains('setup complete'))) "$operation failure reported success."
+        Assert-True (@(Get-ChildItem -LiteralPath $directory -Force -Filter '*.fuse-setup-backup-*').Count -eq $backupCountBefore) "$operation failure created a backup."
+    }
+    $script:failureOperation = ''
+    $updatesBefore = $script:updates
     [IO.File]::WriteAllText($configPath, "[wsl2]`nfirewall=true`nfirewall=false")
     Assert-Throws { Invoke-FuseNetworkSetup -Subnet '10.243.66.0/24' -ConfigPath $configPath } '*Duplicate firewall settings*'
-    Assert-True ($script:updates -eq 4) 'Invalid config changed firewall rules before failing.'
+    Assert-True ($script:updates -eq $updatesBefore) 'Invalid config changed firewall rules before failing.'
     [IO.File]::WriteAllText($configPath, (Get-FuseWslConfig ''))
     $script:shutdownExit = 5
     Assert-Throws { Invoke-FuseNetworkSetup -Subnet '10.243.66.0/24' -ConfigPath $configPath } '*shutdown failed*'
@@ -125,4 +167,4 @@ try {
     Get-ChildItem -LiteralPath $directory -File -Force | Remove-Item -Force
     Remove-Item -LiteralPath $directory
 }
-Write-Host 'PASS: config preservation, backups, firewall creation/update, preview, deferred restart and shutdown errors.'
+Write-Host 'PASS: config preservation, backups, inherited rule collisions, firewall creation/update/failures, preview, deferred restart and shutdown errors.'
