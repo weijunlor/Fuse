@@ -32,6 +32,7 @@ bool b_reduce_accum = true;
 #define DASH_TICKS (TICK_HZ / 5)
 #define DASH_COOLDOWN_TICKS TICK_HZ
 #define SPEED_PICKUP_TICKS (5 * TICK_HZ)
+#define FUSE_PICKUP_TICKS (3 * TICK_HZ)
 #define MAX_PICKUPS 4
 
 static uint8_t arr_u8_keys[MAX_PLAYERS];
@@ -91,16 +92,22 @@ void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys)
 	arr_u64_last_input_ns[a_int_player_id - 1] = timing_now_ns();
 }
 
-void game_reset_player(int a_int_index)
+static void reset_player_effects(int a_int_index)
 {
-	arr_u8_keys[a_int_index] = 0;
-	arr_u8_lives[a_int_index] = PLAYER_START_LIVES;
 	arr_u8_shield[a_int_index] = 0;
 	arr_u16_speed_ticks[a_int_index] = 0;
 	arr_u16_dash_ticks[a_int_index] = 0;
 	arr_u16_dash_cooldown[a_int_index] = 0;
 	arr_u16_tag_guard_ticks[a_int_index] = 0;
-	arr_b_dash_was_down[a_int_index] = false;
+	// Clearing an active dash must still require a fresh press to dash again.
+	arr_b_dash_was_down[a_int_index] = (arr_u8_keys[a_int_index] & KEY_DASH) != 0;
+}
+
+void game_reset_player(int a_int_index)
+{
+	arr_u8_keys[a_int_index] = 0;
+	arr_u8_lives[a_int_index] = PLAYER_START_LIVES;
+	reset_player_effects(a_int_index);
 	arr_u64_last_input_ns[a_int_index] = timing_now_ns();
 }
 
@@ -219,11 +226,14 @@ static void add_explosion(int a_int_x, int a_int_y)
 
 static void spawn_pickup(int a_int_x, int a_int_y)
 {
-	static const uint8_t arr_types[] = {PICKUP_SPEED, PICKUP_SHIELD, PICKUP_FUSE_RESET};
+	// Weighted selection: speed 40%, shield 40%, extra fuse time 20%.
+	static const uint8_t arr_types[] = {
+		PICKUP_SPEED, PICKUP_SPEED, PICKUP_SHIELD, PICKUP_SHIELD, PICKUP_FUSE_RESET
+	};
 	for (int i = 0; i < MAX_PICKUPS; i++)
 	{
 		if (arr_pickups[i].type != PICKUP_NONE) continue;
-		arr_pickups[i].type = arr_types[rand() % 3];
+		arr_pickups[i].type = arr_types[rand() % (sizeof arr_types / sizeof arr_types[0])];
 		arr_pickups[i].x = (int16_t)movement_clamp(
 			a_int_x + (rand() % 151) - 75, WIDTH - SQ_WIDTH, b_game_branchless);
 		arr_pickups[i].y = (int16_t)movement_clamp(
@@ -255,8 +265,7 @@ static void update_player_effects(int a_int_i)
 		if (arr_pickups[i].type == PICKUP_SPEED) arr_u16_speed_ticks[a_int_i] = SPEED_PICKUP_TICKS;
 		else if (arr_pickups[i].type == PICKUP_SHIELD) arr_u8_shield[a_int_i] = 1;
 		else if (arr_pickups[i].type == PICKUP_FUSE_RESET)
-			// Reset to the configured fuse; never extend the compact timer to overflow.
-			u_fuse_ticks = FUSE_TICKS;
+			u_fuse_ticks += FUSE_PICKUP_TICKS;
 		arr_pickups[i].type = PICKUP_NONE;
 	}
 }
@@ -357,6 +366,7 @@ static void update_round_state(void)
 			{
 				int int_holder = u8_bomb_holder - 1;
 				arr_u8_lives[int_holder]--;
+				for (int i = 0; i < MAX_PLAYERS; i++) reset_player_effects(i);
 				add_explosion(arr_Players[int_holder].x, arr_Players[int_holder].y);
 				spawn_pickup(arr_Players[int_holder].x, arr_Players[int_holder].y);
 				u8_bomb_holder = 0;

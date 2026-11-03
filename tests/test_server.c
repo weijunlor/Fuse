@@ -138,11 +138,87 @@ static void test_random_bomb_holder(void)
 	puts("PASS random bomb holder across all eligible player sets (0-5 players)");
 }
 
+static void test_explosion_resets_effects(void)
+{
+	for (int final = 0; final < 2; final++)
+	{
+		setup_players();
+		for (int i = 2; i < MAX_PLAYERS; i++) assert(join(100 + i).status == JOIN_OK);
+		bot_set_player(MAX_PLAYERS - 1, true);
+		u8_phase = PHASE_PLAYING; u8_bomb_holder = 1; u_fuse_ticks = 1;
+		uint8_t arr_expected_lives[MAX_PLAYERS];
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			arr_u8_lives[i] = final ? (i < 2 ? 1 : 0) : (i == 2 ? 0 : 3);
+			arr_expected_lives[i] = arr_u8_lives[i];
+			arr_u8_shield[i] = 1;
+			arr_u16_speed_ticks[i] = SPEED_PICKUP_TICKS;
+			arr_u16_dash_ticks[i] = DASH_TICKS;
+			arr_u16_dash_cooldown[i] = DASH_COOLDOWN_TICKS;
+			arr_u16_tag_guard_ticks[i] = PASS_COOLDOWN_TICKS;
+			arr_u8_keys[i] = KEY_LEFT | KEY_DASH;
+			arr_b_dash_was_down[i] = true;
+			arr_u64_last_input_ns[i] = 123;
+		}
+		arr_expected_lives[0]--;
+		game_tick();
+		GameSnapshot state = take_snapshot();
+		assert(state.phase == (final ? PHASE_GAME_OVER : PHASE_ROUND_OVER));
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			assert(!(state.players[i].flags & (PF_SHIELD | PF_SPEED | PF_DASHING)));
+			assert(state.players[i].lives == arr_expected_lives[i]);
+			assert(arr_u16_dash_cooldown[i] == 0 && arr_u16_tag_guard_ticks[i] == 0);
+			assert(arr_u8_keys[i] == (KEY_LEFT | KEY_DASH));
+			assert(arr_u64_last_input_ns[i] == 123);
+		}
+		if (!final)
+		{
+			// Holding dash cannot restart it; walking resumes at base speed.
+			tick_many(ROUND_OVER_TICKS);
+			state = take_snapshot();
+			assert(state.phase == PHASE_COUNTDOWN);
+			assert(state.players[1].vx == -PLAYER_SPEED);
+			assert(!(state.players[1].flags & (PF_SHIELD | PF_SPEED | PF_DASHING)));
+			game_set_keys(2, KEY_LEFT); game_tick();
+			game_set_keys(2, KEY_LEFT | KEY_DASH); game_tick();
+			assert(take_snapshot().players[1].vx == -2 * PLAYER_SPEED);
+		}
+	}
+	puts("PASS explosions clear all player effects, preserve lives/input, and reset dash");
+}
+
+static void test_fuse_pickups_add_time(void)
+{
+	static const int arr_seconds[] = {1, 8, 20};
+	for (int n = 0; n < 3; n++)
+		for (int count = 1; count <= 2; count++)
+		{
+			setup_players();
+			u8_phase = PHASE_PLAYING; u8_bomb_holder = 1;
+			u_fuse_ticks = arr_seconds[n] * TICK_HZ;
+			for (int i = 0; i < count; i++)
+				arr_pickups[i] = (Pickup){.type = PICKUP_FUSE_RESET,
+					.x = arr_Players[i].x, .y = arr_Players[i].y};
+			game_tick();
+			uint32_t expected = (arr_seconds[n] + 3 * count) * TICK_HZ - 1;
+			assert(u_fuse_ticks == expected);
+			assert(take_snapshot().timer_ms == (expected * 1000u) / TICK_HZ);
+			for (int i = 0; i < count; i++) assert(arr_pickups[i].type == PICKUP_NONE);
+			game_tick();
+			assert(u_fuse_ticks == expected - 1);
+		}
+	puts("PASS fuse pickups add 3 seconds each, stack above 20 seconds, and are consumed");
+}
+
 int main(void)
 {
 	// FUSE_HANDOFF=spsc (default) or mutex: make test runs both. Login is off
 	// (auth_init() not called), so joins take the nonce-only path.
 	assert(handoff_init());
+
+	test_explosion_resets_effects();
+	test_fuse_pickups_add_time();
 	test_random_bomb_holder();
 	setup_players();
 	tick_many(LOBBY_WAIT_TICKS);

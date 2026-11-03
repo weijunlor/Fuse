@@ -50,6 +50,6 @@ they combine with |. */
 #define PICKUP_NONE       0  // empty slot
 #define PICKUP_SPEED      1
 #define PICKUP_SHIELD     2
-#define PICKUP_FUSE_RESET 3
+#define PICKUP_FUSE_RESET 3  // adds 3 seconds to the remaining fuse
 
 #endif /* COMMON_TYPES_H */
