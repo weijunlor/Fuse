@@ -93,8 +93,9 @@ Move with arrows or WASD; press Space or either Shift key to dash. A dash
 lasts 0.2 seconds with a 1-second cooldown and requires a fresh key press.
 Touch another player to pass the bomb; it cannot be passed straight back for
 0.5 seconds. Shields block one tag, speed pickups last 5 seconds, and fuse
-pickups reset the fuse to 20 seconds. Embers slow players for their 8-second
-lifetime.
+pickups add 3 seconds to the remaining fuse. Each bomb explosion clears every
+player's shield, speed boost and dash state, restoring their base stats.
+Embers slow players for their 8-second lifetime.
 
 With two or more connected players, the lobby stays open for 5 seconds, then
 a 3-second countdown starts. New players wait for the next lobby once the
