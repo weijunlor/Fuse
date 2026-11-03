@@ -69,6 +69,8 @@ build/test_pairing_ui: tests/test_pairing_ui.c client/pairing_ui.c client/pairin
 
 test-pairing: build/pairing build/test_pairing build/test_pairing_ui
 	./build/test_pairing
+	# test_pairing.py saves pairing UI screenshots here; stb cannot create folders.
+	mkdir -p build/pairing-validation
 	python3 security/scripts/test_client_session.py -v
 	python3 security/scripts/test_pairing.py -v
 .PHONY: test-pairing
