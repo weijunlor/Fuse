@@ -5,6 +5,7 @@ security/certs/
 security/accounts/
 *.pass
 users.db
+*.fuse-lan
 *.o
 perf.data*
 screenshot.png

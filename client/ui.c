@@ -6,6 +6,11 @@ Lobby, login prompt, win screen, cached text. */
 #include "ui.h"
 #include "stb_easy_font.h"
 
+float ui_text_width(float scale, const char *text)
+{
+    return stb_easy_font_width((char *)text) * scale;
+}
+
 void ui_draw_text(float x, float y, float scale, const char *text)
 {
     // Increased buffer size to support longer strings

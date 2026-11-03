@@ -62,6 +62,9 @@ extern bool b_interp;
 // true (--smooth-stats) = render_frame() calls interp_stats_frame() every frame
 extern bool b_interp_stats;
 
+// Render thread only: discard snapshots and clock estimates between sessions.
+void interp_reset(void);
+
 /* Store a snapshot received at a_u_received_ns (timing_now_ns()). Snapshots
 older than the newest one are ignored; a tick lower than any seen before
 means a new server, and the buffer starts again. Render thread only. */

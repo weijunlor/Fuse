@@ -109,11 +109,41 @@ static void setup_players(void)
 	arr_Players[1].x = 600; arr_Players[1].y = 400;
 }
 
+static void test_random_bomb_holder(void)
+{
+	// Cover every set of eligible IDs, including gaps, eliminated players,
+	// inactive slots, and the zero/one-player boundaries. The seed is fixed
+	// so checking that all eligible players can be picked is repeatable.
+	for (unsigned int u_mask = 0; u_mask < (1u << MAX_PLAYERS); u_mask++)
+	{
+		reset_test();
+		bool arr_seen[MAX_PLAYERS] = {false};
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			bool b_eligible = (u_mask & (1u << i)) != 0;
+			arr_Players[i].b_active = b_eligible || i % 2 == 0;
+			arr_u8_lives[i] = b_eligible || !arr_Players[i].b_active ? 3 : 0;
+		}
+		for (int n = 0; n < 512; n++)
+		{
+			uint8_t u8_holder = choose_bomb_holder();
+			if (u_mask == 0) { assert(u8_holder == 0); continue; }
+			assert(u8_holder >= 1 && u8_holder <= MAX_PLAYERS);
+			assert((u_mask & (1u << (u8_holder - 1))) != 0);
+			arr_seen[u8_holder - 1] = true;
+		}
+		for (int i = 0; i < MAX_PLAYERS; i++)
+			assert(arr_seen[i] == ((u_mask & (1u << i)) != 0));
+	}
+	puts("PASS random bomb holder across all eligible player sets (0-5 players)");
+}
+
 int main(void)
 {
 	// FUSE_HANDOFF=spsc (default) or mutex: make test runs both. Login is off
 	// (auth_init() not called), so joins take the nonce-only path.
 	assert(handoff_init());
+	test_random_bomb_holder();
 	setup_players();
 	tick_many(LOBBY_WAIT_TICKS);
 	assert(u8_phase == PHASE_COUNTDOWN);
@@ -125,7 +155,9 @@ int main(void)
 	game_tick();
 	assert(take_snapshot().players[0].vx == 2 * PLAYER_SPEED);
 	game_set_keys(1, 0);
-	u_fuse_ticks = 1; arr_u8_lives[0] = 1;
+	// Force player 1 only for this elimination scenario; round starts above
+	// now choose a random eligible holder instead of always choosing player 1.
+	u8_bomb_holder = 1; u_fuse_ticks = 1; arr_u8_lives[0] = 1;
 	game_tick();
 	assert(u8_phase == PHASE_GAME_OVER && arr_u8_lives[0] == 0);
 	arr_u64_last_input_ns[1] = 123;

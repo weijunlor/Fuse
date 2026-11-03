@@ -13,9 +13,19 @@ Client DDS worker thread: sends input, receives snapshots. */
 
 // Worker-owned ID and snapshot are published TOGETHER. The renderer never
 // accesses the worker's live state (#4), and uses one complete copy per frame.
+typedef enum
+{
+    CLIENT_JOINING,
+    CLIENT_JOINED,
+    CLIENT_WAITING_MATCH,
+    CLIENT_FULL,
+    CLIENT_REJECTED
+} ClientConnection;
+
 typedef struct
 {
     int int_player_id; // -1 until joined
+    ClientConnection connection;
     uint64_t u64_received_ns; // snapshot arrival time for render-thread interpolation
     GameSnapshot snapshot;
 } ClientFrame;
@@ -40,6 +50,10 @@ void net_client_wake(void);
 // Prepare login, frame handoff and the waitset guard before starting the worker.
 bool net_client_prepare(void);
 
+// Main thread only, AFTER pthread_join (or a failed prepare/start). Releases
+// the session's library-owned wake guard and clears credentials before rejoin.
+void net_client_finish(void);
+
 /* DDS worker sends authenticated inputs and publishes copied ClientFrames.
 Waits for DDS, changed keys, shutdown or the next timed message.
 Runs until net_client_stop() is called. */
@@ -47,7 +61,7 @@ void *net_client_worker(void *arg);
 
 /* Ask the worker to stop: it sends a Leave (if joined, and FUSE_LEAVE is not
 off), waits up to 0.5 s for the server to acknowledge it, closes DDS and
-returns. Called by the main thread when the window closes; pthread_join the
+returns. Called by the main thread on Leave or window close; pthread_join the
 worker afterwards. (The baseline exited without telling the server.) */
 void net_client_stop(void);
 

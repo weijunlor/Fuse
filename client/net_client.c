@@ -101,16 +101,17 @@ bool net_client_read_frame(ClientFrame *a_frame)
 
 // Called only by the worker. A slow reader may hold the other slot; skip
 // that publication and let the next snapshot replace it, without waiting.
-static void publish_frame(const ClientFrame *a_frame)
+static bool publish_frame(const ClientFrame *a_frame)
 {
 	if (handoff_spsc())
-		ClientFrameBuffer_publish(&frame_buffer, a_frame);
+		return ClientFrameBuffer_publish(&frame_buffer, a_frame);
 	else
 	{
 		pthread_mutex_lock(&mutex);
 		frame_mutex = *a_frame;
 		pthread_mutex_unlock(&mutex);
 	}
+	return true;
 }
 
 bool b_client_wait = true;
@@ -119,6 +120,15 @@ bool b_client_wait = true;
 // before the worker starts and never changed, and a guard condition is
 // thread-safe, so no mutex is needed around it.
 static dds_entity_t guard_wake = 0;
+
+void net_client_finish(void)
+{
+	// No worker may still be using this guard or the authentication state.
+	if (guard_wake > 0)
+		dds_delete(guard_wake);
+	guard_wake = 0;
+	crypto_clear(&client_auth, sizeof client_auth);
+}
 
 void net_client_init(void)
 {
@@ -153,6 +163,7 @@ void *net_client_worker(void *arg)
 	// All mutable session/ID/snapshot state belongs to this worker. The
 	// main thread gets copied frames, never references into this object.
 	ClientFrame frame = { .int_player_id = -1 };
+	publish_frame(&frame);
 
 	NetTopics net;
 	dds_entity_t response_reader;
@@ -227,6 +238,7 @@ void *net_client_worker(void *arg)
 	// after that, the server has dropped us (snapshots taken before the
 	// server admitted us do not show us yet, so they must not count)
 	bool b_seen_self = false;
+	bool b_join_sent = false;
 
 	/* Initialize sample buffer, by pointing the void pointer within
 	* the buffer array to a valid sample memory location. */
@@ -242,7 +254,7 @@ void *net_client_worker(void *arg)
 		// If not in a game yet
 		int int_player_id_temp = frame.int_player_id;
 		bool b_quit_temp = atomic_load_explicit(&b_quit, memory_order_relaxed);
-		// The window was closed
+		// Leave, Cancel or window close was requested by the main thread.
 		if (b_quit_temp)
 			break;
 		if (int_player_id_temp == -1)
@@ -265,9 +277,22 @@ void *net_client_worker(void *arg)
 				LOG_INFO("Join response received\n");
 				// If server responded with an invalid player ID
 				if (response->status == JOIN_BAD_LOGIN && client_auth.b_enabled)
-					DDS_FATAL("Login rejected (credentials, active account, or replay check)\n");
+				{
+					LOG_WARN("Login rejected (credentials, active account, or replay check). "
+					         "Each simultaneous client needs its own paired identity.\n");
+					frame.connection = CLIENT_REJECTED;
+					// This is the final publication. Retry if the consumer has a
+					// slot pinned, so the menu always receives the rejection.
+					while (!publish_frame(&frame) &&
+					       !atomic_load_explicit(&b_quit, memory_order_relaxed))
+						dds_sleepfor(DDS_MSECS(1));
+					goto cleanup;
+				}
 				if (!app_client_response(&client_auth, &request, response))
 				{
+					frame.connection = response->status == JOIN_IN_GAME ? CLIENT_WAITING_MATCH :
+					                   response->status == JOIN_FULL ? CLIENT_FULL : CLIENT_JOINING;
+					publish_frame(&frame);
 					if (response->status == JOIN_IN_GAME)
 						LOG_INFO("Match in progress; waiting for the next lobby\n");
 					else
@@ -281,6 +306,7 @@ void *net_client_worker(void *arg)
 			if (int_resp_player_id > 0)
 			{
 				frame.int_player_id = int_resp_player_id;
+				frame.connection = CLIENT_JOINED;
 				publish_frame(&frame);
 				u8_sent_keys = 0;
 				last_input_time = 0;
@@ -295,13 +321,14 @@ void *net_client_worker(void *arg)
 			// Get the current time
 			uint64_t curr_time = dds_time();
 			// Get the time difference
-			if (curr_time - last_join_req_time > DDS_SECS(1))
+			if (frame.int_player_id == -1 && curr_time - last_join_req_time > DDS_SECS(1))
 			{
 				// Update the last req time
 				last_join_req_time = curr_time;
 
 				// Send join request
 				rc = dds_write(join_writer, &request);
+				b_join_sent = true;
 				LOG_INFO("Join request sent\n");
 				if (rc != DDS_RETCODE_OK)
 				{
@@ -391,6 +418,8 @@ void *net_client_worker(void *arg)
 					// late response to the old one cannot be taken by mistake.
 					LOG_WARN("Removed by the server (timed out), joining again\n");
 					frame.int_player_id = -1;
+					frame.connection = CLIENT_JOINING;
+					b_join_sent = false;
 					b_seen_self = false;
 					crypto_clear(client_auth.arr_session_key, sizeof client_auth.arr_session_key);
 					if (!app_client_request(&client_auth, &request))
@@ -431,9 +460,38 @@ void *net_client_worker(void *arg)
 		}
 	}
 
-	// Tell the server we are leaving, so it frees the slot now instead of
-	// after the timeout, and wait (briefly) until it has the message: the
-	// process exits right after this
+cleanup:
+	// Cancel may race with server admission. Briefly drain our own response
+	// so a late accepted join can also send an authenticated Leave. If the
+	// server is unreachable, its normal heartbeat timeout frees the slot.
+	if (frame.int_player_id == -1 && b_join_sent && net_leave() &&
+	    frame.connection != CLIENT_REJECTED)
+	{
+		dds_time_t deadline = dds_time() + DDS_MSECS(300);
+		do
+		{
+			rc = dds_take(response_reader, samples_response, infos_response, JOIN_TAKE, JOIN_TAKE);
+			if (rc < 0)
+				break;
+			for (int i = 0; i < rc; i++)
+			{
+				JoinResponse *response = samples_response[i];
+				if (infos_response[i].valid_data &&
+				    (!b_join_nonce || response->nonce == request.nonce) &&
+				    app_client_response(&client_auth, &request, response))
+				{
+					frame.int_player_id = response->player_id;
+					break;
+				}
+			}
+			if (frame.int_player_id > 0)
+				break;
+			dds_sleepfor(DDS_MSECS(10));
+		} while (dds_time() < deadline);
+	}
+
+	// Tell the server we are leaving and briefly wait for acknowledgement
+	// before destroying the participant (the window may return to the menu).
 	if (frame.int_player_id > 0 && net_leave())
 	{
 		Leave leave = {0};
@@ -448,6 +506,11 @@ void *net_client_worker(void *arg)
 		else
 			LOG_INFO("Left the game\n");
 	}
+	if (waitset > 0)
+		dds_delete(waitset);
+	for (int i = 0; i < JOIN_TAKE; i++)
+		JoinResponse_free(samples_response[i], DDS_FREE_ALL);
+	GameSnapshot_free(samples_snapshot[0], DDS_FREE_ALL);
 	dds_delete(net.participant);
 	crypto_clear(&client_auth, sizeof client_auth);
 	return NULL;

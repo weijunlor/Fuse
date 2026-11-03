@@ -2,20 +2,173 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
-Concurrency #3/#4 GUI verification (30 Oct): two real WSLg clients completed
+2026-11-02, Codex: fixed second and later game windows under the same Linux/WSL
+user reusing the first window's paired login. The ordinary client launcher now
+reserves a private player profile with a nonblocking kernel lock and supervises
+only its own game process. The first profile retains the existing pairing;
+additional windows have independent persistent device keys and pair once using
+the next host code. Later launches reuse those saved profiles. Closing/crashing
+a game releases its local window slot without recycling the host assignment.
+Additional profiles prefill the first profile's host only before their first
+pairing. Explicit player launch options remain supported. Updated UI wording,
+login rejection guidance, launcher help and README setup instructions.
+
+Validation: five new launcher tests passed for concurrent allocation/capacity,
+saved profile reuse, credential isolation, private modes, symlink/insecure-lock
+rejection, crash and signal cleanup. All 18 existing enrollment/UI tests and
+16 LAN tests passed; the rendered pairing screen was inspected. The isolated
+multicast-disabled integration paired two remote players and three simultaneous
+windows sharing one profile root, then verified five distinct authenticated
+players, movement, snapshots and Leave. After restarting the server and client
+sessions, all five rejoined using only saved profiles. The encrypted enrollment
+capture still excludes codes/passwords. Client build, game regressions,
+ShellCheck and Python compilation passed. Physical two-computer verification
+remains pending; actual network/firewall settings and existing credentials were
+unchanged. Evidence: ignored `build/pairing-validation/multi-window-*.log`.
+
+2026-11-02, Codex: fixed repeated "Join request sent" after successful pairing
+when the client runs on the host computer. Linux routes a computer's own LAN
+address through loopback; selecting that route's adapter made the client DDS
+participant advertise loopback while the server used Ethernet. Local destinations
+now select the adapter owning the exact address. Remote destinations still use
+their route, and explicit interface overrides remain authoritative. Existing saved
+profiles regenerate the corrected configuration on client restart, without pairing
+again. Added regression coverage and README troubleshooting instructions.
+
+Validation: reproduced the saved-profile failure against the running WSL host
+(loopback selected, no secure endpoint match), then verified the fix selected
+Ethernet and passed secure discovery, authenticated join, movement, snapshots and
+confirmed Leave. All 16 LAN bundle/configuration tests passed. The isolated pairing
+integration enrolled two remote clients plus one client on the host computer;
+automatic adapter selection with multicast disabled produced three distinct player
+IDs, shared snapshots, movement and Leave using saved profiles. The enrollment
+capture still showed encrypted traffic without codes or passwords. Real network
+and firewall settings were unchanged; physical two-computer verification remains
+pending. Evidence: ignored `build/pairing-validation/`.
+
+2026-11-02, Codex: implemented the approved one-time LAN pairing plan for a
+dedicated host and five remote player PCs. The supervised native pairing helper
+uses TLS 1.3 external PSKs with ephemeral key exchange, 256-bit single-use codes,
+monotonic expiry/deadlines, four connection slots and per-address rate limits.
+Codes appear only on the terminal or an explicitly supplied private pipe, rather
+than redirected game logs. Ed25519 device proofs are bound to the TLS connection;
+the private, durable host registry assigns/reuses identities by verified device
+key and records ownership before credential delivery. Existing preprovisioned
+DDS/login bundles are validated and transferred without exporting CA private keys.
+Archive decompression is bounded before tar metadata parsing.
+
+The native client now opens without credentials and provides Host IP/code fields,
+paste/focus controls and background enrollment/cancellation. Per-host private
+profiles activate atomically; cancellation before commit preserves the prior
+address, credentials and DDS configuration, while completion after commit is
+reported as successful. Saved profiles prepare secure DDS before Join Game.
+Legacy player flags, bundle tools and benchmark paths remain supported. Server
+terminal commands manage codes/assignments; launcher cleanup owns only its child
+processes. Added host-only TCP 7440 firewall previews and updated setup documents.
+
+Validation: built game, pairing helper and probes in Ubuntu 22.04 WSL using
+Cyclone DDS 0.10.5/OpenSSL 3.0. Native TLS/expiry/concurrent-consumption tests and
+18 enrollment/UI checks passed: all five assignments/capacity, persistence,
+incorrect/noncanonical/used/cancelled codes, concurrent reuse, forged/replayed
+device proofs, rogue certificate fallback, rate/concurrency bounds, invalid and
+oversized transfers, interrupted-delivery recovery, activation cancellation
+boundaries, log redaction, and offscreen form/paste/restart/cancellation checks.
+The rendered pairing screen was inspected. Fourteen LAN bundle/config tests
+passed, including bounded compressed-archive expansion. Two private network
+stacks enrolled over a veth link with multicast disabled, retained assignments
+across service restart, and joined using saved profiles without IP/code/player
+flags; both saw the two-player match with distinct IDs, movement, snapshots and
+Leave. The TLS capture decodes as encrypted records and contains neither codes
+nor passwords. Normal/disabled/occupied-port launcher cases retained gameplay;
+Ctrl+C collected their owned processes. Existing game tests, all six network
+scenarios, 19 authentication checks and 42 DDS security checks passed. ShellCheck,
+Windows PowerShell syntax and host TCP firewall `-WhatIf` checks passed. Network
+and firewall settings were left unchanged; physical two-computer verification
+remains pending. Evidence: ignored `build/pairing-validation/`.
+
+2026-11-02, sheeyang / Codex: implemented the requested direct LAN multiplayer plan for
+Windows/WSL and native Ubuntu. Client launchers accept a server IPv4 address;
+both launchers accept a Linux interface name. Secure generated DDS configuration
+uses routed interface selection, unicast peers and bounded participant indices.
+Added per-player credential export/import, signed-policy validation, conflict and
+archive-path protection, secure connectivity diagnostics, and an inspection-first
+Windows helper with explicit mirrored-networking and subnet-scoped firewall options.
+Documented host/client provisioning, transfer, setup and troubleshooting. Diagnostic
+probes report DDS matching/login status and complete authenticated Leave even when
+their main measurement window expires. Replaced wall-clock diagnostic/test deadlines
+with monotonic time after intermittent phase-transition timeouts, preserving budgets.
+
+Validation: built game and probes in Ubuntu 22.04 WSL with Cyclone DDS 0.10.5.
+All 13 LAN unit regressions passed (including encrypted-key rejection without a
+prompt, credential permissions/conflicts, malformed bundles and symlink protection).
+An unprivileged user/network namespace test connected separate network stacks over
+a private veth link with multicast disabled: secure joining, movement, snapshots,
+Leave, rejoining, login rejection, and two concurrent clients observing both players
+with distinct IDs all passed. `make test` and all six `make test-network` scenarios
+passed; authentication acceptance passed 19 checks and final DDS security acceptance
+passed 42 checks, including decoded encrypted/plaintext packet captures. Regular
+secure launchers and the production client worker passed automatic same-computer
+discovery, movement and Leave using the existing local credentials. ShellCheck and
+Windows PowerShell syntax/config preservation/idempotence/duplicate checks passed;
+inspection and both setup operations' `-WhatIf` previews were exercised. System
+network/firewall settings were left unchanged. Two-physical-computer verification
+remains pending; this PC currently reports WSL NAT and a Public Ethernet profile.
+Evidence and preserved earlier timeout logs: ignored `build/lan-validation/`.
+
+2026-11-02, zhikai / Codex: replaced first-living-slot bomb assignment with a
+uniform random choice from active players who still have lives. This applies
+at round start and when a holder departs; sparse IDs and eliminated slots are
+handled explicitly. Uses the server's seeded PRNG with rejection sampling to
+avoid modulo bias. Validation: a fixed-seed regression exercises all 32 eligible
+player sets (0-5 players), rejects inactive/eliminated slots and checks every
+eligible ID is selectable. `make test` passed in SPSC and mutex modes, including
+existing game/input regressions; rebuilt build/server successfully.
+
+2026-11-02, zhikai / Codex: centred the arena status banner using measured font
+width, centred player/health labels on their character and reserved the bomb's
+50px cell above its holder before placing that label. Added small edge margins
+to keep labels on screen. Validation: client build and isolated render preview.
+
+2026-11-02, zhikai / Codex: diagnosed the recurring server buffer overflow with
+GDB inside Ubuntu's libddsc.so.0debian. The selected SDK was 0.10.5, but the
+existing binary still linked to the system library. Added a content-based DDS
+configuration stamp in Makefile so SDK version, library/plugin directory,
+pkg-config flags and idlc path changes regenerate types and rebuild both game
+binaries and particles.o. Validation: compiled with the system SDK, switched to
+the local SDK and ran normal make without -B; both binaries relinked correctly.
+A further make preserved binary/object timestamps and performed no compilation.
+The secure server remained running for a bounded six-second startup check.
+
+2026-11-02, zhikai / Codex: packed the user-supplied Ninja Adventure art into
+the existing 800x600 atlas of 50px cells. Added five character designs,
+directional walks, lobby portraits, player rings, ticking-bomb phases, effects,
+power-up icons and floor tiles. Kept the original atlas and curated CC0 source
+PNGs, licence, a reproducible Pillow packer and a cell/source manifest in assets/.
+Updated renderer/lobby sprite selection and expanded batch capacity for the
+additional layered sprites. Validation: client build; 105 nonempty, uniquely
+placed cells and an opaque floor; isolated ASan/UBSan render preview in immediate,
+float and short modes with five shielded players, four explosions/pickups and a
+full particle pool over 60 frames per mode. Checked lobby texture-matrix
+restoration and GL errors, and inspected game/menu/lobby screenshots in build/.
+No live server or network state was changed by the render preview.
+
+sheeyang: Concurrency #3/#4 GUI verification (30 Oct): two real WSLg clients completed
 6,000 frames each, showed both players with correct local ID banners, stopped
 their workers and sent authenticated Leave; the server freed both slots.
 Screenshots and logs: `bench/results/concurrency-tests/gui-*`.
 
 | Date | Who | Tool | Prompt summary | Output used in | How it was tested |
 |---|---|---|---|---|---|
-| 2026-10-30 | | Codex | Fix the build dropping the default DDS security plugin directory after the padding CFLAGS override | `Makefile` | Compiler command previews retain both plugin-directory and padding definitions for default, compact, profile, debug and custom-CFLAGS builds. Rebuilt server, client and security probe in WSL. Secure participant creation passed with `FUSE_DDS_PLUGIN_DIR` unset; an explicit invalid runtime override was still rejected. Logs: ignored `build/plugin-path-checks/`. |
-| 2026-10-30 | | Codex | Fix benchmark login identities with DDS encryption off; resolve the merge with origin/main while retaining game rules, interpolation and waitsets | Benchmark launchers and new main test tools, client/server handoff and waitset integration, rendering and concurrency documentation | WSL builds passed for game, unchanged baseline and test tools. Unit/lifecycle tests passed in SPSC (8,773 assertions) and mutex (8,387) modes; ASan/UBSan and primitive TSan passed. Authentication acceptance: 19 checks per handoff; DDS security: 42 checks. Local merge harness: 22 checks covering separate/default/custom benchmark usernames, all eight handoff/wait/write combinations, two authenticated players through a complete game and reset, and four real GUI runs at 20 Hz with interpolation on/off. Interpolation reduced stall percentage from 89.2 to 0.8 (SPSC) and 88.9 to 1.1 (mutex); screenshots inspected for players, local ID, lives, phase/timer and bomb. New evidence is isolated in ignored `build/merge-tests/`; existing measurement folders were preserved. |
-| 2026-10-30 | | Codex | Fix the padding benchmark timer including worker setup | `bench/bench_false_share.c`, `docs/CONCURRENCY.md` | Built compact/padded benchmarks in WSL with GCC. All 24 counters/ring smoke runs passed: both layouts, 1/1,000/100,000 iterations, pinned and unpinned. An ignored `build/` regression probe injected a 200 ms delay per affinity call and asserted both workers finished setup before either timestamp: all four layout/mode combinations passed; the original benchmark failed the same assertion as expected. Probe builds passed `-Wall -Wextra -Werror`. |
-| 2026-10-30 | | Codex | Implement optional false-sharing padding as a compile-time flag, with compact/padded builds and repeatable measurements | `common/cache_padding.h`, queue/buffer/worker-result layouts, particle callers, Makefile rebuild stamp, `bench/bench_false_share.c`, `bench/padding.sh`, profiling metadata, tests and concurrency docs | Built both layouts in Ubuntu 22.04 WSL, GCC 11.4, DDS 0.10.5. Each passed 250k FIFO transfers and 250k coherent publications, normal/TSan/ASan-UBSan; offsets/stride checked. Authentication/lifecycle assertions: 8,773 SPSC and 8,387 mutex per layout, also ASan/UBSan. Particle checksums equal across both layouts and 1/4 workers. 19 real-DDS acceptance checks per layout (38 total), including secure/plaintext movement, tampering/replay, Leave and timeout/rejoin. Verified 0/1 switches rebuild game and particles.o, unchanged settings do not recompile, invalid values fail, both benchmark binaries coexist and produce matching checksums. ShellCheck and 8 interleaved timing-only smoke runs pass; native perf/c2c measurements are not claimed. Evidence: `bench/results/opt-11-padding-checks/`, `bench/results/opt-11-padding-smoke/`. |
-| 2026-10-30 | | Codex | Implement concurrency package: player-ID race fix, SPSC commands and join responses, double-buffered snapshots, comparison mode and authentication-safe lifecycle integration | `common/spsc_ring.h`, `common/double_buffer.h`, `common/handoff.*`, client/server handoff callers, `common/net.c`, benchmarks/tests, Makefile, concurrency docs | Built FUSE and unchanged baseline in Ubuntu 22.04 WSL. 250,000 FIFO transfers and 250,000 coherent latest-value publications pass normal, TSan and ASan/UBSan runs; tests include unsigned wrap, full/empty and a pinned reader. Authentication/lifecycle checks: 8,773 assertions in SPSC mode, 8,387 in mutex mode, also ASan/UBSan; queue overflow/copying, delayed old-session samples, response backpressure and snapshot-rate divisors covered. 19 real-DDS acceptance checks pass per mode (38 total), including signed movement/Leave and timeout/rejoin. Production TSan found and prompted a fix to lazy network-option initialisation; full-process TSan then reports DDS GC/discovery accesses even with DDS instrumented, so no whole-game TSan-clean claim or suppression. Evidence and reproducible commands: `bench/results/concurrency-tests/`, `docs/CONCURRENCY.md`. |
-| 2026-10-30 | | Codex | Implement crypto helpers and application authentication: password proofs, private account provisioning, session keys, Input/Leave MACs, replay rejection, validation, rate limits, lifecycle cleanup and client/benchmark integration | `common/crypto.*`, `common/app_client.*`, `server/auth.*`, lobby/network callers, `security/AUTH.md`, account/test scripts, Makefile and benchmarks | FUSE built in Ubuntu 22.04 WSL with OpenSSL 3.0.2 and Cyclone DDS 0.10.5. 8,371 crypto/lifecycle assertions passed (independent PBKDF2/HMAC vectors, tampering, cross-player spoofing, sequence/replay rules, input/join token buckets, private-file parser, full 4,096-nonce replay ledger). AddressSanitizer/UndefinedBehaviorSanitizer clean. 19 acceptance checks passed over real secure/plaintext DDS, including the production client worker, timeout/rejoin, wrong passwords, signed movement/Leave and explicit comparison mode. DDS regression suite: 42 checks, including baseline and decoded pcaps; no baseline source changes. Logs and binary hashes: `bench/results/app-auth-tests/`, `bench/results/dds-security-app-auth/`. |
-| 2026-10-30 | | Codex | Implement DDS security: WSL dependencies and pinned Cyclone DDS 0.10.5, certificate CAs/identities, signed governance/permissions, encrypted DDS, secure defaults with explicit comparison mode, launcher and benchmark integration | `common/dds_security.*`, DDS callers/Makefile, `security/`, benchmark launchers, setup docs | Built FUSE and untouched baseline in Ubuntu 22.04 WSL; 52 acceptance checks passed, including secure movement/Leave, startup failures, invalid signatures/expired permissions, mismatched key, denied topics, untrusted/plaintext peers alongside an authorized peer, external-XML downgrade resistance, plaintext regression, real WSLg clients and baseline, decoded plaintext/encrypted pcaps. ShellCheck and shell/Python syntax checks passed; baseline diff is empty. Logs, hashes, screenshots and captures: `bench/results/dds-security-wsl/`. |
+| 2026-11-02 | zhikai | Codex | Restore the client lobby menu after its removal during debugging; no tests or Makefile changes requested | `client/lobby_ui.c/.h`, client entry/network/render/interpolation modules, `bench/security_env.sh` | Restored Join/Cancel/Leave/Exit controls, five-slot waiting room, server countdown, fresh authenticated sessions and single-consumer frame sharing. No builds or tests run at the user's request. Makefile unchanged; its existing client source wildcard includes the menu module. |
+| 2026-11-01 | sheeyang | Codex | Prompt for a client player number when omitted | `run-client.sh`, `README.md` | Bash syntax and ShellCheck passed. Temporary launch-stub smoke checks verified chosen identity, retries for invalid/empty numbers, explicit `--player` bypassing the prompt, EOF handling, and invalid option rejection. |
+| 2026-11-01 | sheeyang | Codex | Add separate Windows batch launchers that call Linux server/client scripts | `run-server.bat`, `run-client.bat`, `run-server.sh`, `run-client.sh`, `.gitattributes`, `README.md` | Bash syntax and ShellCheck passed. Batch wrappers forwarded help and invalid-player errors with correct exit codes. Started the real server and client through the batch files with normal builds; a second client ran directly through the Linux script with `--player 2 --no-build`. Both WSLg clients authenticated, closed normally with Leave and zero exit codes, and left the server running until Ctrl+C. Help also worked from outside the project directory. |
+| 2026-10-30 | sheeyang | Codex | Fix the build dropping the default DDS security plugin directory after the padding CFLAGS override | `Makefile` | Compiler command previews retain both plugin-directory and padding definitions for default, compact, profile, debug and custom-CFLAGS builds. Rebuilt server, client and security probe in WSL. Secure participant creation passed with `FUSE_DDS_PLUGIN_DIR` unset; an explicit invalid runtime override was still rejected. Logs: ignored `build/plugin-path-checks/`. |
+| 2026-10-30 | sheeyang | Codex | Fix benchmark login identities with DDS encryption off; resolve the merge with origin/main while retaining game rules, interpolation and waitsets | Benchmark launchers and new main test tools, client/server handoff and waitset integration, rendering and concurrency documentation | WSL builds passed for game, unchanged baseline and test tools. Unit/lifecycle tests passed in SPSC (8,773 assertions) and mutex (8,387) modes; ASan/UBSan and primitive TSan passed. Authentication acceptance: 19 checks per handoff; DDS security: 42 checks. Local merge harness: 22 checks covering separate/default/custom benchmark usernames, all eight handoff/wait/write combinations, two authenticated players through a complete game and reset, and four real GUI runs at 20 Hz with interpolation on/off. Interpolation reduced stall percentage from 89.2 to 0.8 (SPSC) and 88.9 to 1.1 (mutex); screenshots inspected for players, local ID, lives, phase/timer and bomb. New evidence is isolated in ignored `build/merge-tests/`; existing measurement folders were preserved. |
+| 2026-10-30 | sheeyang | Codex | Fix the padding benchmark timer including worker setup | `bench/bench_false_share.c`, `docs/CONCURRENCY.md` | Built compact/padded benchmarks in WSL with GCC. All 24 counters/ring smoke runs passed: both layouts, 1/1,000/100,000 iterations, pinned and unpinned. An ignored `build/` regression probe injected a 200 ms delay per affinity call and asserted both workers finished setup before either timestamp: all four layout/mode combinations passed; the original benchmark failed the same assertion as expected. Probe builds passed `-Wall -Wextra -Werror`. |
+| 2026-10-30 | sheeyang | Codex | Implement optional false-sharing padding as a compile-time flag, with compact/padded builds and repeatable measurements | `common/cache_padding.h`, queue/buffer/worker-result layouts, particle callers, Makefile rebuild stamp, `bench/bench_false_share.c`, `bench/padding.sh`, profiling metadata, tests and concurrency docs | Built both layouts in Ubuntu 22.04 WSL, GCC 11.4, DDS 0.10.5. Each passed 250k FIFO transfers and 250k coherent publications, normal/TSan/ASan-UBSan; offsets/stride checked. Authentication/lifecycle assertions: 8,773 SPSC and 8,387 mutex per layout, also ASan/UBSan. Particle checksums equal across both layouts and 1/4 workers. 19 real-DDS acceptance checks per layout (38 total), including secure/plaintext movement, tampering/replay, Leave and timeout/rejoin. Verified 0/1 switches rebuild game and particles.o, unchanged settings do not recompile, invalid values fail, both benchmark binaries coexist and produce matching checksums. ShellCheck and 8 interleaved timing-only smoke runs pass; native perf/c2c measurements are not claimed. Evidence: `bench/results/opt-11-padding-checks/`, `bench/results/opt-11-padding-smoke/`. |
+| 2026-10-30 | sheeyang | Codex | Implement concurrency package: player-ID race fix, SPSC commands and join responses, double-buffered snapshots, comparison mode and authentication-safe lifecycle integration | `common/spsc_ring.h`, `common/double_buffer.h`, `common/handoff.*`, client/server handoff callers, `common/net.c`, benchmarks/tests, Makefile, concurrency docs | Built FUSE and unchanged baseline in Ubuntu 22.04 WSL. 250,000 FIFO transfers and 250,000 coherent latest-value publications pass normal, TSan and ASan/UBSan runs; tests include unsigned wrap, full/empty and a pinned reader. Authentication/lifecycle checks: 8,773 assertions in SPSC mode, 8,387 in mutex mode, also ASan/UBSan; queue overflow/copying, delayed old-session samples, response backpressure and snapshot-rate divisors covered. 19 real-DDS acceptance checks pass per mode (38 total), including signed movement/Leave and timeout/rejoin. Production TSan found and prompted a fix to lazy network-option initialisation; full-process TSan then reports DDS GC/discovery accesses even with DDS instrumented, so no whole-game TSan-clean claim or suppression. Evidence and reproducible commands: `bench/results/concurrency-tests/`, `docs/CONCURRENCY.md`. |
+| 2026-10-30 | sheeyang | Codex | Implement crypto helpers and application authentication: password proofs, private account provisioning, session keys, Input/Leave MACs, replay rejection, validation, rate limits, lifecycle cleanup and client/benchmark integration | `common/crypto.*`, `common/app_client.*`, `server/auth.*`, lobby/network callers, `security/AUTH.md`, account/test scripts, Makefile and benchmarks | FUSE built in Ubuntu 22.04 WSL with OpenSSL 3.0.2 and Cyclone DDS 0.10.5. 8,371 crypto/lifecycle assertions passed (independent PBKDF2/HMAC vectors, tampering, cross-player spoofing, sequence/replay rules, input/join token buckets, private-file parser, full 4,096-nonce replay ledger). AddressSanitizer/UndefinedBehaviorSanitizer clean. 19 acceptance checks passed over real secure/plaintext DDS, including the production client worker, timeout/rejoin, wrong passwords, signed movement/Leave and explicit comparison mode. DDS regression suite: 42 checks, including baseline and decoded pcaps; no baseline source changes. Logs and binary hashes: `bench/results/app-auth-tests/`, `bench/results/dds-security-app-auth/`. |
+| 2026-10-30 | sheeyang | Codex | Implement DDS security: WSL dependencies and pinned Cyclone DDS 0.10.5, certificate CAs/identities, signed governance/permissions, encrypted DDS, secure defaults with explicit comparison mode, launcher and benchmark integration | `common/dds_security.*`, DDS callers/Makefile, `security/`, benchmark launchers, setup docs | Built FUSE and untouched baseline in Ubuntu 22.04 WSL; 52 acceptance checks passed, including secure movement/Leave, startup failures, invalid signatures/expired permissions, mismatched key, denied topics, untrusted/plaintext peers alongside an authorized peer, external-XML downgrade resistance, plaintext regression, real WSLg clients and baseline, decoded plaintext/encrypted pcaps. ShellCheck and shell/Python syntax checks passed; baseline diff is empty. Logs, hashes, screenshots and captures: `bench/results/dds-security-wsl/`. |
 | 2026-10-27 | | Claude Code | Game concept, optimisation plan, directory structure, Makefile | Project layout, Makefile | Built in WSL with `make`; ran baseline server + client |
 | 2026-10-27 | | Claude Code | Script to profile baseline and later builds with perf (stat, lock, trace, record), saving setup, raw data and a report per run; Makefile `baseline-O%` targets | `bench/profile.sh`, `Makefile` | Short smoke run (2 × 4 s) checked every output file; parsers checked against an earlier full run; frame-pointer call stacks checked to reach `main`/`worker`; full -O0 and -O2 baseline runs |
 | 2026-10-27 | | Claude Code | Split baseline server/client into the planned modules without changing behaviour | `server/*.c`, `client/*.c`, `common/config.h`, `common/types.h`, `common/net.c` | Built with no new warnings; DDS test driver (join + 30 right + 1000 up) gave matching results on baseline and split servers; split server with new and baseline clients (joins and positions); `bench/profile.sh split-modules` compared with `baseline-O2` |

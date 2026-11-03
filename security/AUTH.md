@@ -1,5 +1,11 @@
 # Application authentication
 
+The default launchers now support [one-time in-game LAN pairing](../README.md#one-time-pairing-recommended).
+The dedicated host provisions the five existing accounts once; each player PC
+receives only its automatically assigned identity and matching password over
+code-authenticated TLS. Player PCs need dependency setup, but no local CA/account
+generation. The manual account and bundle workflows below remain supported.
+
 FUSE now requires both a DDS participant identity and an application login by
 default. Certificate setup remains in [README.md](README.md). The original
 lecturer programs in `baseline/` are unchanged and do not use application login.
@@ -62,6 +68,11 @@ own password file, together with its separate DDS credential bundle. Set the
 same account name on its client. Keep the database private: derived login keys
 are sufficient to generate valid login proofs. Neither passwords nor database
 files belong in source control or the submission zip.
+
+For the default `client-1` through `client-5` accounts, `lan.py export/import`
+transfers each client's matching DDS and application credentials together. Follow
+the [LAN setup instructions](../README.md#play-across-computers-on-the-same-lan);
+generate the demo accounts on the provisioning host, not independently on each PC.
 
 ## Protocol and lifecycle
 

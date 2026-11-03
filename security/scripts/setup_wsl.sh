@@ -9,7 +9,7 @@ if [ "${1:-}" != --no-packages ]; then
     sudo apt-get update
     sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake git curl \
         pkg-config bison libssl-dev libglfw3-dev libstb-dev libgl1-mesa-dev openssl \
-        tcpdump tshark libxml2-utils shellcheck xdotool
+        tcpdump tshark libxml2-utils shellcheck xdotool iproute2
 fi
 str_prefix=${FUSE_CYCLONEDDS_PREFIX:-$HOME/.local/opt/cyclonedds-0.10.5}
 str_source=$HOME/.cache/fuse/cyclonedds-0.10.5

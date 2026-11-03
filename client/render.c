@@ -82,6 +82,27 @@ static int int_num_stress;
 static unsigned long u32_seen_explosion_tick = 0;
 static unsigned long u32_last_snapshot_tick = 0;
 static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
+static ClientFrame received = { .int_player_id = -1 };
+// Last walking direction, retained while idle; render thread only.
+static int arr_player_direction[MAX_PLAYERS];
+
+void render_set_client_frame(const ClientFrame *a_frame)
+{
+    received = *a_frame;
+    if (received.u64_received_ns != 0)
+        interp_push(&received.snapshot, received.u64_received_ns);
+}
+
+void render_reset_session(void)
+{
+    received = (ClientFrame){ .int_player_id = -1 };
+    interp_reset();
+    particles_clear();
+    u32_seen_explosion_tick = 0;
+    u32_last_snapshot_tick = 0;
+    u8_last_snapshot_phase = PHASE_LOBBY;
+    memset(arr_player_direction, 0, sizeof arr_player_direction);
+}
 
 // Immediate path: one sprite = one glBegin/glEnd
 static void sprite_immediate(int a_int_sprite, float x, float y)
@@ -232,9 +253,10 @@ void render_init(RenderMode a_mode, int a_int_stress)
         arr_stress[i].d_phase_s = (i % 17) * 0.037;
     }
 
-    // Batch capacity: floor + players + stress sprites + particles, 4 vertices
-    // each (particles_init() must run first)
-    int_batch_cap = (FLOOR_TILES + MAX_PLAYERS + int_num_stress + particles_capacity()) * 4;
+    // Four sprites per player cover body, ring, shield and bomb; also reserve
+    // all four pickups and four simultaneous explosions. No per-frame allocs.
+    // particles_init() must run first so its full capacity is known here.
+    int_batch_cap = (FLOOR_TILES + MAX_PLAYERS * 4 + 8 + int_num_stress + particles_capacity()) * 4;
     bool b_alloc_ok = true;
     if (render_mode == RENDER_BATCHED_FLOAT)
         b_alloc_ok = (arr_batch = malloc((size_t)int_batch_cap * sizeof(QuadVertex))) != NULL;
@@ -263,9 +285,6 @@ void render_frame(void)
     double d_time_s = glfwGetTime();
     // The state to draw: interpolated between the last snapshots (#15,
     // interp.h), or the newest snapshot with --interp off
-    static ClientFrame received = { .int_player_id = -1 };
-    if (net_client_read_frame(&received) && received.u64_received_ns != 0)
-        interp_push(&received.snapshot, received.u64_received_ns);
     InterpFrame frame;
     interp_sample(timing_now_ns(), &frame);
     if (b_interp_stats)
@@ -353,17 +372,34 @@ void render_frame(void)
         const PlayerState *p_state = &p_game->players[i];
         if((p_state->flags & (PF_ACTIVE | PF_ALIVE)) == (PF_ACTIVE | PF_ALIVE))
         {
-            int int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
+            bool b_moving = p_state->vx != 0 || p_state->vy != 0;
+            if (b_moving)
+            {
+                // The source sheets store down/up/left/right in that order.
+                if (abs(p_state->vx) > abs(p_state->vy))
+                    arr_player_direction[i] = p_state->vx < 0 ? 2 : 3;
+                else
+                    arr_player_direction[i] = p_state->vy < 0 ? 1 : 0;
+            }
+            int int_first = SPR_PLAYER_WALK + arr_player_direction[i] * ATLAS_COLS + i * WALK_FRAMES;
+            int int_sprite = b_moving ? atlas_frame(int_first, WALK_FRAMES, 1, d_time_s, 0.12) : int_first;
+            if (!b_moving && arr_player_direction[i] == 0)
+                int_sprite = atlas_frame(SPR_PLAYER + i, PLAYER_FRAMES, PLAYER_STEP,
                                          d_time_s, PLAYER_FRAME_S);
             // Interpolated position (#15), between whole pixels
             float f_x = frame.arr_f_x[i], f_y = frame.arr_f_y[i];
+            render_sprite(SPR_PLAYER_RING + i, f_x, f_y);
             render_sprite(int_sprite, f_x, f_y);
             if ((p_state->flags & PF_SHIELD) != 0)
-                render_sprite(SPR_SHIELD_BUBBLE, f_x, f_y);
+                render_sprite(atlas_frame(SPR_SHIELD_BUBBLE, SHIELD_FRAMES, 1,
+                                          d_time_s, 0.12), f_x, f_y);
             if (p_game->bomb_holder == i + 1)
             {
+                // Tick faster near detonation; server still owns the fuse.
+                double d_bomb_frame_s = p_game->timer_ms < 2000 ? 0.055 :
+                                        p_game->timer_ms < 5000 ? 0.09 : 0.16;
                 int int_bomb = atlas_frame(SPR_BOMB, BOMB_FRAMES, 1,
-                                            d_time_s, 0.12);
+                                            d_time_s, d_bomb_frame_s);
                 render_sprite(int_bomb, f_x, f_y - SQ_WIDTH);
             }
         }
@@ -376,7 +412,8 @@ void render_frame(void)
     /* Text (untextured quads)                               */
     /* ----------------------------------------------------- */
     glDisable(GL_TEXTURE_2D);
-    glColor3f(0.15f, 0.15f, 0.2f);
+    // Light HUD text stays readable over the darker Ninja Adventure floor.
+    glColor3f(0.98f, 0.95f, 0.85f);
 
     char str_banner[160] = "Waiting for server ...";
     if (received.int_player_id != -1)
@@ -407,7 +444,8 @@ void render_frame(void)
                          (p_game->timer_ms % 1000) / 10);
         }
     }
-    ui_draw_text(140, 20, 2.0f, str_banner);
+    // Measure the complete message so countdown and win text stay centred too.
+    ui_draw_text((WIDTH - ui_text_width(2.0f, str_banner)) / 2.0f, 20, 2.0f, str_banner);
     ui_draw_text(20, HEIGHT - 22, 1.5f, "Move: arrows / WASD   Dash: Space / Shift");
 
     for(int i = 0; i < MAX_PLAYERS; i++)
@@ -420,11 +458,49 @@ void render_frame(void)
             snprintf(str_player, sizeof(str_player), "%s%d %s%u",
                      (p_state->flags & PF_BOT) ? "Bot " : "", i + 1,
                      b_alive ? "L:" : "Out ", (unsigned)p_state->lives);
-            ui_draw_text(b_alive ? frame.arr_f_x[i] + SQ_WIDTH / 2 - 20 : 20,
-                        b_alive ? frame.arr_f_y[i] - 30 : 65 + i * 18,
-                        1.5f, str_player);
+            float f_label_x = 20, f_label_y = 65 + i * 18;
+            if (b_alive)
+            {
+                float f_width = ui_text_width(1.5f, str_player);
+                f_label_x = frame.arr_f_x[i] + SQ_WIDTH / 2.0f - f_width / 2.0f;
+                // The bomb occupies a full cell above its holder. Put the
+                // label above that cell, with a gap, instead of over the fuse.
+                bool b_holder = p_game->bomb_holder == i + 1;
+                f_label_y = frame.arr_f_y[i] - (b_holder ? SQ_WIDTH : 0) - 22;
+                if (f_label_x < 4) f_label_x = 4;
+                if (f_label_x > WIDTH - f_width - 4) f_label_x = WIDTH - f_width - 4;
+                if (f_label_y < 4) f_label_y = 4;
+            }
+            ui_draw_text(f_label_x, f_label_y, 1.5f, str_player);
         }
     }
+}
+
+void render_draw_portrait(int a_int_player, float x, float y, float a_f_size)
+{
+    if (a_int_player < 0 || a_int_player >= MAX_PLAYERS)
+        return;
+    float u0, v0, u1, v1;
+    atlas_uv(SPR_PORTRAIT + a_int_player, &u0, &v0, &u1, &v1);
+    GLint int_matrix_mode;
+    glGetIntegerv(GL_MATRIX_MODE, &int_matrix_mode);
+    glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_CURRENT_BIT);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture_atlas);
+    glColor4f(1, 1, 1, 1);
+    // The short batch uses pixel UVs; these UI quads use normalised UVs.
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+    glBegin(GL_QUADS);
+    glTexCoord2f(u0, v0); glVertex2f(x, y);
+    glTexCoord2f(u0, v1); glVertex2f(x, y + a_f_size);
+    glTexCoord2f(u1, v1); glVertex2f(x + a_f_size, y + a_f_size);
+    glTexCoord2f(u1, v0); glVertex2f(x + a_f_size, y);
+    glEnd();
+    glPopMatrix();
+    glMatrixMode(int_matrix_mode);
+    glPopAttrib();
 }
 
 void render_save_screenshot(const char *a_str_path)

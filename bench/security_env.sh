@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Source from launchers. Keep the requested mode explicit and reproducible.
+# Benchmarks run without menu interaction, including idle-client profiles.
+export FUSE_AUTO_JOIN=1
 export FUSE_DDS_SECURITY=${FUSE_DDS_SECURITY:-on}
 case $FUSE_DDS_SECURITY in
     on) source security/scripts/env.sh ;;
