@@ -2,6 +2,20 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-03, Codex: automated the supplied Windows/WSL networking commands with
+`run-setup.bat` and `run-setup.ps1` for both host and player PCs. Setup requests
+Administrator access, creates or updates subnet-scoped Windows and Hyper-V
+pairing/DDS rules, backs up and preserves unrelated `.wslconfig` settings, applies
+mirrored networking/localhost forwarding/`firewall=false`, and shuts down WSL.
+Added subnet, preview and deferred-shutdown options, documented networking versus
+Build prerequisites, and removed the server launcher's fixed `eth3` adapter.
+
+Validation: Windows PowerShell 5.1 isolated regressions passed for config merging,
+idempotence, duplicate-setting rejection, backups, firewall ports/protocols/subnet
+scope, rule creation/update, preview, deferred restart and shutdown failure.
+The actual batch launcher passed a `-WhatIf` preview; PowerShell syntax and
+`git diff --check` passed. No real firewall changes or WSL shutdowns were executed.
+
 2026-11-02, Codex: fixed second and later game windows under the same Linux/WSL
 user reusing the first window's paired login. The ordinary client launcher now
 reserves a private player profile with a nonblocking kernel lock and supervises

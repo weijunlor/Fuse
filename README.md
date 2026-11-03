@@ -34,6 +34,34 @@ and rebuilds the game binaries; source `env.sh` to select the pinned WSL SDK.
 
 ## Run
 
+On **each Windows PC** (host and players), run the network setup once:
+
+```bat
+.\run-setup.bat
+```
+
+Accept the Windows Administrator prompt. Save your work in all WSL terminals
+first: setup automatically runs `wsl --shutdown`. It adds or updates Windows
+and WSL Hyper-V inbound rules for TCP 7440 and UDP 7400-7401,7410-7429, scoped
+to `10.243.66.0/24` on all network profiles. It backs up your existing
+`%USERPROFILE%\.wslconfig`, preserves unrelated settings, and sets:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+localhostForwarding=true
+firewall=false
+```
+
+This configures either PC to host or play. `firewall=false` disables WSL's
+Hyper-V firewall filtering; the Windows firewall rules remain subnet-scoped.
+Windows 11 22H2 or later and a current WSL installation are required.
+For a different subnet use `.\run-setup.bat -LanSubnet 192.168.1.0/24`.
+Use `-NoRestart` to defer WSL shutdown, or `-WhatIf` to preview changes.
+Rerunning setup updates the same named rules and preserves saved pairings.
+This handles Windows/WSL networking; complete the **Build** prerequisites above
+on each PC, generating certificates and demo accounts on the host only.
+
 On Windows, run these from separate terminals in this folder:
 
 ```bat
