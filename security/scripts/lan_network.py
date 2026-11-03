@@ -44,7 +44,20 @@ def select_interface(server=None, interface=None):
         if not routes or not routes[0].get("dev"):
             raise RuntimeError(f"No route to {server}")
         return routes[0]["dev"]
-    return None  # Retain DDS automatic selection when no destination is given.
+    # A host has no destination to route to yet. Prefer its active default
+    # route so DDS advertises the same LAN adapter as the pairing listener.
+    # Interface numbers vary across WSL machines and can change after restart.
+    usable = {name for name, addresses in available.items() if name != "lo" and any(
+        not (address.is_loopback or address.is_link_local or address.is_unspecified or
+             address.is_multicast or str(address) == "255.255.255.255")
+        for address in map(ipaddress.IPv4Address, addresses))}
+    routes = sorted(ip_json("route", "show", "default"), key=lambda row: row.get("metric", 0))
+    for route in routes:
+        if route.get("dev") in usable and "linkdown" not in route.get("flags", []):
+            return route["dev"]
+    if len(usable) == 1:
+        return next(iter(usable))  # An isolated LAN may have no default gateway.
+    return None  # Ambiguous/no LAN: retain DDS selection; pairing requests an override.
 
 
 def networking_mode():

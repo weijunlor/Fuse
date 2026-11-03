@@ -307,6 +307,12 @@ Explicit server connections use unicast DDS discovery, so multicast is unnecessa
 Omitting `--server` retains automatic discovery. Both launchers accept
 `--interface NAME` (the Linux interface name, such as `eth0` or `wlan0`); otherwise
 an explicit-server client selects the interface from its route to that server.
+The host automatically selects the usable IPv4 adapter on its lowest-metric
+default route, using the same adapter for DDS and pairing. For example, if WSL
+routes your LAN through `eth3`, no interface argument is needed. With no usable
+default route, a sole LAN adapter is selected; if several remain, pairing asks
+for `--interface NAME`. An explicit flag or `FUSE_DDS_INTERFACE` overrides
+automatic selection, which is useful when a VPN changes the default route.
 
 **4. Check connectivity before changing the network.** With the host running, run
 this on a client using its assigned player number:

@@ -241,13 +241,9 @@ def activate(emit=True):
 
 
 def bind_address():
-    name = os.environ.get('FUSE_DDS_INTERFACE')
+    name = lan_network.select_interface(None, os.environ.get('FUSE_DDS_INTERFACE'))
     if not name:
-        routes = lan_network.ip_json('route', 'show', 'default')
-        if not routes:
-            raise ValueError('No default LAN route; select --interface NAME')
-        name = min(routes, key=lambda row: row.get('metric', 0))['dev']
-    name = lan_network.select_interface(None, name)
+        raise ValueError('Cannot determine a LAN interface; select --interface NAME')
     addresses = lan_network.interfaces()[name]
     print(next(address for address in addresses if not address.startswith('169.254.')))
 

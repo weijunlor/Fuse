@@ -21,6 +21,66 @@ import lan_network
 import security
 
 
+class InterfaceTests(unittest.TestCase):
+    def setUp(self):
+        self.available = {"lo": ["127.0.0.1", "10.255.255.254"],
+                          "eth1": ["169.254.83.107"], "eth3": ["10.243.66.130"]}
+
+    def test_host_dds_and_pairing_share_default_route(self):
+        import pairing_store
+        with patch.dict(os.environ, {"FUSE_DDS_INTERFACE": "", "FUSE_SERVER_IP": ""}), \
+                patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=[{"dev": "eth3", "metric": 50}]):
+            domain = ET.Element("Domain")
+            lan_network.configure(domain, "server")
+            self.assertEqual(domain.find("General/Interfaces/NetworkInterface").get("name"), "eth3")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                pairing_store.bind_address()
+            self.assertEqual(output.getvalue().strip(), "10.243.66.130")
+
+    def test_host_uses_lowest_metric_usable_route(self):
+        self.available["wlan0"] = ["192.168.1.20"]
+        routes = [{"dev": "missing", "metric": 0}, {"dev": "lo", "metric": 1},
+                  {"dev": "eth1", "metric": 2}, {"dev": "wlan0", "metric": 100},
+                  {"dev": "eth3", "metric": 50}]
+        with patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=routes) as query:
+            self.assertEqual(lan_network.select_interface(), "eth3")
+            query.assert_called_once_with("route", "show", "default")
+
+    def test_host_skips_linkdown_route(self):
+        self.available["wlan0"] = ["192.168.1.20"]
+        routes = [{"dev": "wlan0", "metric": 0, "flags": ["linkdown"]}, {"dev": "eth3"}]
+        with patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=routes):
+            self.assertEqual(lan_network.select_interface(), "eth3")
+
+    def test_host_with_no_gateway_uses_only_lan_adapter(self):
+        with patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=[]):
+            self.assertEqual(lan_network.select_interface(), "eth3")
+
+    def test_host_with_ambiguous_adapters_requests_override_for_pairing(self):
+        import pairing_store
+        self.available["wlan0"] = ["192.168.1.20"]
+        with patch.dict(os.environ, {"FUSE_DDS_INTERFACE": ""}), \
+                patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=[]):
+            self.assertIsNone(lan_network.select_interface())
+            with self.assertRaisesRegex(ValueError, "select --interface NAME"):
+                pairing_store.bind_address()
+
+    def test_explicit_interface_and_client_destination_take_precedence(self):
+        self.available["wlan0"] = ["192.168.1.20"]
+        with patch.object(lan_network, "interfaces", return_value=self.available), \
+                patch.object(lan_network, "ip_json", return_value=[{"dev": "wlan0"}]) as query:
+            self.assertEqual(lan_network.select_interface(interface="eth3"), "eth3")
+            query.assert_not_called()
+            self.assertEqual(lan_network.select_interface("192.168.1.50"), "wlan0")
+            query.assert_called_once_with("route", "get", "192.168.1.50")
+
+
 class LanTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
