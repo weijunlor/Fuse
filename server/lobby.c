@@ -1,5 +1,8 @@
-/* server/lobby.c
-Player slots: join (nonce), leave, liveliness timeout. */
+/** @file server/lobby.c
+ * @brief Manage player slots, nonces, join answers, timeouts and bots.
+ * @details Integrates game admission with the team's authentication and
+ * concurrency layers; public contracts are documented in lobby.h.
+ */
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -134,6 +137,11 @@ static int find_slot_by_nonce(uint64_t a_u64_nonce)
 // Give a free slot to a new player at a random position where it does not
 // overlap anyone. Returns the slot index, or -1 if the game is full.
 // The caller holds the mutex.
+/** @brief Reserve a free slot and choose a random, non-overlapping spawn.
+ * @param a_u64_nonce Nonce associated with the slot (0 for a bot).
+ * @return Slot index, or -1 when no slot is free.
+ * @pre The caller holds mutex.
+ */
 static int admit_player(uint64_t a_u64_nonce)
 {
 	if (int_num_active_players == MAX_PLAYERS)
@@ -179,6 +187,10 @@ static int admit_player(uint64_t a_u64_nonce)
 
 // Free slot a_int_index: the player disappears from the next snapshot, and
 // its nonce is forgotten. The caller holds the mutex.
+/** @brief Clear a slot's bot flag, session, nonce and gameplay state.
+ * @param a_int_index Occupied slot index in 0..MAX_PLAYERS-1.
+ * @pre The caller holds mutex.
+ */
 static void free_slot(int a_int_index)
 {
 	bot_set_player(a_int_index, false);

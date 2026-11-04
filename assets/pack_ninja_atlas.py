@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+## @file assets/pack_ninja_atlas.py
+# @brief Pack supplied Ninja Adventure sprites into the game's atlas and manifest.
+# @details Requires Pillow and restored source art under assets/ninja_adventure/.
+# The checked-in atlas works without running this tool; see assets/README.md.
 """Pack the curated Ninja Adventure sources into FUSE's 50px cells.
 
 Requires Pillow (python3-pil). Run from any directory. Reads source art from
@@ -20,11 +24,19 @@ COLOURS = ("#ed526b", "#57b8ee", "#8acb5b", "#f3ca61", "#bc8cdd")
 NEAREST = Image.Resampling.NEAREST
 
 
+## @brief Load one source PNG as RGBA and close its source file.
+# @param name Path relative to the source-art directory.
+# @return A Pillow RGBA image.
 def load(name):
     with Image.open(SOURCE / name) as image:
         return image.convert("RGBA")
 
 
+## @brief Integer-scale and centre art within a transparent 50x50 cell.
+# @param image Source Pillow image.
+# @param scale Optional integer scale; otherwise choose the largest fitting scale.
+# @return A Pillow RGBA cell.
+# @exception ValueError The scaled sprite exceeds the cell dimensions.
 def cell(image, scale=None):
     """Integer scaling, centred on a transparent 50px cell; never stretch art."""
     if scale is None:
@@ -37,6 +49,9 @@ def cell(image, scale=None):
     return output
 
 
+## @brief Create a speed, shield or fuse pickup badge.
+# @param kind Badge name: speed, shield or fuse.
+# @return A 50x50 RGBA image using custom art and the pack's boot inset.
 def badge(kind):
     """Custom shield and clock icons; the boot inset comes from the pack."""
     image = Image.new("RGBA", (24, 24))
@@ -65,10 +80,20 @@ def badge(kind):
     return cell(image, 2)
 
 
+## @brief Write atlas.png and atlas_manifest.json beside the packer script.
+# @details Packs characters, portraits, rings, bombs, effects, pickups and floor
+# tiles while preserving existing sprite IDs. Source art must be restored first.
 def main():
     atlas = Image.new("RGBA", (COLS * TILE, ROWS * TILE))
     entries = []
 
+    ## @brief Validate a sprite cell, composite it and record its source metadata.
+    # @param row Destination atlas row.
+    # @param col Destination atlas column.
+    # @param image Nonempty 50x50 RGBA sprite.
+    # @param name Manifest sprite name.
+    # @param source Original source path or description of custom art.
+    # @exception ValueError An image is empty, incorrectly sized or duplicates a cell.
     def put(row, col, image, name, source):
         if image.size != (TILE, TILE) or not image.getbbox():
             raise ValueError(f"Empty or incorrectly sized sprite: {name}")

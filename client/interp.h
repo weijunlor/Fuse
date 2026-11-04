@@ -1,3 +1,8 @@
+/** @file client/interp.h
+ * @brief Shared snapshot interpolation API, extended with lobby session reset.
+ * @details Interpolation is the team's existing implementation; interp_reset()
+ * prevents a later lobby session from drawing the previous session's history.
+ */
 /* client/interp.h
 Snapshot buffer and interpolation between server ticks (optimisation #15).
 
@@ -63,6 +68,9 @@ extern bool b_interp;
 extern bool b_interp_stats;
 
 // Render thread only: discard snapshots and clock estimates between sessions.
+/** @brief Discard snapshot history and server-clock estimates between sessions.
+ * @note Render thread only; interpolation options and measurement flags persist.
+ */
 void interp_reset(void);
 
 /* Store a snapshot received at a_u_received_ns (timing_now_ns()). Snapshots

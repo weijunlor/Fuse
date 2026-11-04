@@ -1,5 +1,6 @@
-/* server/bot.c
-AI bot state machine (stretch goal). */
+/** @file server/bot.c
+ * @brief Server-controlled bots that chase, flee, avoid walls and request dash.
+ */
 
 #include "bot.h"
 

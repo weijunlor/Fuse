@@ -1,3 +1,8 @@
+/** @file bench/bench_collision.c
+ * @brief Compare grid/brute ember queries and simulated tick workloads (#8).
+ * @details Prints timings and hit checksums. Array/ring comparison and the
+ * game workload include Weijun's later #8b extensions to this benchmark.
+ */
 /* bench_collision.c
 Compare brute-force ember collision with the spatial-grid query (#8), and
 the two ember layouts (#8b: fixed array of structs vs FIFO ring of SoA).
@@ -20,6 +25,9 @@ layout the #8 measurements used, so "grid" and "brute" mean what they did.
 
 #define SEED 1234u
 
+/** @brief Populate a repeatable ember set in complete groups of 32.
+ * @param a_int_count Requested ember count; a partial final group is omitted.
+ */
 static void fill_embers(int a_int_count)
 {
 	for (int i = 0; i < a_int_count / 32; i++)
@@ -28,6 +36,12 @@ static void fill_embers(int a_int_count)
 }
 
 // One server tick of the game workload; returns the number of hits
+/** @brief Simulate ember expiry/spawn and one query per synthetic player.
+ * @param a_int_t Workload tick used for positions and random seeds.
+ * @param a_int_every Explosion interval in ticks; 0 disables spawning.
+ * @param a_int_players Number of synthetic player queries.
+ * @return Number of player queries that hit an ember this tick.
+ */
 static unsigned game_tick(int a_int_t, int a_int_every, int a_int_players)
 {
 	collision_embers_tick();
@@ -44,6 +58,11 @@ static unsigned game_tick(int a_int_t, int a_int_every, int a_int_players)
 	return u_hits;
 }
 
+/** @brief Run the selected collision benchmark and print timing/checksum output.
+ * @param argc Number of command-line arguments.
+ * @param argv Mode grid/brute/game with optional -array/-ring, then workload sizes.
+ * @return 0 on completion; 1 on invalid arguments.
+ */
 int main(int argc, char **argv)
 {
 	char str_query[16] = "";

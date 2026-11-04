@@ -1,5 +1,8 @@
-/* server/lobby.h
-Player slots: join (nonce), leave, liveliness timeout. */
+/** @file server/lobby.h
+ * @brief Server player admission, leave, heartbeat timeout and bot-slot API.
+ * @details Shared module: slot management integrates the team's authentication
+ * and SPSC/mutex handoffs. Queue admission does not authenticate a message.
+ */
 
 #ifndef SERVER_LOBBY_H
 #define SERVER_LOBBY_H
@@ -43,10 +46,18 @@ typedef JoinResponse JoinResult;
 
 // Called by the DDS worker when a join request arrives. Copy the sample before
 // DDS reuses its storage. Returns false if the queue is full.
+/** @brief Copy a join request from the DDS worker into the pending queue.
+ * @param a_request Request to copy; caller retains ownership.
+ * @return True if queued, false when full (the client retries later).
+ */
 bool lobby_signal_join(const JoinRequest *a_request);
 
 // Called by the DDS worker. Copies the oldest waiting answer to *a_p_out and
 // returns true, or returns false if there is none.
+/** @brief Consume the oldest join answer for the DDS worker to publish.
+ * @param[out] a_p_out Receives an answer on success.
+ * @return True when copied; false when there is no answer.
+ */
 bool lobby_take_result(JoinResult *a_p_out);
 
 // Free the slot of a player that sent no Input for this many seconds
@@ -55,7 +66,16 @@ extern int int_player_timeout_s;
 
 // Validate and apply under the same mutex as slot admission/removal. No
 // unauthenticated sample may move a player, refresh its timeout, or free it.
+/** @brief Validate an input and update keys/heartbeat while holding mutex.
+ * @param a_input Message to authenticate against the current slot session.
+ * @return True when accepted; false for invalid, stale or rejected input.
+ */
 bool lobby_receive_input(const Input *a_input);
+
+/** @brief Validate a leave and schedule its slot removal under mutex.
+ * @param a_leave Leave message to authenticate.
+ * @return True when accepted for removal; false if invalid or the queue is full.
+ */
 bool lobby_receive_leave(const Leave *a_leave);
 
 // Network entry points: SPSC mode copies into a bounded ring, and the MAIN
@@ -63,18 +83,44 @@ bool lobby_receive_leave(const Leave *a_leave);
 // authenticated. Full queues return false without changing auth state. Input
 // repeats recover dropped updates; a dropped Leave is recovered by timeout.
 // Mutex comparison mode validates/applies immediately as before.
+/** @brief Submit copied input through the selected thread handoff.
+ * @param a_input Message received by the DDS worker.
+ * @return In SPSC mode, true means queued; in mutex mode, true means validated
+ * and applied. False means the queue was full or validation failed.
+ */
 bool lobby_submit_input(const Input *a_input);
+
+/** @brief Submit a copied leave through the selected thread handoff.
+ * @param a_leave Message received by the DDS worker.
+ * @return True if queued in SPSC mode or validated for removal in mutex mode;
+ * false on a full queue or failed validation.
+ */
 bool lobby_submit_leave(const Leave *a_leave);
 
 // Called repeatedly by the main thread: handles every pending leave, then
 // every pending join request
+/** @brief Process queued inputs, leaves and join requests on the main thread.
+ * @details Leaves free slots before joins are admitted. New players are accepted
+ * only in the lobby; retries for an existing session can be answered in a match.
+ * @note Acquires mutex as needed. SPSC input/leave samples are validated here.
+ */
 void lobby_poll(void);
 
 // Called by the main thread once per tick: frees the slots of players not
 // heard from for int_player_timeout_s seconds (a_u64_now_ns: timing_now_ns())
+/** @brief Remove silent human players and clear their session state.
+ * @param a_u64_now_ns Current monotonic time from timing_now_ns().
+ * @note Main thread, once per tick. Acquires mutex; skips bots and does nothing
+ * if timeouts or Leave handling have been disabled.
+ */
 void lobby_check_timeouts(uint64_t a_u64_now_ns);
 
 // Startup only: reserve 0..MAX_PLAYERS-1 slots for server-controlled bots.
+/** @brief Reserve and initialise server-controlled player slots during startup.
+ * @param a_int_count Bot count in 0..MAX_PLAYERS-1.
+ * @return True when all requested bots were added; false on invalid count,
+ * insufficient capacity or admission failure.
+ */
 bool lobby_add_bots(int a_int_count);
 
 #endif /* SERVER_LOBBY_H */

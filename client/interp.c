@@ -1,3 +1,6 @@
+/** @file client/interp.c
+ * @brief Shared interpolation implementation with a between-session history reset.
+ */
 /* client/interp.c
 Snapshot buffer and interpolation between server ticks (optimisation #15).
 How it works and why: see interp.h. */

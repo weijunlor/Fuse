@@ -1,3 +1,8 @@
+/** @file server/net_server.c
+ * @brief DDS join/input/leave handling and copied snapshot publication.
+ * @details Shared networking code integrates per-topic QoS, waitsets,
+ * authentication and the SPSC/mutex comparison paths.
+ */
 /* server/net_server.c
 Server DDS worker thread: takes inputs, publishes snapshots.
 

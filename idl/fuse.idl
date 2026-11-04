@@ -19,6 +19,7 @@
 
 // Client -> server. Sent every 1 s until a JoinResponse with the same nonce
 // arrives.
+/** @brief Client admission request with nonce, login name and password proof. */
 struct JoinRequest
 {
     unsigned long long nonce;   // random per client; only the matching response is accepted
@@ -29,6 +30,7 @@ struct JoinRequest
 
 // Server -> clients. Every client receives every response and ignores those
 // whose nonce is not its own.
+/** @brief Admission answer carrying the request nonce, status and wrapped session key. */
 struct JoinResponse
 {
     unsigned long long nonce;   // copied from the JoinRequest being answered
@@ -39,8 +41,9 @@ struct JoinResponse
                                 // only the joining client can recover it
 };
 
-// Client -> server when the player quits. Crashed clients are detected by DDS
-// liveliness instead.
+// Client -> server when the player quits. Silent clients are removed by the
+// server's Input-heartbeat timeout; DDS liveliness is not used for this.
+/** @brief Signed client departure message, sharing Input's sequence counter. */
 struct Leave
 {
     octet player_id;
@@ -54,6 +57,7 @@ struct Leave
 
 // Client -> server. Carries the keys held right now (not single steps), sent
 // when they change and repeated every 100 ms in case one is lost.
+/** @brief Latest held keys, sequence and authentication tag for one player. */
 struct Input
 {
     @key octet player_id;       // keyed: keep-last 1 keeps the newest input of EACH player
@@ -66,6 +70,7 @@ struct Input
 // Game state (QoS: best-effort, keep-last 1)
 // ---------------------------------------------------------------------------
 
+/** @brief One player's flags, lives, pixel position and velocity. */
 struct PlayerState
 {
     octet flags;                // PF_ACTIVE | PF_ALIVE | PF_SHIELD | PF_DASHING | PF_SPEED
@@ -76,6 +81,7 @@ struct PlayerState
     short vy;
 };
 
+/** @brief Pickup type and pixel position; PICKUP_NONE marks an empty slot. */
 struct Pickup
 {
     octet type;                 // PICKUP_NONE (empty slot), PICKUP_SPEED, PICKUP_SHIELD, PICKUP_FUSE_RESET
@@ -83,9 +89,9 @@ struct Pickup
     short y;
 };
 
-// Embers are not sent one by one: server and clients both spawn them from
-// each explosion with the same PRNG (common/), so thousands of embers cost
-// only these few bytes per snapshot.
+// Server embers are not sent one by one. Clients use compact explosion
+// records to trigger visual effects; the server owns collision simulation.
+/** @brief Timestamped explosion centre and seed for compact effect events. */
 struct Explosion
 {
     unsigned long tick;         // server tick of the explosion (0 = empty slot)
@@ -96,6 +102,7 @@ struct Explosion
 
 // Server -> clients, once per published tick. Starts at 60 Hz; optimisation
 // #15 (client interpolation) lowers the rate.
+/** @brief Completed server tick containing phase, timer and all game entities. */
 struct GameSnapshot
 {
     unsigned long tick;         // server tick number (60 Hz)
@@ -114,6 +121,7 @@ struct GameSnapshot
 // Server -> clients: names for the HUD and win screen. Transient-local, so a
 // client that joins late still receives everyone's entry. The server disposes
 // the instance when the player leaves.
+/** @brief Reserved player name/wins message; current network setup creates no Roster topic. */
 struct Roster
 {
     @key octet player_id;

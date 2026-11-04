@@ -1,4 +1,8 @@
-/* #9: compare the actual overlap, clamp and held-key direction helpers. */
+/** @file bench/bench_branches.c
+ * @brief Compare branchy and branch-reduced movement/collision helpers (#9).
+ * @details Runs the actual game helpers with repeatable inputs and prints
+ * nanoseconds per query plus a checksum. Usage: bench_branches branchy|branchless [queries].
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +10,11 @@
 #include "movement.h"
 #include "timing.h"
 
+/** @brief Exercise direction lookup, coordinate clamps and overlap checks.
+ * @param a_int_queries Number of repeatable queries.
+ * @param a_b_branchless True selects lookup/clamp/bitwise comparison paths.
+ * @return Checksum of final coordinates and overlap results.
+ */
 static uint64_t run_queries(int a_int_queries, bool a_b_branchless)
 {
 	uint32_t u32_state = 1234;
@@ -29,6 +38,11 @@ static uint64_t run_queries(int a_int_queries, bool a_b_branchless)
 	return u64_sum;
 }
 
+/** @brief Time the chosen branch comparison path.
+ * @param argc Number of command-line arguments.
+ * @param argv Mode branchy/branchless, then an optional query count.
+ * @return 0 on completion; 1 on invalid arguments.
+ */
 int main(int argc, char **argv)
 {
 	if (argc < 2 || argc > 3 ||

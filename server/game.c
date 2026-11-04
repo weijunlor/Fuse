@@ -1,5 +1,8 @@
-/* Server-authoritative simulation. All state below is guarded by mutex.
- * Held keys drive a fixed 60 Hz tick; snapshots describe the completed tick. */
+/** @file server/game.c
+ * @brief Fixed-tick game rules, player effects, bomb passing and snapshots.
+ * @details Main-thread simulation state is protected by the game mutex.
+ * The DDS worker consumes copied snapshots through the selected handoff.
+ */
 #include <string.h>
 #include <stdlib.h>
 #include "game.h"
@@ -64,6 +67,7 @@ bool game_accepts_joins(void)
 	return u8_phase == PHASE_LOBBY;
 }
 
+/** @brief Check whether a valid slot is active and still has lives. */
 static bool player_alive(int a_int_index)
 {
 	return arr_Players[a_int_index].b_active && arr_u8_lives[a_int_index] > 0;
@@ -92,6 +96,7 @@ void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys)
 	arr_u64_last_input_ns[a_int_player_id - 1] = timing_now_ns();
 }
 
+/** @brief Clear shields, speed, dash and tag protection for a slot. */
 static void reset_player_effects(int a_int_index)
 {
 	arr_u8_shield[a_int_index] = 0;
@@ -116,6 +121,7 @@ uint64_t game_last_input_ns(int a_int_index)
 	return arr_u64_last_input_ns[a_int_index];
 }
 
+/** @brief Remove pickups, explosion records and server embers. */
 static void clear_round_transients(void)
 {
 	memset(arr_pickups, 0, sizeof arr_pickups);
@@ -125,6 +131,9 @@ static void clear_round_transients(void)
 
 // Reset connected slots without refreshing their heartbeat: a rematch must
 // not keep a crashed client alive indefinitely. Fixed spawns never overlap.
+/** @brief Restore connected players and fixed spawns for a fresh match.
+ * @note Preserves heartbeat timestamps so rematches cannot keep crashed clients alive.
+ */
 static void reset_match(void)
 {
 	static const int arr_x[MAX_PLAYERS] = {100, 650, 100, 650, 375};
@@ -151,6 +160,11 @@ static void reset_match(void)
 
 // #10: independent accumulators in the SAME loop, with an odd tail.
 // --reduction serial retains the dependent path for an isolated comparison.
+/** @brief Count connected and living players (#10).
+ * @param[out] a_p_active Receives the number of occupied slots.
+ * @param[out] a_p_alive Receives the number of occupied slots with lives left.
+ * @details Uses independent accumulator pairs or the serial comparison path.
+ */
 static void count_players(int *a_p_active, int *a_p_alive)
 {
 	int int_active_a = 0, int_active_b = 0;
@@ -176,6 +190,11 @@ static void count_players(int *a_p_active, int *a_p_alive)
 	*a_p_alive = int_alive_a + int_alive_b;
 }
 
+/** @brief Randomly select an active player with lives remaining.
+ * @return A 1-based player ID, or 0 when no player is eligible.
+ * @details Rejection sampling avoids modulo bias and handles gaps between IDs.
+ * Uses the PRNG seeded by the server entry point, not security randomness.
+ */
 static uint8_t choose_bomb_holder(void)
 {
 	// Slots can have gaps after a leave or elimination. Draw from the actual
@@ -196,6 +215,7 @@ static uint8_t choose_bomb_holder(void)
 	return arr_candidates[u_random % u_count];
 }
 
+/** @brief Enter the win/draw phase and start the five-second rematch timer. */
 static void finish_match(void)
 {
 	u8_phase = PHASE_GAME_OVER;
@@ -207,12 +227,17 @@ static void finish_match(void)
 	LOG_INFO("Match over: winner player %u (0 = draw)\n", (unsigned)choose_bomb_holder());
 }
 
+/** @brief Convert a tick duration to snapshot milliseconds, capped at UINT16_MAX. */
 static uint16_t ticks_to_ms(uint32_t a_u_ticks)
 {
 	uint32_t u_ms = (a_u_ticks * 1000u) / TICK_HZ;
 	return (uint16_t)(u_ms > UINT16_MAX ? UINT16_MAX : u_ms);
 }
 
+/** @brief Record an explosion at a player's centre and spawn server embers.
+ * @param a_int_x Player's left coordinate in pixels.
+ * @param a_int_y Player's top coordinate in pixels.
+ */
 static void add_explosion(int a_int_x, int a_int_y)
 {
 	Explosion explosion = {
@@ -224,6 +249,7 @@ static void add_explosion(int a_int_x, int a_int_y)
 	collision_embers_spawn(explosion.x, explosion.y, explosion.seed);
 }
 
+/** @brief Place a weighted random pickup near a position if a pickup slot is free. */
 static void spawn_pickup(int a_int_x, int a_int_y)
 {
 	// Weighted selection: speed 40%, shield 40%, extra fuse time 20%.
@@ -242,6 +268,7 @@ static void spawn_pickup(int a_int_x, int a_int_y)
 	}
 }
 
+/** @brief Update a slot's effect timers, detect a new dash press and collect pickups. */
 static void update_player_effects(int a_int_i)
 {
 	if (arr_u16_dash_cooldown[a_int_i] > 0) arr_u16_dash_cooldown[a_int_i]--;
@@ -270,6 +297,7 @@ static void update_player_effects(int a_int_i)
 	}
 }
 
+/** @brief Pass the bomb on contact, respecting shields and pass-back protection. */
 static void pass_bomb_if_touched(void)
 {
 	if (u8_phase != PHASE_PLAYING || u8_bomb_holder == 0) return;
@@ -300,6 +328,10 @@ static void pass_bomb_if_touched(void)
 	}
 }
 
+/** @brief Advance lobby, countdown, fuse, round-over and rematch transitions.
+ * @details Admissions wait five seconds with two players, countdowns last
+ * three seconds, and the current FUSE_TICKS constant sets a 20-second fuse.
+ */
 static void update_round_state(void)
 {
 	int int_active, int_alive;
@@ -391,6 +423,11 @@ static void update_round_state(void)
 	}
 }
 
+/** @brief Move one living player with effects, ember slowdown and axis collisions.
+ * @param a_int_i Slot index in 0..MAX_PLAYERS-1.
+ * @param[out] a_p_state Receives the velocity for the completed step.
+ * @note The caller holds mutex; eliminated spectators do not block movement.
+ */
 static void move_player(int a_int_i, PlayerState *a_p_state)
 {
 	int int_speed = TICK_STEP;

@@ -1,3 +1,8 @@
+/** @file client/atlas.h
+ * @brief Shared 50-pixel atlas layout, extended for directional art and portraits.
+ * @details Zhikai's art integration adds walk rows 6..9, portraits in row 10
+ * and player rings in row 11. Existing sprite IDs remain compatible.
+ */
 /* client/atlas.h
 Texture atlas: every sprite is a 50 x 50 tile in assets/atlas.png. The atlas
 is the size of the window (800 x 600 = 16 x 12 tiles), so one tile is one cell

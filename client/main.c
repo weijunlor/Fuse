@@ -54,8 +54,11 @@ Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
 #include "lobby_ui.h"
 #include "pairing_ui.h"
 
-// Each Join starts a fresh authenticated session. Never reset handoffs or
-// credentials until the previous worker has stopped and pthread_join finished.
+
+/** @brief Prepare and start a fresh authenticated network session.
+ * @param[out] a_thread Receives the worker handle on success.
+ * @return True if started; false if preparation or thread creation fails.
+*/
 static bool start_client(pthread_t *a_thread)
 {
     if (!net_client_prepare())
@@ -73,6 +76,11 @@ static bool start_client(pthread_t *a_thread)
     return true;
 }
 
+/** @brief Stop, join and finish a session before returning to the menu.
+ * @param a_thread Worker handle when the running flag is true.
+ * @param[in,out] a_b_running Session-started flag; cleared after cleanup.
+ * @note Does nothing when the flag is already false.
+ */
 static void stop_client(pthread_t a_thread, bool *a_b_running)
 {
     if (!*a_b_running)
@@ -123,6 +131,11 @@ static void on_framebuffer_size(GLFWwindow *a_window, int a_int_w, int a_int_h)
     render_resize(a_int_w, a_int_h);
 }
 
+/** @brief Run the client menu, input and drawing loop.
+ * @param argc Number of command-line arguments.
+ * @param argv Client options; --auto-join skips the normal lobby menu.
+ * @return 0 after a normal exit, nonzero on invalid options or startup failure.
+ */
 int main(int argc, char **argv)
 {
     uint64_t u_main_ns = timing_now_ns();

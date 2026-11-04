@@ -1,5 +1,10 @@
-/* server/game.h
-Server simulation tick: movement, bomb/fuse, rounds, pickups, win state. */
+/**
+ * @file server/game.h
+ * @brief Server simulation API for movement, rounds, lives and snapshots.
+ * @details Player IDs are 1..MAX_PLAYERS; slot indices are 0..MAX_PLAYERS-1.
+ * The main thread owns simulation state in SPSC mode. Shared-state operations
+ * use the game mutex; individual functions describe who acquires it.
+ */
 
 #ifndef SERVER_GAME_H
 #define SERVER_GAME_H
@@ -29,37 +34,54 @@ extern bool b_game_branchless;
 extern bool b_ember_grid;
 extern bool b_reduce_accum;
 
-// New slots are admitted only in the lobby. Caller holds mutex.
+/** @brief Check whether the current phase permits new players.
+ * @pre The caller holds mutex.
+ * @return True in PHASE_LOBBY; false during a match.
+ */
 bool game_accepts_joins(void);
 
-// Store the keys (KEY_* bitmask, types.h) that a player holds now, from an
-// Input message; the next tick moves the player by them. Also records when
-// the player was last heard from (for the timeout in lobby.c). IDs outside
-// 1..MAX_PLAYERS are ignored. Locks the mutex itself. Called by the DDS worker.
+/** @brief Store a human player's held keys and refresh its heartbeat.
+ * @param a_int_player_id Player ID in 1..MAX_PLAYERS; invalid IDs are ignored.
+ * @param a_u8_keys KEY_* bitmask; unsupported bits are discarded.
+ * @note Acquires mutex. Inactive slots and bot slots are ignored.
+ */
 void game_set_keys(int a_int_player_id, uint8_t a_u8_keys);
 
-// Same update with the mutex already held (authentication + update is atomic).
+/** @brief Apply the same key/heartbeat update without acquiring mutex.
+ * @param a_int_player_id Player ID in 1..MAX_PLAYERS.
+ * @param a_u8_keys Current KEY_* bitmask.
+ * @pre The caller holds mutex and has validated the network message.
+ * @see game_set_keys
+ */
 void game_set_keys_locked(int a_int_player_id, uint8_t a_u8_keys);
 
-// Start a slot afresh for a player who joins or leaves: no keys held, last
-// heard from now. The caller holds the mutex.
+/** @brief Reset keys, lives, temporary effects and heartbeat for a slot.
+ * @param a_int_index Slot index in 0..MAX_PLAYERS-1.
+ * @pre The caller holds mutex. Position and active status are managed separately.
+ */
 void game_reset_player(int a_int_index);
 
-// When the player at a_int_index last sent an Input (or joined), in
-// timing_now_ns() nanoseconds. The caller holds the mutex.
+/** @brief Read the last accepted input or reset time for a slot.
+ * @param a_int_index Slot index in 0..MAX_PLAYERS-1.
+ * @pre The caller holds mutex.
+ * @return Monotonic timestamp in timing_now_ns() nanoseconds.
+ */
 uint64_t game_last_input_ns(int a_int_index);
 
-// Advance the game by one fixed step of 1/TICK_HZ s: move every active player
-// by its held keys (with dash/speed/ember effects), ignoring eliminated
-// spectators in collision, then build the completed tick's GameSnapshot.
-// Advances lobby/countdown/round/win/rematch rules. Locks the mutex itself.
-// Called by the main thread TICK_HZ times per second.
+/** @brief Advance one fixed simulation step and prepare its snapshot.
+ * @details Updates ember expiry, phase timers, bots, movement, pickups and
+ * bomb passing. Publishes a snapshot at the configured tick divisor.
+ * @note Main thread only, TICK_HZ calls per second. Acquires mutex internally.
+ */
 void game_tick(void);
 
-// Copy the latest snapshot to *a_p_out if one is waiting to be published,
-// and mark it taken. Returns false if there is nothing new.
-// SPSC: DDS worker copies from a pinned double buffer without taking mutex.
-// Mutex comparison: the caller must hold mutex, as in the original path.
+/** @brief Consume the latest completed snapshot for the DDS worker.
+ * @param[out] a_p_out Receives a snapshot on success; otherwise unchanged.
+ * @return True when a snapshot was copied; false if none is available or the
+ * SPSC read collides with publication.
+ * @note One consumer only. In mutex mode the caller must hold mutex;
+ * the SPSC path uses a pinned buffer without that lock.
+ */
 bool game_take_snapshot(GameSnapshot *a_p_out);
 
 #endif /* SERVER_GAME_H */

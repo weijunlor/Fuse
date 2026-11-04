@@ -1,3 +1,6 @@
+/** @file client/lobby_ui.c
+ * @brief Native lobby input, five-slot waiting room and menu drawing.
+ */
 /* Simple lobby drawn with the existing OpenGL text and rectangle primitives.
    A joined lobby shows the server's five slots; the server owns admission,
    countdown and match start. The menu never changes authoritative game state. */
@@ -19,6 +22,7 @@ static const Button button_exit = {710, 535, 70, 36};
 static double d_mouse_x, d_mouse_y;
 static bool b_mouse_down, b_enter_pressed, b_escape_pressed;
 
+/** @brief Check the logical mouse position against a button rectangle. */
 static bool in_button(Button a_button)
 {
     return d_mouse_x >= a_button.x && d_mouse_x < a_button.x + a_button.w &&
@@ -27,6 +31,7 @@ static bool in_button(Button a_button)
 
 // Latch presses: a quick press/release between two rendered frames still
 // counts once. GLFW_REPEAT is ignored, so holding Enter cannot rejoin.
+/** @brief Latch fresh Enter/Escape presses, forwarding keys when pairing is visible. */
 static void on_key(GLFWwindow *a_window, int a_int_key, int a_int_scancode,
                    int a_int_action, int a_int_mods)
 {
@@ -49,6 +54,7 @@ void lobby_ui_init(GLFWwindow *a_window)
     glfwSetInputMode(a_window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 }
 
+/** @brief Check whether a joined client should see the arena instead of the menu. */
 static bool in_arena(const ClientFrame *a_frame, bool a_b_running)
 {
     return a_b_running && a_frame->int_player_id > 0 &&

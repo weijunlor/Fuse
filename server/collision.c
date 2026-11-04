@@ -1,4 +1,9 @@
-/* server/collision.c
+/** @file server/collision.c
+ * @brief Ember lifetime, spatial-grid queries and player collision tests.
+ * @details Zhikai's grid/array and branch-reduced collision work is retained
+ * alongside Weijun's later FIFO ring/SoA optimisation (#8b).
+ */
+/*
 AABB tests and spatial grid for embers.
 
 Embers are stored in one of two layouts (b_ember_ring, #8b):
@@ -59,6 +64,7 @@ static uint32_t u32_ember_tick = 0;
 static int16_t arr_i16_sorted_x[MAX_EMBERS];
 static int16_t arr_i16_sorted_y[MAX_EMBERS];
 
+/** @brief Apply strict square overlap to one array-layout ember and a player. */
 static bool ember_overlaps_player(const Ember *a_p_ember, int a_int_x,
                                   int a_int_y)
 {
@@ -67,6 +73,7 @@ static bool ember_overlaps_player(const Ember *a_p_ember, int a_int_x,
 	                         b_collision_branchless);
 }
 
+/** @brief Map pixel coordinates to a clamped, row-major 64-pixel grid cell. */
 static int ember_cell(int a_int_x, int a_int_y)
 {
 	int int_cell_x = a_int_x >> EMBER_CELL_SHIFT;
@@ -83,6 +90,9 @@ static int ember_cell(int a_int_x, int a_int_y)
 }
 
 // Grid cells a player square at (x, y) can touch, clamped to the grid
+/** @brief Find the grid-cell bounds that may contain overlapping embers.
+ * @details Extends the search for ember width, then clamps it to the grid.
+ */
 static void player_cell_range(int a_int_x, int a_int_y,
                               int *a_p_min_cx, int *a_p_min_cy,
                               int *a_p_max_cx, int *a_p_max_cy)
@@ -101,6 +111,7 @@ static void player_cell_range(int a_int_x, int a_int_y,
 
 /* ================= array layout ================= */
 
+/** @brief Count-sort active array embers into contiguous grid-cell ranges (#8). */
 static void rebuild_ember_grid_array(void)
 {
 	int arr_int_counts[EMBER_GRID_CELLS] = {0};
@@ -126,6 +137,7 @@ static void rebuild_ember_grid_array(void)
 	b_grid_dirty = false;
 }
 
+/** @brief Fill free array slots with deterministic explosion embers. */
 static void embers_spawn_array(int a_int_x, int a_int_y, uint16_t a_u16_seed)
 {
 	uint32_t u32_state = a_u16_seed;
@@ -157,6 +169,7 @@ static void embers_spawn_array(int a_int_x, int a_int_y, uint16_t a_u16_seed)
 	b_grid_dirty = true;
 }
 
+/** @brief Scan the fixed array, aging and expiring its active embers. */
 static void embers_tick_array(void)
 {
 	// All 4096 slots, every tick, even when none is active
@@ -172,6 +185,7 @@ static void embers_tick_array(void)
 	// Positions are fixed. Rebuild only on spawn/expiry, not every tick.
 }
 
+/** @brief Scan every active array ember until the player overlaps one. */
 static bool hits_ember_bruteforce_array(int a_int_x, int a_int_y)
 {
 	for (int i = 0; i < MAX_EMBERS; i++)
@@ -187,6 +201,7 @@ static bool hits_ember_bruteforce_array(int a_int_x, int a_int_y)
 // collision_player_hits_ember() was. Inlined into the layout dispatcher,
 // GCC laid out the #9 branchless test with an extra data-dependent branch
 // (2.4x the branch misses, 35% slower), which would flatter the ring.
+/** @brief Search only nearby cell ranges in the array-layout spatial grid. */
 __attribute__((noinline))
 static bool hits_ember_grid_array(int a_int_x, int a_int_y)
 {

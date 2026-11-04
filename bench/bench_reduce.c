@@ -1,5 +1,8 @@
-/* bench_reduce.c
-Compare a dependent reduction with multiple independent accumulators (#10). */
+/** @file bench/bench_reduce.c
+ * @brief Compare serial reduction with four independent accumulators (#10).
+ * @details Usage: bench_reduce serial|accum [values] [rounds]. Each mode prints
+ * nanoseconds per value and an unsigned checksum for comparing results.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +12,12 @@ Compare a dependent reduction with multiple independent accumulators (#10). */
 
 #define SEED 0x9e3779b9u
 
+/** @brief Sum values with one dependent accumulator over repeated rounds.
+ * @param a_arr_values Input values, unchanged by the benchmark.
+ * @param a_int_count Number of values.
+ * @param a_int_rounds Number of passes; each adds its round index to every value.
+ * @return Unsigned checksum (wraparound is intentional).
+ */
 static unsigned int reduce_serial(const unsigned int *a_arr_values,
                                   int a_int_count, int a_int_rounds)
 {
@@ -19,6 +28,12 @@ static unsigned int reduce_serial(const unsigned int *a_arr_values,
 	return u32_sum;
 }
 
+/** @brief Sum the same workload with four independent chains and an odd tail.
+ * @param a_arr_values Input values, unchanged by the benchmark.
+ * @param a_int_count Number of values; need not be a multiple of four.
+ * @param a_int_rounds Number of passes.
+ * @return Same unsigned checksum as reduce_serial().
+ */
 static unsigned int reduce_accumulators(const unsigned int *a_arr_values,
                                         int a_int_count, int a_int_rounds)
 {
@@ -44,6 +59,11 @@ static unsigned int reduce_accumulators(const unsigned int *a_arr_values,
 	return u32_sum_0 + u32_sum_1 + u32_sum_2 + u32_sum_3;
 }
 
+/** @brief Generate repeatable input and time one reduction implementation.
+ * @param argc Number of command-line arguments.
+ * @param argv Mode serial/accum, then optional value and round counts.
+ * @return 0 on completion; 1 on invalid arguments or allocation failure.
+ */
 int main(int argc, char **argv)
 {
 	if (argc < 2 ||

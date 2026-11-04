@@ -453,11 +453,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/test_run_setup.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/test_full_setup.ps1
 ```
 
-The network checks use unique discovery tags and stop only the server
-processes they start. Profiling commands and comparison rules are in
-[bench/README.md](bench/README.md). Implementation and validation notes for
-Zhikai's remaining work are in [docs/report-notes/zhikai-completion.md](docs/report-notes/zhikai-completion.md).
-
 ## Layout
 
 | Folder | Contents |

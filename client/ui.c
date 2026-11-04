@@ -1,5 +1,6 @@
-/* client/ui.c
-Lobby, login prompt, win screen, cached text. */
+/** @file client/ui.c
+ * @brief Shared text drawing plus width measurement for centred labels.
+ */
 
 #include <GLFW/glfw3.h>
 

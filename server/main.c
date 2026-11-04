@@ -1,3 +1,8 @@
+/** @file server/main.c
+ * @brief Server startup, comparison options and fixed 60 Hz scheduling.
+ * @details Initialises authentication, bot slots and the DDS worker; the
+ * main loop handles lobby work, timeouts, simulation ticks and worker wakes.
+ */
 /* server/main.c
 FUSE server entry point. Based on baseline/server.c (Dr Khoo Teck Ping,
 27 Aug 2026), extended with a fixed tick, game rules and optional AI bots:
@@ -49,6 +54,11 @@ Environment (to measure optimisations against the old behaviour):
 // Nanoseconds per tick
 #define TICK_NS (1000000000ull / TICK_HZ)
 
+/** @brief Parse a complete nonnegative decimal value bounded by INT_MAX.
+ * @param a_str_value Command-line value to parse.
+ * @param[out] a_p_out Receives the value on success.
+ * @return True for a valid value; false for malformed or out-of-range input.
+ */
 static bool parse_number(const char *a_str_value, int *a_p_out)
 {
 	char *str_end;
@@ -60,6 +70,11 @@ static bool parse_number(const char *a_str_value, int *a_p_out)
 	return true;
 }
 
+/** @brief Configure and run the authoritative server.
+ * @param argc Number of command-line arguments.
+ * @param argv Options for snapshots, timeouts, bots and optimisation comparisons.
+ * @return Nonzero on invalid options or startup failure; normally runs until stopped.
+ */
 int main(int argc, char **argv)
 {
 	int int_bots = 0;
