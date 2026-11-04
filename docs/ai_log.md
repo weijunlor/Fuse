@@ -2,6 +2,28 @@
 
 Required by the brief: summary of prompts used and how generated code was tested.
 
+2026-11-04, sheeyang / Codex: expanded `run-setup.bat` into complete FUSE
+application setup. It asks Host/Player (or accepts `-Role`), configures Windows
+networking through a separate elevated child, then installs dependencies and
+pinned secure DDS and builds all game/pairing/baseline targets in the original
+user's WSL. Host provisioning preserves existing CAs, keys, accounts and device
+assignments, recovers password-only interrupted account creation, and rejects
+missing/mismatched credentials or excess account capacity without resetting them.
+Player setup creates no host credentials. Added full preview, deferred restart
+and dependency-skip support, updated README and simplified the Build & Run slide.
+Windows 11 and an initialized Ubuntu WSL user remain platform prerequisites.
+
+Validation: existing Windows PowerShell 5.1 network regressions and new full-setup
+orchestration regressions passed, covering both roles, preview, elevation,
+original-user WSL operations, failure ordering and restart options. Bash syntax,
+ShellCheck and isolated Python setup/credential tests passed. A real temporary
+Linux project copy completed Host setup, an unchanged Host rerun and Player
+setup using the installed DDS, building server/client/pairing and both baseline
+executables while preserving every credential hash. The actual Windows batch
+launcher passed a Player `-WhatIf` preview. Package installation, real firewall
+writes and WSL shutdowns were not executed during validation. Local build logs:
+ignored `build/full-setup-integration-*.log`.
+
 2026-11-03, Codex: automated the supplied Windows/WSL networking commands with
 `run-setup.bat` and `run-setup.ps1` for both host and player PCs. Setup requests
 Administrator access, creates or updates subnet-scoped Windows and Hyper-V

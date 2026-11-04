@@ -4,7 +4,26 @@ Real-time multiplayer bomb-passing arena game built on Cyclone DDS, OpenGL and G
 
 Project plan, architecture and optimisation list: [docs/PLAN.md](docs/PLAN.md).
 
+## Quick start (Windows / WSL)
+
+With Windows 11 and an initialized Ubuntu WSL user, run this once on each PC:
+
+```powershell
+.\run-setup.bat
+```
+
+Choose **Host** or **Player**. Setup installs dependencies and secure DDS,
+configures networking, provisions the host when needed and builds FUSE.
+Then use `.\run-server.bat` on the host and `.\run-client.bat` on player PCs.
+Pair each player once using the host IP and displayed code, then click **Join Game**.
+Save WSL work before setup; it restarts WSL to apply network settings.
+Options and prerequisites are described under **Run** below.
+
 ## Build (WSL / Ubuntu)
+
+The complete setup under **Run** performs these steps automatically. This
+section is for manual builds and troubleshooting. Generate CAs, certificates
+and demo accounts on the host only; player PCs receive credentials by pairing.
 
 Packages (libssl-dev: OpenSSL headers for the login code in `common/crypto.c`
 and the certificate check in `common/dds_security.c`):
@@ -34,14 +53,25 @@ and rebuilds the game binaries; source `env.sh` to select the pinned WSL SDK.
 
 ## Run
 
-On **each Windows PC** (host and players), run the network setup once:
+On **each Windows PC**, run the complete setup once from this project folder:
 
 ```bat
 .\run-setup.bat
 ```
 
-Accept the Windows Administrator prompt. Save your work in all WSL terminals
-first: setup automatically runs `wsl --shutdown`. It adds or updates Windows
+Choose **Host** for the server PC or **Player** for a player PC. Setup configures
+Windows/WSL networking, installs the Linux dependencies, builds the pinned
+Cyclone DDS 0.10.5 with security, and builds the game, pairing helper and baseline.
+Host setup also creates or validates the CAs, certificates and five login
+accounts. Player setup leaves host credentials alone and uses in-game pairing.
+Existing keys, passwords, account entries and saved pairings are preserved on reruns.
+
+Windows 11 22H2 or later and an initialized Ubuntu WSL distribution with a
+regular Linux user are required. Use the same default WSL distribution as the
+launchers. Setup needs internet access and may request the Linux user's `sudo`
+password to install packages. Accept the Windows Administrator prompt. Save
+your work in all WSL terminals first: setup normally runs `wsl --shutdown`.
+It adds or updates Windows
 and WSL Hyper-V inbound rules for TCP 7440 and UDP 7400-7401,7410-7429, scoped
 to `10.243.66.0/24` on all network profiles. It backs up your existing
 `%USERPROFILE%\.wslconfig`, preserves unrelated settings, and sets:
@@ -53,18 +83,21 @@ localhostForwarding=true
 firewall=false
 ```
 
-This configures either PC to host or play. `firewall=false` disables WSL's
+`firewall=false` disables WSL's
 Hyper-V firewall filtering; the Windows firewall rules remain subnet-scoped.
-Windows 11 22H2 or later and a current WSL installation are required.
 For a different subnet use `.\run-setup.bat -LanSubnet 192.168.1.0/24`.
-Use `-NoRestart` to defer WSL shutdown, or `-WhatIf` to preview changes.
+Use `-Role Host` or `-Role Player` to skip the role prompt. `-NoRestart` defers
+WSL shutdown but still installs and builds; shut down WSL before playing to
+apply the networking settings. `-WhatIf` previews every stage without starting
+WSL or installing anything (Host preview by default). `-SkipDependencies`
+skips package/DDS installation when those tools are already available.
 Rerunning setup updates the same named rules and preserves saved pairings.
 Windows rules use `FUSEPairing` / `FUSEDDS`; WSL rules use
 `FUSEPairing-WSL` / `FUSEDDS-WSL` to avoid colliding with inherited Windows rules.
 Any firewall write failure stops setup before editing `.wslconfig` or shutting
 down WSL; correct the reported error and rerun setup.
-This handles Windows/WSL networking; complete the **Build** prerequisites above
-on each PC, generating certificates and demo accounts on the host only.
+Any failed stage stops setup and reports the error. Correct it and rerun the
+same command; setup does not reset existing accounts or device assignments.
 
 On Windows, run these from separate terminals in this folder:
 
@@ -82,7 +115,12 @@ bash run-server.sh
 bash run-client.sh
 ```
 
-Run the first-time setup under **Build** above before using these scripts.
+For complete application setup directly in Linux, first run
+`bash run-setup.sh --role host` or `bash run-setup.sh --role player` as your
+regular Linux user. Windows users should use `run-setup.bat` so networking is
+configured too. The Linux helper also accepts `--skip-dependencies`.
+
+After successful setup, the launchers are ready to use.
 Each script builds its target and the pairing helper, sources the DDS environment,
 and starts its process with security enabled. The server displays a temporary
 pairing code. On a new PC, the client opens a form for the host IP and that code;
@@ -137,8 +175,8 @@ lobby with lives restored. Eliminated players spectate until the next match.
 
 ### Solo match against a bot
 
-Complete the first-time **Build (WSL / Ubuntu)** setup above, including
-certificates and demo accounts. Run the following commands from the project
+Complete **Host** setup above, including certificates and demo accounts.
+Run the following commands from the project
 folder in **two separate Ubuntu/WSL terminals**. If a server is already running,
 stop it with **Ctrl+C** first.
 
@@ -197,9 +235,11 @@ server is involved. Keep DDS encryption and application authentication enabled.
 
 ### One-time pairing (recommended)
 
-1. On the host, complete the first-time Build/certificate/account setup above and
+1. On the host, complete `run-setup.bat -Role Host` (or
+   `bash run-setup.sh --role host` on Ubuntu), then
    run `.\run-server.bat` (Windows) or `bash run-server.sh` (Ubuntu).
-2. On each player PC, install the Build dependencies and build the game. **Do not
+2. On each player PC, complete `run-setup.bat -Role Player` (or
+   `bash run-setup.sh --role player` on Ubuntu). **Do not
    generate CAs or demo accounts on the player PC.** Run `.\run-client.bat` or
    `bash run-client.sh` without a player-number argument.
 3. Enter the host's LAN IPv4 address and paste its complete `FUSE-...` code into
@@ -403,6 +443,14 @@ and verify both game windows show the same players and movement.
 make test           # deterministic game/lobby/bot/collision/input regressions
 make test-network   # isolated real DDS scenarios; no window required
 make bench          # collision, branch, reduction and particle benchmarks
+python3 -m unittest discover -s tests -p 'test_setup_*.py' -v  # isolated setup checks
+```
+
+Windows setup checks (mocked networking/UAC/WSL; no machine changes):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/test_run_setup.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/test_full_setup.ps1
 ```
 
 The network checks use unique discovery tags and stop only the server

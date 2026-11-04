@@ -1,15 +1,20 @@
 <#
 .SYNOPSIS
-Configure Windows/WSL networking for both FUSE launchers on this PC.
+Install FUSE dependencies, configure networking, provision the host and build.
 .EXAMPLE
 .\run-setup.bat
 .EXAMPLE
-.\run-setup.ps1 -LanSubnet 192.168.1.0/24 -NoRestart
+.\run-setup.ps1 -Role Player -LanSubnet 192.168.1.0/24
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
+    [ValidateSet('Host', 'Player')]
+    [string]$Role,
     [string]$LanSubnet = '10.243.66.0/24',
     [switch]$NoRestart,
+    [switch]$SkipDependencies,
+    [Parameter(DontShow=$true)]
+    [switch]$NetworkOnly,
     [string]$WslConfigPath = (Join-Path $env:USERPROFILE '.wslconfig')
 )
 
@@ -110,7 +115,61 @@ function Invoke-FuseNetworkSetup {
     if ($WhatIfPreference) { return }
     if ($SkipRestart) { Write-Host 'Save WSL work, then run wsl --shutdown before starting FUSE.' }
     Write-Host 'Network setup complete for server and client on this PC.'
-    Write-Host 'After the Build prerequisites in README.md, use .\run-server.bat or .\run-client.bat.'
+}
+
+function Invoke-FuseElevatedNetworkSetup {
+    param([string]$Subnet, [string]$ConfigPath)
+    # Elevate only Windows configuration. Linux installation must run in the
+    # original user's WSL distribution, even if UAC uses another admin account.
+    $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -NetworkOnly -NoRestart -LanSubnet `"$Subnet`" -WslConfigPath `"$ConfigPath`""
+    Write-Host 'Requesting Administrator access to configure the firewall...'
+    $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+    if ($process.ExitCode -ne 0) { throw 'Administrator network setup failed; full setup stopped.' }
+}
+
+function Invoke-FuseSetup {
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory=$true)][ValidateSet('Host', 'Player')][string]$SetupRole,
+        [string]$Subnet,
+        [string]$ConfigPath,
+        [string]$Repository = $PSScriptRoot,
+        [switch]$SkipRestart,
+        [switch]$SkipDependencyInstall
+    )
+
+    if (-not (Test-Path -LiteralPath (Join-Path $Repository 'run-setup.sh') -PathType Leaf)) {
+        throw 'run-setup.sh is missing. Keep the complete FUSE project together.'
+    }
+    # Do not start WSL at all during a preview. Check the Linux user before any
+    # Windows changes so credentials cannot accidentally be installed as root.
+    if (-not $WhatIfPreference) {
+        $linuxUid = & wsl.exe --exec id -u
+        if ($LASTEXITCODE -ne 0) { throw 'Open your Ubuntu WSL distribution and finish its first-time Linux user setup, then rerun run-setup.' }
+        if (($linuxUid | Out-String).Trim() -notmatch '^[1-9][0-9]*$') {
+            throw 'Use a regular Linux user as the default WSL user, then rerun run-setup.'
+        }
+    }
+
+    if ($PSCmdlet.ShouldProcess('Windows/WSL networking', 'Configure firewall and mirrored networking')) {
+        if (Test-FuseAdministrator) {
+            Invoke-FuseNetworkSetup -Subnet $Subnet -ConfigPath $ConfigPath -SkipRestart
+        } else {
+            Invoke-FuseElevatedNetworkSetup -Subnet $Subnet -ConfigPath $ConfigPath
+        }
+    }
+    if (-not $SkipRestart -and $PSCmdlet.ShouldProcess('All WSL distributions', 'Restart WSL before Linux installation')) {
+        & wsl.exe --shutdown
+        if ($LASTEXITCODE -ne 0) { throw "wsl --shutdown failed (exit $LASTEXITCODE)." }
+    }
+    if ($PSCmdlet.ShouldProcess("FUSE $SetupRole in the original user's WSL", 'Install dependencies and DDS, provision host credentials if needed, and build')) {
+        $linuxArguments = @('--cd', $Repository, '--exec', 'bash', './run-setup.sh', '--role', $SetupRole.ToLowerInvariant())
+        if ($SkipDependencyInstall) { $linuxArguments += '--skip-dependencies' }
+        & wsl.exe @linuxArguments
+        if ($LASTEXITCODE -ne 0) { throw "Linux setup failed (exit $LASTEXITCODE). Fix the error above and rerun run-setup; existing credentials are preserved." }
+        if ($SkipRestart) { Write-Host 'Run wsl --shutdown before playing to apply the network settings.' }
+        Write-Host "FUSE $SetupRole setup complete. Use .\run-server.bat on the host or .\run-client.bat on a player PC."
+    }
 }
 
 # Expose functions for isolated tests without inspecting/changing this computer.
@@ -128,28 +187,27 @@ try {
         throw 'Mirrored networking requires Windows 11 22H2 or later and a current WSL installation.'
     }
     $WslConfigPath = [IO.Path]::GetFullPath($WslConfigPath)
+    if ($NetworkOnly) {
+        if (-not $WhatIfPreference -and -not (Test-FuseAdministrator)) { throw 'Internal network setup requires Administrator access.' }
+        Invoke-FuseNetworkSetup -Subnet $LanSubnet -ConfigPath $WslConfigPath -SkipRestart:$NoRestart -WhatIf:$WhatIfPreference
+        exit 0
+    }
+    if (-not $Role) {
+        if ($WhatIfPreference) {
+            $Role = 'Host'
+            Write-Host 'Previewing Host setup. Use -Role Player to preview a player PC.'
+        } else {
+            do {
+                $choice = Read-Host 'Set up this PC as [H]ost server or [P]layer'
+                if ([string]::IsNullOrWhiteSpace($choice)) { throw 'Choose a role, or rerun with -Role Host or -Role Player.' }
+            } until ($choice -match '^(?i:h|host|p|player)$')
+            $Role = if ($choice -match '^(?i:h|host)$') { 'Host' } else { 'Player' }
+        }
+    }
     if (-not $NoRestart -and -not $WhatIfPreference) {
         Write-Warning 'Setup shuts down ALL WSL distributions. Save WSL work before running it; use -NoRestart to defer shutdown.'
     }
-    if (-not $WhatIfPreference -and -not (Test-FuseAdministrator)) {
-        # UAC may use another admin account. Keep the original config path and
-        # shut down WSL in this user's session after the elevated changes finish.
-        $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -LanSubnet `"$LanSubnet`" -WslConfigPath `"$WslConfigPath`" -NoRestart"
-        Write-Host 'Requesting Administrator access to configure the firewall...'
-        $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
-        if ($process.ExitCode -ne 0) {
-            throw 'Administrator setup failed. Run .\run-setup.bat in an Administrator PowerShell window to see the error.'
-        }
-        if (-not $NoRestart) {
-            Write-Host 'Stopping all WSL distributions to apply the network settings...'
-            & wsl.exe --shutdown
-            if ($LASTEXITCODE -ne 0) { throw "wsl --shutdown failed (exit $LASTEXITCODE)." }
-        }
-        Write-Host 'FUSE networking setup complete. Use .\run-server.bat or .\run-client.bat after completing the Build prerequisites.'
-        if ($NoRestart) { Write-Host 'Run wsl --shutdown before starting FUSE to apply the network settings.' }
-        exit $process.ExitCode
-    }
-    Invoke-FuseNetworkSetup -Subnet $LanSubnet -ConfigPath $WslConfigPath -SkipRestart:$NoRestart -WhatIf:$WhatIfPreference
+    Invoke-FuseSetup -SetupRole $Role -Subnet $LanSubnet -ConfigPath $WslConfigPath -SkipRestart:$NoRestart -SkipDependencyInstall:$SkipDependencies -WhatIf:$WhatIfPreference
 } catch {
     Write-Error $_ -ErrorAction Continue
     exit 1
