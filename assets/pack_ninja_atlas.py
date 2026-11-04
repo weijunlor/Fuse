@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Pack the curated Ninja Adventure sources into FUSE's 50px cells.
 
-Requires Pillow (python3-pil). Run from any directory. Source art is kept in
-ninja_adventure/; no download or original ZIP is needed to reproduce the atlas.
+Requires Pillow (python3-pil). Run from any directory. Reads source art from
+ninja_adventure/, which is no longer in the repository: restore it first
+(git checkout c7cd424^ -- assets/ninja_adventure, or extract from the pack ZIP).
 The old sprite IDs remain valid; rows 6-9 add directional walks, row 10 portraits
 and row 11 player rings. See README.md and atlas_manifest.json for the layout.
 """
