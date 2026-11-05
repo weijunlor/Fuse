@@ -94,15 +94,20 @@ bool collision_player_hits_ember(int a_int_x, int a_int_y);
  */
 bool collision_player_hits_ember_bruteforce(int a_int_x, int a_int_y);
 
-// Selected before threads start; benchmarks can compare the same workload.
+/** @brief Use the branchless square test (#9; --branches branchless, default).
+ * @details Selected before threads start; benchmarks can compare the same
+ * workload. */
 extern bool b_collision_branchless;
 
-// #8b ember storage, selected before any ember is spawned:
-// true  (--embers ring, default): live embers only, in a FIFO ring of
-//       separate x / y / spawn-tick arrays (SoA); see collision.c.
-// false (--embers array): the fixed 4096-slot array of Ember structs that
-//       every tick, spawn and grid rebuild scans in full.
-// Collision results are identical in both layouts.
+/** @brief #8b ember storage, selected before any ember is spawned.
+ * @details
+ * - true (--embers ring, default): live embers only, in a FIFO ring of
+ *   separate x / y / spawn-tick arrays (SoA); see collision.c.
+ * - false (--embers array): the fixed 4096-slot array of Ember structs that
+ *   every tick, spawn and grid rebuild scans in full.
+ *
+ * Collision results are identical in both layouts.
+ */
 extern bool b_ember_ring;
 
 #endif /* SERVER_COLLISION_H */

@@ -1,39 +1,38 @@
 /** @file server/net_server.c
- * @brief DDS join/input/leave handling and copied snapshot publication.
+ * @brief Server DDS worker thread: join/input/leave handling and copied
+ * snapshot publication.
  * @details Shared networking code integrates per-topic QoS, waitsets,
  * authentication and the SPSC/mutex comparison paths.
+ *
+ * Since #12 the worker publishes one GameSnapshot per published tick (built by
+ * game_tick() on the main thread) instead of one Position message per player,
+ * and an Input carries the held keys, which game_tick() applies. The worker
+ * blocks on a waitset (#2) and publishes a copied snapshot outside the mutex
+ * (#1). --wait busy and --publish locked retain the separate before paths.
+ *
+ * #14: QoS per topic (common/net.h): join messages reliable and keep-all, input
+ * and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
+ * dds_take. FUSE_QOS=default keeps Cyclone's defaults and one input per take.
+ *
+ * Join nonce (lobby.h, net_join_nonce() in common/net.h): every JoinRequest
+ * taken is queued for the main thread with its nonce, and every answer is sent
+ * back with that nonce, so only the client that asked accepts it.
+ *
+ * Leave (lobby.h, net_leave() in common/net.h): Input/Leave samples are copied
+ * before DDS reuses them, then authenticated by the main thread against the
+ * current slot/session. Queue admission alone never authenticates a message.
+ *
+ * #2 (wait instead of spinning): the worker blocks in a waitset on three read
+ * conditions (join, input, leave) and a guard condition that the main thread
+ * sets after each tick (net_server_wake()), so it wakes only when there is work:
+ * a message to take, or a snapshot or join answer to send. The baseline polled
+ * the readers in a busy loop. FUSE_SERVER_WAIT=spin keeps the busy loop.
+ *
+ * #1 (no network write under the mutex): mutex handoff copies then unlocks;
+ * SPSC handoff takes a pinned copy without that lock. Both publish outside it
+ * by default. FUSE_WRITE_UNDER_LOCK=on takes the state mutex around the write
+ * in either mode for the comparison.
  */
-/* server/net_server.c
-Server DDS worker thread: takes inputs, publishes snapshots.
-
-Since #12 the worker publishes one GameSnapshot per published tick (built by
-game_tick() on the main thread) instead of one Position message per player,
-and an Input carries the held keys, which game_tick() applies. The worker
-blocks on a waitset (#2) and publishes a copied snapshot outside the mutex
-(#1). --wait busy and --publish locked retain the separate before paths.
-
-#14: QoS per topic (common/net.h): join messages reliable and keep-all, input
-and snapshots best-effort keep-last 1, and up to INPUT_TAKE inputs taken per
-dds_take. FUSE_QOS=default keeps Cyclone's defaults and one input per take.
-
-Join nonce (lobby.h, net_join_nonce() in common/net.h): every JoinRequest
-taken is queued for the main thread with its nonce, and every answer is sent
-back with that nonce, so only the client that asked accepts it.
-
-Leave (lobby.h, net_leave() in common/net.h): Input/Leave samples are copied
-before DDS reuses them, then authenticated by the main thread against the
-current slot/session. Queue admission alone never authenticates a message.
-
-#2 (wait instead of spinning): the worker blocks in a waitset on three read
-conditions (join, input, leave) and a guard condition that the main thread
-sets after each tick (net_server_wake()), so it wakes only when there is work:
-a message to take, or a snapshot or join answer to send. The baseline polled
-the readers in a busy loop. FUSE_SERVER_WAIT=spin keeps the busy loop.
-
-#1 (no network write under the mutex): mutex handoff copies then unlocks;
-SPSC handoff takes a pinned copy without that lock. Both publish outside it
-by default. FUSE_WRITE_UNDER_LOCK=on takes the state mutex around the write
-in either mode for the comparison. */
 
 #include <stdio.h>
 
@@ -48,8 +47,11 @@ in either mode for the comparison. */
 bool b_server_wait = true;
 bool b_write_under_lock = false;
 
-// Set by net_server_wake() (main thread), waited on by the worker. A guard
-// condition is thread-safe, so no mutex is needed around it.
+/** @brief Wake guard condition (#2).
+ * @details Set by net_server_wake() (main thread), waited on by the worker. A
+ * guard condition is thread-safe, so no mutex is needed around it. 0 in spin
+ * mode.
+ */
 static dds_entity_t guard_wake = 0;
 
 void net_server_init(void)

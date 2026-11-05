@@ -2,18 +2,18 @@
  * @brief Compare grid/brute ember queries and simulated tick workloads (#8).
  * @details Prints timings and hit checksums. Array/ring comparison and the
  * game workload include Weijun's later #8b extensions to this benchmark.
+ *
+ * Compare brute-force ember collision with the spatial-grid query (#8), and
+ * the two ember layouts (#8b: fixed array of structs vs FIFO ring of SoA).
+ *
+ * Modes: <grid|brute|game>[-array|-ring]. The layout defaults to array, the
+ * layout the #8 measurements used, so "grid" and "brute" mean what they did.
+ * - grid, brute: queries against a fixed set of embers (one tick per round).
+ * - game: what the server does each tick: collision_embers_tick(), then one
+ *   grid query per player, with an explosion (32 embers) every K ticks so that
+ *   about <embers> embers are alive (K = 32 * lifetime / embers; 0 embers =
+ *   no explosions). Reports ns per tick, including grid rebuilds.
  */
-/* bench_collision.c
-Compare brute-force ember collision with the spatial-grid query (#8), and
-the two ember layouts (#8b: fixed array of structs vs FIFO ring of SoA).
-
-Modes: <grid|brute|game>[-array|-ring]. The layout defaults to array, the
-layout the #8 measurements used, so "grid" and "brute" mean what they did.
-- grid, brute: queries against a fixed set of embers (one tick per round).
-- game: what the server does each tick: collision_embers_tick(), then one
-  grid query per player, with an explosion (32 embers) every K ticks so that
-  about <embers> embers are alive (K = 32 * lifetime / embers; 0 embers =
-  no explosions). Reports ns per tick, including grid rebuilds. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +23,7 @@ layout the #8 measurements used, so "grid" and "brute" mean what they did.
 #include "collision.h"
 #include "timing.h"
 
+/** @brief Base seed for the repeatable ember set. */
 #define SEED 1234u
 
 /** @brief Populate a repeatable ember set in complete groups of 32.
@@ -35,7 +36,6 @@ static void fill_embers(int a_int_count)
 		                       (uint16_t)(SEED + i));
 }
 
-// One server tick of the game workload; returns the number of hits
 /** @brief Simulate ember expiry/spawn and one query per synthetic player.
  * @param a_int_t Workload tick used for positions and random seeds.
  * @param a_int_every Explosion interval in ticks; 0 disables spawning.

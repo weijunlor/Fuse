@@ -1,13 +1,18 @@
-/* common/worker_pool.c
-Fixed pool of worker threads synchronised by two barriers per job (see
-worker_pool.h). */
+/** @file common/worker_pool.c
+ * @brief Fixed pool of worker threads synchronised by two barriers per job
+ * (see worker_pool.h).
+ */
 
 #include <stdlib.h>
 
 #include "worker_pool.h"
 
-// Body of threads 1..N-1: sleep at the start barrier, run the posted job on
-// this worker's share, report at the done barrier, repeat until job == NULL
+/** @brief Body of pool threads 1..N-1.
+ * @details Sleep at the start barrier, run the posted job on this worker's
+ * share, report at the done barrier, and repeat until the job is NULL.
+ * @param a_arg This thread's WorkerStart.
+ * @return NULL.
+ */
 static void *worker_main(void *a_arg)
 {
     WorkerStart *p_start = a_arg;

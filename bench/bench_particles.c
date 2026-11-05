@@ -1,29 +1,32 @@
-/* bench/bench_particles.c
-Particle update benchmark (optimisations #5, #6, #7) on the client's real
-particle code (client/particles.c), without a window, so perf stat sees only
-the particle work.
-
-Usage: bench_particles <aos|soa|soa-intrin|soa-intrin-scan> [threads] [particles] [ticks] [capacity]
-  defaults: 1 thread, 100000 particles, 600 ticks (10 s of game time at 60 Hz),
-  capacity = particles. A game sizes the pool for its busiest moment (several
-  explosions at once), so most of the time it is partly empty: capacity
-  4 x particles = 25% full. "aos" walks the whole capacity every tick; "soa"
-  only the live particles.
-
-Every tick: update all particles (dt = 1/60 s), then spawn bursts until the
-count is back to <particles>, as a busy game would. Before timing, 120 ticks
-run untimed so particle ages are spread out (steady state: ~1 in 75 dies and
-is replaced every tick). Prints one key=value line, parsed by
-bench/particles.sh:
-  ns_per_particle   update + respawn time / (ticks x particles)
-  us_per_tick       the same per tick
-  checksum          particles_checksum() at the end: must match between
-                    layouts, thread counts and builds (up to rounding)
-
-Built three ways by the Makefile from the same source (see #7 in PLAN.md):
-  build/bench_particles_scalar  -O2 -fno-tree-vectorize (no SIMD at all)
-  build/bench_particles_sse2    -O3 -fno-trapping-math (SSE2: 4 floats per instruction)
-  build/bench_particles         -O3 -march=native -fno-trapping-math (AVX2: 8 floats) */
+/** @file bench/bench_particles.c
+ * @brief Particle update benchmark (optimisations #5, #6, #7) on the client's
+ * real particle code (client/particles.c), without a window, so perf stat
+ * sees only the particle work.
+ * @details
+ * @verbatim
+ * Usage: bench_particles <aos|soa|soa-intrin|soa-intrin-scan> [threads] [particles] [ticks] [capacity]
+ *   defaults: 1 thread, 100000 particles, 600 ticks (10 s of game time at 60 Hz),
+ *   capacity = particles. A game sizes the pool for its busiest moment (several
+ *   explosions at once), so most of the time it is partly empty: capacity
+ *   4 x particles = 25% full. "aos" walks the whole capacity every tick; "soa"
+ *   only the live particles.
+ *
+ * Every tick: update all particles (dt = 1/60 s), then spawn bursts until the
+ * count is back to <particles>, as a busy game would. Before timing, 120 ticks
+ * run untimed so particle ages are spread out (steady state: ~1 in 75 dies and
+ * is replaced every tick). Prints one key=value line, parsed by
+ * bench/particles.sh:
+ *   ns_per_particle   update + respawn time / (ticks x particles)
+ *   us_per_tick       the same per tick
+ *   checksum          particles_checksum() at the end: must match between
+ *                     layouts, thread counts and builds (up to rounding)
+ *
+ * Built three ways by the Makefile from the same source (see #7 in PLAN.md):
+ *   build/bench_particles_scalar  -O2 -fno-tree-vectorize (no SIMD at all)
+ *   build/bench_particles_sse2    -O3 -fno-trapping-math (SSE2: 4 floats per instruction)
+ *   build/bench_particles         -O3 -march=native -fno-trapping-math (AVX2: 8 floats)
+ * @endverbatim
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,10 +34,18 @@ Built three ways by the Makefile from the same source (see #7 in PLAN.md):
 #include "particles.h"
 #include "timing.h"
 
+/** @brief Time step per tick, seconds (60 Hz). */
 #define DT (1.0f / 60.0f)
+/** @brief Untimed ticks before measuring, so particle ages are spread out. */
 #define WARMUP_TICKS 120
+/** @brief Fixed random seed: every run spawns the same particles. */
 #define SEED 12345u
 
+/** @brief Run the benchmark and print one key=value result line.
+ * @param argc Number of arguments.
+ * @param argv Layout, then optional threads, particles, ticks and capacity.
+ * @return 0 on success, 1 on bad arguments.
+ */
 int main(int argc, char **argv)
 {
     if (argc < 2 || particles_layout_from_name(argv[1]) < 0)

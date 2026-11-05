@@ -1,16 +1,20 @@
-/* bench/dds_joiner.c
-Headless client for join tests (#14): joins the game exactly as the real
-client does (same topics and QoS from common/net.c, FUSE_QOS and
-FUSE_JOIN_NONCE honoured, a JoinRequest every 1 s until its JoinResponse
-arrives), then stays connected and
-watches the snapshots. bench/join_loss.sh runs several of these while the
-loopback interface drops packets.
-
-Usage: dds_joiner <seconds>
-Prints one line when it ends:
-  joined=<0|1> id=<player id> join_ms=<first request to accepted response>
-  requests=<JoinRequests sent>
-  active=<active players in the last snapshot> snapshots=<snapshots received> */
+/** @file bench/dds_joiner.c
+ * @brief Headless client for join tests under packet loss (#14, join nonce).
+ * @details Joins the game exactly as the real
+ * client does (same topics and QoS from common/net.c, FUSE_QOS and
+ * FUSE_JOIN_NONCE honoured, a JoinRequest every 1 s until its JoinResponse
+ * arrives), then stays connected and
+ * watches the snapshots. bench/join_loss.sh runs several of these while the
+ * loopback interface drops packets.
+ *
+ * @verbatim
+ * Usage: dds_joiner <seconds>
+ * Prints one line when it ends:
+ *   joined=<0|1> id=<player id> join_ms=<first request to accepted response>
+ *   requests=<JoinRequests sent>
+ *   active=<active players in the last snapshot> snapshots=<snapshots received>
+ * @endverbatim
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +25,11 @@ Prints one line when it ends:
 #include "config.h"
 #include "app_client.h"
 
+/** @brief Join once like the real client, watch snapshots, print one result line.
+ * @param argc Number of arguments.
+ * @param argv Seconds to run (default 10).
+ * @return 0 on success, 2 if login set-up fails.
+ */
 int main(int argc, char **argv)
 {
     double d_seconds = argc > 1 ? atof(argv[1]) : 10.0;

@@ -1,5 +1,6 @@
-/* client/atlas.c
-Texture atlas: loading and sprite lookup. */
+/** @file client/atlas.c
+ * @brief Texture atlas: loading (stb_image) and sprite lookup.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

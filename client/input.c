@@ -1,5 +1,7 @@
-/* client/input.c
-Keyboard polling to key bitmask; send on change. */
+/** @file client/input.c
+ * @brief Keyboard polling into the held-key bitmask, plus the scripted
+ * auto-move used by profiling runs.
+ */
 
 #include <stdlib.h>
 
@@ -7,14 +9,16 @@ Keyboard polling to key bitmask; send on change. */
 #include "net_client.h"
 #include "types.h"
 
-// Seconds each direction is held in auto-move mode
+/** @brief Seconds each direction is held in auto-move mode. */
 #define AUTO_MOVE_S 1.0
 
-/* Auto-move (for measurements): with FUSE_AUTO_MOVE=1 in the environment the
-keyboard is ignored and the player holds right, down, left, up for
-AUTO_MOVE_S seconds each, round and round, so profiling runs include the input
-messages a held key sends without anyone at the keyboard.
-Returns true if auto-move is on. */
+/** @brief Scripted movement for measurements (FUSE_AUTO_MOVE=1).
+ * @details With FUSE_AUTO_MOVE=1 in the environment the keyboard is ignored
+ * and the player holds right, down, left, up for AUTO_MOVE_S seconds each,
+ * round and round, so profiling runs include the input messages a held key
+ * sends without anyone at the keyboard. The environment is read once.
+ * @return True if auto-move is on (and has set the keys).
+ */
 static bool auto_move(void)
 {
 	static int int_auto = -1;   // -1: environment not read yet

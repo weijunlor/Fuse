@@ -19,41 +19,44 @@
 #include "handoff.h"
 #include "spsc_ring.h"
 
-// Each queue has one writer and one reader. Only the main thread validates
-// queued Input/Leave samples, so a stale queued MAC is checked against the
-// CURRENT session before it can change the game or refresh a timeout.
+/* Each queue has one writer and one reader. Only the main thread validates
+queued Input/Leave samples, so a stale queued MAC is checked against the
+CURRENT session before it can change the game or refresh a timeout. */
 SPSC_RING_DEFINE(JoinRing, JoinRequest, JOIN_QUEUE)
 SPSC_RING_DEFINE(ResultRing, JoinResult, JOIN_QUEUE)
 SPSC_RING_DEFINE(InputRing, Input, INPUT_QUEUE)
 SPSC_RING_DEFINE(LeaveRing, Leave, JOIN_QUEUE)
-static JoinRing join_ring;
-static ResultRing result_ring;
-static InputRing input_ring;
-static LeaveRing leave_ring;
+static JoinRing join_ring;      ///< SPSC: worker -> main join requests
+static ResultRing result_ring;  ///< SPSC: main -> worker join answers
+static InputRing input_ring;    ///< SPSC: worker -> main copied Inputs
+static LeaveRing leave_ring;    ///< SPSC: worker -> main copied Leaves
 
 int int_player_timeout_s = PLAYER_TIMEOUT_S;
 
-// Only written by the main thread
+/** @brief Number of occupied slots; only written by the main thread. */
 static int int_num_active_players = 0;
 
-// Nonce of the JoinRequest that each slot was given to (0 = none, or the
-// client sent no nonce). Only used by the main thread.
+/** @brief Nonce of the JoinRequest that each slot was given to.
+ * @details 0 = none, or the client sent no nonce. Only used by the main thread. */
 static uint64_t arr_u64_slot_nonce[MAX_PLAYERS] = {0};
 
-// Bounded join requests waiting for authentication/admission, oldest first.
-// Written by the DDS worker, emptied by the main thread, under the mutex.
+/** @name Mutex-mode queues (FUSE_HANDOFF=mutex), all guarded by the game mutex
+ * @{ */
+/** @brief Join requests waiting for authentication/admission, oldest first.
+ * @details Written by the DDS worker, emptied by the main thread. */
 static JoinRequest arr_pending[JOIN_QUEUE];
-static int int_num_pending = 0;
+static int int_num_pending = 0;     ///< Entries in arr_pending
 
-// Player IDs from Leave messages waiting for the main thread.
-// Written by the DDS worker, emptied by the main thread, under the mutex.
+/** @brief Player IDs from Leave messages waiting for the main thread.
+ * @details Written by the DDS worker, emptied by the main thread. */
 static int arr_int_leaving[JOIN_QUEUE];
-static int int_num_leaving = 0;
+static int int_num_leaving = 0;     ///< Entries in arr_int_leaving
 
-// Answers waiting for the DDS worker (oldest first).
-// Written by the main thread, emptied by the DDS worker, under the mutex.
+/** @brief Answers waiting for the DDS worker, oldest first.
+ * @details Written by the main thread, emptied by the DDS worker. */
 static JoinResult arr_results[JOIN_QUEUE];
-static int int_num_results = 0;
+static int int_num_results = 0;     ///< Entries in arr_results
+/** @} */
 
 bool lobby_signal_join(const JoinRequest *a_request)
 {
@@ -120,8 +123,11 @@ bool lobby_take_result(JoinResult *a_p_out)
 	return b_found;
 }
 
-// Find the slot already given to a_u64_nonce. Returns its index, or -1.
-// Nonce 0 never matches: clients without a nonce cannot be told apart.
+/** @brief Find the slot already given to a nonce (a repeated JoinRequest).
+ * @details Nonce 0 never matches: clients without a nonce cannot be told apart.
+ * @param a_u64_nonce Nonce from the request.
+ * @return Slot index, or -1 if none (or the join nonce is off).
+ */
 static int find_slot_by_nonce(uint64_t a_u64_nonce)
 {
 	if (a_u64_nonce == 0 || !net_join_nonce())
@@ -134,9 +140,6 @@ static int find_slot_by_nonce(uint64_t a_u64_nonce)
 	return -1;
 }
 
-// Give a free slot to a new player at a random position where it does not
-// overlap anyone. Returns the slot index, or -1 if the game is full.
-// The caller holds the mutex.
 /** @brief Reserve a free slot and choose a random, non-overlapping spawn.
  * @param a_u64_nonce Nonce associated with the slot (0 for a bot).
  * @return Slot index, or -1 when no slot is free.

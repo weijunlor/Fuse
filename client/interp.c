@@ -1,9 +1,8 @@
 /** @file client/interp.c
- * @brief Shared interpolation implementation with a between-session history reset.
+ * @brief Snapshot buffer and interpolation between server ticks
+ * (optimisation #15), with a between-session history reset.
+ * @details How it works and why: see interp.h. Render thread only.
  */
-/* client/interp.c
-Snapshot buffer and interpolation between server ticks (optimisation #15).
-How it works and why: see interp.h. */
 
 #include <math.h>
 #include <stdio.h>
@@ -15,19 +14,21 @@ How it works and why: see interp.h. */
 bool b_interp = true;
 bool b_interp_stats = false;
 
-/* Ring of the last INTERP_SLOTS snapshots, oldest at int_first. Ticks rise
-from oldest to newest (interp_push drops anything else). */
+/** @brief Ring of the last INTERP_SLOTS snapshots, oldest at int_first.
+ * @details Ticks rise from oldest to newest (interp_push() drops anything else). */
 static GameSnapshot arr_snapshots[INTERP_SLOTS];
-static int int_first = 0;
-static int int_count = 0;
+static int int_first = 0;   ///< Ring index of the oldest snapshot
+static int int_count = 0;   ///< Snapshots in the ring
 
-// Client time (seconds) minus server time (tick / TICK_HZ): when a tick
-// "happens" on our clock if the snapshot arrived as fast as the fastest one
+/** @brief Client time (seconds) minus server time (tick / TICK_HZ).
+ * @details When a tick "happens" on our clock if the snapshot arrived as fast
+ * as the fastest one. */
 static double d_offset_s = 0.0;
 
-// Smallest tick gap between consecutive snapshots seen: the server's publish
-// interval (TICK_HZ / --snapshot-hz). A lost snapshot makes one gap larger,
-// never smaller, so the minimum is the true interval.
+/** @brief Smallest tick gap between consecutive snapshots seen.
+ * @details The server's publish interval (TICK_HZ / --snapshot-hz). A lost
+ * snapshot makes one gap larger, never smaller, so the minimum is the true
+ * interval. 0 until two snapshots have arrived. */
 static uint32_t u_interval_ticks = 0;
 
 void interp_reset(void)
@@ -38,13 +39,19 @@ void interp_reset(void)
     u_interval_ticks = 0;
 }
 
-// Snapshot number a_int_i, counted from the oldest
+/** @brief Snapshot number a_int_i in the ring, counted from the oldest.
+ * @param a_int_i 0 .. int_count - 1.
+ * @return Pointer into the ring.
+ */
 static const GameSnapshot *slot(int a_int_i)
 {
     return &arr_snapshots[(int_first + a_int_i) % INTERP_SLOTS];
 }
 
-// *a_p_out = a_p_snapshot as received (positions not interpolated)
+/** @brief Fill a frame from one snapshot as received (positions not interpolated).
+ * @param[out] a_p_out Frame to fill.
+ * @param a_p_snapshot Source snapshot.
+ */
 static void frame_from(InterpFrame *a_p_out, const GameSnapshot *a_p_snapshot)
 {
     a_p_out->snapshot = *a_p_snapshot;
@@ -173,11 +180,17 @@ bool interp_sample(uint64_t a_u_now_ns, InterpFrame *a_p_out)
 /* Smoothness statistics (--smooth-stats)                */
 /* ----------------------------------------------------- */
 
+/** @name Smoothness statistics state (--smooth-stats)
+ * Frames measured; first and last frame time; state drawn last frame;
+ * player-frames moving steadily and those without on-screen movement; sum of
+ * squared speed errors ((px/s)^2) and largest on-screen step in one frame (px).
+ * @{ */
 static int int_stat_frames = 0;
 static uint64_t u_stat_first_ns = 0, u_stat_prev_ns = 0;
 static InterpFrame stat_prev;
 static long l_stat_samples = 0, l_stat_stalls = 0;
 static double d_stat_sq_err = 0.0, d_stat_max_step = 0.0;
+/** @} */
 
 void interp_stats_frame(const InterpFrame *a_p_drawn, uint64_t a_u_now_ns)
 {

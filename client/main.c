@@ -1,41 +1,46 @@
-/* client/main.c
-FUSE client entry point. Based on baseline/client.c (Dr Khoo Teck Ping,
-27 Aug 2026), split into modules with behaviour unchanged:
-
-1. DDS client (net_client.c)
-2. Supports max 5 clients
-3. Start server, then start client one by one
-4. Each client can see itself and all other clients (render.c)
-5. Each client can move itself using the arrow keys (input.c)
-6. Collision detection among all players and the window is supported (server)
-
-Threads: the main thread owns the window, reads the keyboard and draws;
-a DDS worker thread does all network I/O (net_client.c).
-
-Options (for measurements, see bench/render.sh):
-  --stress N           draw N extra animated sprites every frame
-  --frames F           exit after F frames and print frame-time statistics
-                       (vsync is switched on so every run renders the same way)
-  --render MODE        how sprites are drawn (optimisation #16, see render.h):
-                       immediate, float or short (default)
-  --particles N        keep N particles alive (bursts at random places)
-  --particle-layout L  particle code (#5-#7, see particles.h): aos, soa (default)
-                       soa-intrin or soa-intrin-scan (hand-written AVX2)
-  --particle-threads T threads for the particle update (default 1; more only
-                       pays off with tens of thousands of particles, see
-                       bench/results/opt-05-particle-threads)
-  --input-send MODE    when input is sent (#13, see net_client.h): change
-                       (default: on change + every 100 ms) or every-10ms
-                       (while a key is held, as the baseline)
-  --interp on|off      draw positions interpolated between snapshots (#15,
-                       default on) or the newest snapshot as received
-  --smooth-stats S     after S seconds print smoothness statistics of the
-                       players' on-screen movement (interp.h) and quit
-  --auto-join          skip the menu (also FUSE_AUTO_JOIN=1; measurements
-                       and FUSE_AUTO_MOVE=1 keep automatic joining)
-
-Environment: FUSE_CLIENT_WAIT=spin  the DDS worker polls as the baseline
-                                    did instead of waiting (#2) */
+/** @file client/main.c
+ * @brief FUSE client entry point: options, window, menu, and the main
+ * input/render loop.
+ * @details Based on baseline/client.c (Dr Khoo Teck Ping, 27 Aug 2026),
+ * split into modules with behaviour unchanged:
+ *
+ * 1. DDS client (net_client.c)
+ * 2. Supports max 5 clients
+ * 3. Start server, then start client one by one
+ * 4. Each client can see itself and all other clients (render.c)
+ * 5. Each client can move itself using the arrow keys (input.c)
+ * 6. Collision detection among all players and the window is supported (server)
+ *
+ * Threads: the main thread owns the window, reads the keyboard and draws;
+ * a DDS worker thread does all network I/O (net_client.c).
+ *
+ * Options (for measurements, see bench/render.sh):
+ * @verbatim
+ *   --stress N           draw N extra animated sprites every frame
+ *   --frames F           exit after F frames and print frame-time statistics
+ *                        (vsync is switched on so every run renders the same way)
+ *   --render MODE        how sprites are drawn (optimisation #16, see render.h):
+ *                        immediate, float or short (default)
+ *   --particles N        keep N particles alive (bursts at random places)
+ *   --particle-layout L  particle code (#5-#7, see particles.h): aos, soa (default)
+ *                        soa-intrin or soa-intrin-scan (hand-written AVX2)
+ *   --particle-threads T threads for the particle update (default 1; more only
+ *                        pays off with tens of thousands of particles, see
+ *                        bench/results/opt-05-particle-threads)
+ *   --input-send MODE    when input is sent (#13, see net_client.h): change
+ *                        (default: on change + every 100 ms) or every-10ms
+ *                        (while a key is held, as the baseline)
+ *   --interp on|off      draw positions interpolated between snapshots (#15,
+ *                        default on) or the newest snapshot as received
+ *   --smooth-stats S     after S seconds print smoothness statistics of the
+ *                        players' on-screen movement (interp.h) and quit
+ *   --auto-join          skip the menu (also FUSE_AUTO_JOIN=1; measurements
+ *                        and FUSE_AUTO_MOVE=1 keep automatic joining)
+ * @endverbatim
+ *
+ * Environment: FUSE_CLIENT_WAIT=spin makes the DDS worker poll as the baseline
+ * did instead of waiting (#2).
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,16 +97,27 @@ static void stop_client(pthread_t a_thread, bool *a_b_running)
     *a_b_running = false;
 }
 
-// qsort comparison for frame times
+/** @brief qsort() comparison for uint64_t frame times (ascending).
+ * @param a First uint64_t.
+ * @param b Second uint64_t.
+ * @return Negative, zero or positive, as qsort() expects.
+ */
 static int compare_u64(const void *a, const void *b)
 {
     uint64_t x = *(const uint64_t *)a, y = *(const uint64_t *)b;
     return (x > y) - (x < y);
 }
 
-/* Print statistics of the CPU time spent in render_frame() per frame, in
-microseconds, as one key=value line (parsed by bench/render.sh). Sorts the
-array in place. */
+/** @brief Print render_frame() CPU-time statistics for a --frames run.
+ * @details One key=value line in microseconds (mean, p50, p99, max), parsed
+ * by bench/render.sh. Sorts the array in place.
+ * @param a_arr_ns Per-frame render_frame() times, ns (sorted on return).
+ * @param a_int_frames Number of frames in the array.
+ * @param a_int_stress --stress sprite count (printed for the record).
+ * @param a_mode Render mode used (printed for the record).
+ * @param a_d_wall_s Wall time of the render loop, seconds (for fps).
+ * @param a_d_elapsed_s Seconds since the start of main().
+ */
 static void print_frame_stats(uint64_t *a_arr_ns, int a_int_frames, int a_int_stress,
                               RenderMode a_mode, double a_d_wall_s, double a_d_elapsed_s)
 {
@@ -123,8 +139,13 @@ static void print_frame_stats(uint64_t *a_arr_ns, int a_int_frames, int a_int_st
            (const char *)glGetString(GL_RENDERER));
 }
 
-// GLFW callback: the framebuffer changed size (display scaling applied after
-// the window opened, or the window moved to a monitor with another scale)
+/** @brief GLFW callback: the framebuffer changed size.
+ * @details Happens when display scaling is applied after the window opened,
+ * or the window moves to a monitor with another scale.
+ * @param a_window Window (unused).
+ * @param a_int_w New framebuffer width, device pixels.
+ * @param a_int_h New framebuffer height, device pixels.
+ */
 static void on_framebuffer_size(GLFWwindow *a_window, int a_int_w, int a_int_h)
 {
     (void)a_window;

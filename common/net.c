@@ -1,5 +1,7 @@
-/* common/net.c
-DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets. */
+/** @file common/net.c
+ * @brief DDS setup helpers: participant, topics, readers/writers, QoS
+ * profiles (#14) and the environment switches.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +13,16 @@ DDS setup helpers: participant, topics, readers/writers, QoS profiles, waitsets.
 #include "log.h"
 #include "fuse.h"
 
-// The main and DDS threads can query these concurrently on their first pass.
-// A plain static "-1 means unread" cache races during that first access.
+/** @brief Reads the environment switches exactly once.
+ * @details The main and DDS threads can query these concurrently on their
+ * first pass; a plain static "-1 means unread" cache races during that first
+ * access, so pthread_once() is used. */
 static pthread_once_t options_once = PTHREAD_ONCE_INIT;
+/** @brief Cached switches: tuned QoS (#14), join nonce, leave/timeout. */
 static bool b_tuned, b_nonce, b_leave;
 
+/** @brief pthread_once() routine: read FUSE_QOS, FUSE_JOIN_NONCE and
+ * FUSE_LEAVE, and log the chosen modes. */
 static void read_options(void)
 {
     const char *str_qos = getenv("FUSE_QOS");
@@ -71,8 +78,11 @@ bool net_qos_tuned(void)
     return b_tuned;
 }
 
-// QoS object for a_qos, or NULL (default QoS) when not tuned. Free with
-// dds_delete_qos (accepts NULL).
+/** @brief Build the QoS object for a profile.
+ * @param a_qos Profile.
+ * @return New QoS object, or NULL (Cyclone defaults) when not tuned. Free
+ *         with dds_delete_qos() (accepts NULL).
+ */
 static dds_qos_t *make_qos(NetQos a_qos)
 {
     if (!net_qos_tuned())

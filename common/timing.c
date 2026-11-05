@@ -1,5 +1,6 @@
-/* common/timing.c
-Monotonic clock helpers and fixed-timestep accumulator. */
+/** @file common/timing.c
+ * @brief Monotonic clock helper (clock_gettime(CLOCK_MONOTONIC)).
+ */
 
 #include <time.h>
 

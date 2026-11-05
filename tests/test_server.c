@@ -28,8 +28,16 @@ static void reset_test(void)
  * checkpoints of one scripted sequence: overfill past MAX_EMBERS, expiry on
  * the exact tick, a partly expired ring refilled so it wraps. The ring and
  * array layouts must give identical records. */
+/** @brief Checkpoints in run_ember_script(). */
 #define EMBER_CHECKPOINTS 7
+/** @brief Player positions sampled per checkpoint (a 23 x 29 px lattice). */
 #define EMBER_POINTS ((WIDTH - SQ_WIDTH) / 23 + 1) * ((HEIGHT - SQ_WIDTH) / 29 + 1)
+
+/** @brief Query every lattice position and record whether it hits an ember.
+ * @details Asserts that the grid and brute-force queries agree at each point.
+ * @param[out] a_p_out EMBER_POINTS results, in lattice order.
+ * @return Number of positions that hit an ember.
+ */
 static int record_ember_hits(bool *a_p_out)
 {
 	int int_hits = 0;
@@ -44,17 +52,28 @@ static int record_ember_hits(bool *a_p_out)
 	return int_hits;
 }
 
+/** @brief Advance the ember simulation by a number of ticks.
+ * @param a_int_n Ticks to run.
+ */
 static void ember_ticks(int a_int_n)
 {
 	for (int i = 0; i < a_int_n; i++) collision_embers_tick();
 }
 
+/** @brief Spawn repeatable explosions (32 embers each) at scripted positions.
+ * @param a_int_first Index of the first explosion (sets its position and seed).
+ * @param a_int_batches Number of explosions.
+ */
 static void ember_spawns(int a_int_first, int a_int_batches)
 {
 	for (int n = a_int_first; n < a_int_first + a_int_batches; n++)
 		collision_embers_spawn((n * 37) % WIDTH, (n * 53) % HEIGHT, (uint16_t)n);
 }
 
+/** @brief Run the scripted #8b ember sequence in one layout and record its hits.
+ * @param a_b_ring True for the ring/SoA layout, false for the fixed array.
+ * @param[out] a_arr_out Hit records per checkpoint, compared between layouts.
+ */
 static void run_ember_script(bool a_b_ring, bool a_arr_out[EMBER_CHECKPOINTS][EMBER_POINTS])
 {
 	b_ember_ring = a_b_ring;

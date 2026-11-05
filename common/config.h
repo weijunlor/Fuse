@@ -1,37 +1,42 @@
-/* common/config.h
-Game constants shared by server and client: window size, MAX_PLAYERS, tick rate, tuning values. */
+/** @file common/config.h
+ * @brief Game constants shared by server and client: window size,
+ * MAX_PLAYERS, tick rate and tuning values.
+ */
 
 #ifndef COMMON_CONFIG_H
 #define COMMON_CONFIG_H
 
-// Maximum number of players in a game
+/** @brief Maximum number of players in a game (player IDs 1..MAX_PLAYERS). */
 #define MAX_PLAYERS 5
 
-// Window (and play area) size in pixels
+/** @brief Window (and play area) width in pixels. */
 #define WIDTH  800
+/** @brief Window (and play area) height in pixels. */
 #define HEIGHT 600
 
-// Side length of a player square in pixels
+/** @brief Side length of a player square (hitbox) in pixels. */
 #define SQ_WIDTH 50
 
-// Server simulation rate: the game advances in fixed steps of 1/TICK_HZ s,
-// whatever the network or input rate (the baseline moved a player 1 pixel per
-// input message, so speed depended on how fast messages arrived)
+/** @brief Server simulation rate, ticks per second (#12).
+ * @details The game advances in fixed steps of 1/TICK_HZ s, whatever the
+ * network or input rate (the baseline moved a player 1 pixel per input
+ * message, so speed depended on how fast messages arrived). */
 #define TICK_HZ 60
 
-// Player speed in pixels per second while a direction key is held.
-// A multiple of TICK_HZ, so positions stay whole pixels (3 px per tick).
+/** @brief Player speed in pixels per second while a direction key is held.
+ * @details A multiple of TICK_HZ, so positions stay whole pixels (3 px per tick). */
 #define PLAYER_SPEED 180
 
-// Snapshots the server publishes per second unless --snapshot-hz says
-// otherwise (one GameSnapshot every TICK_HZ / SNAPSHOT_HZ ticks)
+/** @brief Snapshots the server publishes per second unless --snapshot-hz says
+ * otherwise (one GameSnapshot every TICK_HZ / SNAPSHOT_HZ ticks). */
 #define SNAPSHOT_HZ 60
 
-// A player whose client sends no Input for this long is removed, unless the
-// server's --player-timeout says otherwise (0 = never). Clients repeat their
-// keys every 100 ms even when idle (#13), so only a crashed, killed or cut-off
-// client is that quiet. Long enough that a short network stall does not drop
-// anyone (a clean exit sends Leave and frees the slot at once).
+/** @brief Seconds without Input after which the server removes a player.
+ * @details Unless the server's --player-timeout says otherwise (0 = never).
+ * Clients repeat their keys every 100 ms even when idle (#13), so only a
+ * crashed, killed or cut-off client is that quiet. Long enough that a short
+ * network stall does not drop anyone (a clean exit sends Leave and frees the
+ * slot at once). */
 #define PLAYER_TIMEOUT_S 5
 
 #endif /* COMMON_CONFIG_H */

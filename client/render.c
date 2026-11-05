@@ -1,18 +1,21 @@
-/* client/render.c
-Batched rendering of players, bomb and HUD.
-
-Optimisation #16 (batched drawing). Ways to draw sprites, chosen at start-up
-with --render <mode> (see RenderMode in render.h):
-- immediate (#16a before): every sprite is its own glBegin/glEnd, i.e.
-  4 glTexCoord + 4 glVertex driver calls per sprite.
-- float (#16a after): sprites are appended to one vertex array in memory and
-  drawn with a single glDrawArrays call per frame, so the driver is called a
-  few times per frame instead of ~9 times per sprite.
-- short (#16b after, default): as float, but each vertex is 4 shorts (8 bytes)
-  instead of 4 floats (16 bytes). Measuring #16a showed that with many sprites
-  most of the time is the driver copying the vertex array, so halving its
-  size should halve that copy.
-Text is still drawn per string (ui.c) in every mode. */
+/** @file client/render.c
+ * @brief Batched rendering of the floor, players, bomb, pickups, particles,
+ * explosions and HUD.
+ * @details Optimisation #16 (batched drawing). Ways to draw sprites, chosen
+ * at start-up with --render <mode> (see RenderMode in render.h):
+ * - immediate (#16a before): every sprite is its own glBegin/glEnd, i.e.
+ *   4 glTexCoord + 4 glVertex driver calls per sprite.
+ * - float (#16a after): sprites are appended to one vertex array in memory and
+ *   drawn with a single glDrawArrays call per frame, so the driver is called a
+ *   few times per frame instead of ~9 times per sprite.
+ * - short (#16b after, default): as float, but each vertex is 4 shorts (8
+ *   bytes) instead of 4 floats (16 bytes). Measuring #16a showed that with many
+ *   sprites most of the time is the driver copying the vertex array, so
+ *   halving its size should halve that copy.
+ *
+ * Text is still drawn per string (ui.c) in every mode. Every function here
+ * runs on the main (GL) thread.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,62 +31,76 @@ Text is still drawn per string (ui.c) in every mode. */
 #include "interp.h"
 #include "timing.h"
 
-// Seconds each animation frame is shown
+/** @brief Seconds each player idle-animation frame is shown. */
 #define PLAYER_FRAME_S 0.4
+/** @brief Seconds each stress-sprite animation frame is shown. */
 #define STRESS_FRAME_S 0.1
-// Seconds per explosion frame; the animation plays once (6 x 0.08 = 0.48 s)
+/** @brief Seconds per explosion frame; the animation plays once (6 x 0.08 = 0.48 s). */
 #define EXPLOSION_FRAME_S 0.08
 
-// Floor tiles needed to cover the window (the tile size divides the window
-// size exactly, so this is 16 x 12)
+/** @brief Floor tiles needed to cover the window (the tile size divides the
+ * window size exactly, so this is 16 x 12). */
 #define FLOOR_TILES ((WIDTH / ATLAS_TILE) * (HEIGHT / ATLAS_TILE))
 
-// One corner of a sprite quad. Position and texture coordinates are stored
-// together (interleaved), so each corner is one contiguous read for the driver.
-// "float" mode: 16 bytes, texture coordinates 0..1
+/** @brief One corner of a sprite quad in "float" mode (16 bytes).
+ * @details Position and texture coordinates are stored together
+ * (interleaved), so each corner is one contiguous read for the driver.
+ */
 typedef struct
 {
-    float x, y;
-    float u, v;
+    float x, y;     ///< Window pixels
+    float u, v;     ///< Texture coordinates, 0..1
 } QuadVertex;
 
-// "short" mode: 8 bytes. Positions are whole window pixels (the game only uses
-// whole pixels); texture coordinates are whole atlas pixels, scaled to 0..1 by
-// the texture matrix set in render_init()
+/** @brief One corner of a sprite quad in "short" mode (8 bytes, #16b).
+ * @details Positions are whole window pixels (the game only uses whole
+ * pixels); texture coordinates are whole atlas pixels, scaled to 0..1 by the
+ * texture matrix set in render_init().
+ */
 typedef struct
 {
-    short x, y;
-    short u, v;
+    short x, y;     ///< Window pixels
+    short u, v;     ///< Atlas texels
 } QuadVertexShort;
 
+/** @brief Command-line names, indexed by RenderMode. */
 static const char *const arr_mode_names[] = { "immediate", "float", "short" };
 
-// Animated test sprite for --stress (stands in for particles and embers)
+/** @brief Animated test sprite for --stress (stands in for particles and embers). */
 typedef struct
 {
-    float x, y;
-    int int_first;      // first frame's sprite ID
-    int int_frames;     // number of frames
-    double d_phase_s;   // animation offset, so the sprites do not blink in sync
+    float x, y;         ///< Top-left corner, window pixels
+    int int_first;      ///< First frame's sprite ID
+    int int_frames;     ///< Number of frames
+    double d_phase_s;   ///< Animation offset, so the sprites do not blink in sync
 } StressSprite;
 
-static GLuint texture_atlas;
-static RenderMode render_mode;
+static GLuint texture_atlas;    ///< Atlas texture from atlas_load()
+static RenderMode render_mode;  ///< Mode chosen in render_init()
 
-// Batch: vertices of every sprite this frame, drawn by batch_flush(). Only
-// the array of the current mode is allocated.
-static QuadVertex *arr_batch;              // "float" mode
-static QuadVertexShort *arr_batch_short;   // "short" mode
-static int int_batch_len;   // vertices in use
-static int int_batch_cap;   // vertices allocated
+/** @name Sprite batch
+ * Vertices of every sprite this frame, drawn by batch_flush(). Only the array
+ * of the current mode is allocated.
+ * @{ */
+static QuadVertex *arr_batch;              ///< "float" mode
+static QuadVertexShort *arr_batch_short;   ///< "short" mode
+static int int_batch_len;   ///< Vertices in use
+static int int_batch_cap;   ///< Vertices allocated
+/** @} */
 
-static StressSprite *arr_stress;
-static int int_num_stress;
+static StressSprite *arr_stress;    ///< --stress sprites
+static int int_num_stress;          ///< Number of --stress sprites
+/** @brief Tick of the newest explosion whose particle burst has been spawned
+ * (a repeated snapshot must not replay it). */
 static unsigned long u32_seen_explosion_tick = 0;
+/** @brief Tick of the last snapshot drawn: a smaller tick means a new server. */
 static unsigned long u32_last_snapshot_tick = 0;
+/** @brief Phase of the last snapshot drawn: back to lobby means a new match. */
 static uint8_t u8_last_snapshot_phase = PHASE_LOBBY;
+/** @brief Copy of main's latest network frame (render_set_client_frame()). */
 static ClientFrame received = { .int_player_id = -1 };
-// Last walking direction, retained while idle; render thread only.
+/** @brief Last walking direction per player (0 down, 1 up, 2 left, 3 right),
+ * retained while idle; render thread only. */
 static int arr_player_direction[MAX_PLAYERS];
 
 void render_set_client_frame(const ClientFrame *a_frame)
@@ -104,7 +121,11 @@ void render_reset_session(void)
     memset(arr_player_direction, 0, sizeof arr_player_direction);
 }
 
-// Immediate path: one sprite = one glBegin/glEnd
+/** @brief Immediate path: one sprite = one glBegin/glEnd (#16a before).
+ * @param a_int_sprite Sprite ID.
+ * @param x Left edge, window pixels.
+ * @param y Top edge, window pixels.
+ */
 static void sprite_immediate(int a_int_sprite, float x, float y)
 {
     float u0, v0, u1, v1;
@@ -118,7 +139,11 @@ static void sprite_immediate(int a_int_sprite, float x, float y)
     glEnd();
 }
 
-// Batched path: append the sprite's 4 corners to the batch (no GL call)
+/** @brief "float" batched path: append the sprite's 4 corners to the batch (no GL call).
+ * @param a_int_sprite Sprite ID.
+ * @param x Left edge, window pixels.
+ * @param y Top edge, window pixels.
+ */
 static void sprite_batched(int a_int_sprite, float x, float y)
 {
     float u0, v0, u1, v1;
@@ -133,7 +158,11 @@ static void sprite_batched(int a_int_sprite, float x, float y)
     int_batch_len += 4;
 }
 
-// "short" path: as sprite_batched, with 8-byte vertices
+/** @brief "short" batched path: as sprite_batched(), with 8-byte vertices.
+ * @param a_int_sprite Sprite ID.
+ * @param x Left edge, window pixels (truncated to a whole pixel).
+ * @param y Top edge, window pixels (truncated to a whole pixel).
+ */
 static void sprite_batched_short(int a_int_sprite, float x, float y)
 {
     int int_u, int_v;
@@ -150,7 +179,12 @@ static void sprite_batched_short(int a_int_sprite, float x, float y)
     int_batch_len += 4;
 }
 
-// Draw one sprite with its top-left corner at (x, y), at the atlas tile size
+/** @brief Draw one sprite at the atlas tile size, using the current RenderMode.
+ * @details In the batched modes the sprite only appears at batch_flush().
+ * @param a_int_sprite Sprite ID.
+ * @param x Left edge, window pixels.
+ * @param y Top edge, window pixels.
+ */
 static void render_sprite(int a_int_sprite, float x, float y)
 {
     switch (render_mode)
@@ -161,7 +195,9 @@ static void render_sprite(int a_int_sprite, float x, float y)
     }
 }
 
-// Batched paths: draw every queued sprite with one call, then empty the batch
+/** @brief Batched paths: draw every queued sprite with one glDrawArrays, then
+ * empty the batch. Does nothing in immediate mode.
+ */
 static void batch_flush(void)
 {
     if (render_mode == RENDER_IMMEDIATE || int_batch_len == 0)

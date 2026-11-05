@@ -1,24 +1,28 @@
-/* bench/dds_players.c
-Headless test players (#2, game rules): joins 2 players from one process
-(two nonces), player 1 holds <keys1> and player 2 holds <keys2> (KEY_* bitmask
-from common/types.h, sent as an Input every 100 ms), then prints every phase,
-bomb holder, lives and explosion change seen in the snapshots and, at the end,
-statistics of the gaps between snapshots. The gaps use each snapshot's source
-timestamp (when the server called dds_write), so they show how evenly the
-server publishes, independent of this program's own scheduling.
-
-Usage: dds_players <seconds> [keys1] [keys2]   (default 8 = right, 4 = left)
-  e.g. dds_players 90 10 10: both hold right+down, meet in the corner and pass
-  the bomb back and forth for a whole game.
-Last line:
-  snapshots=<n> gap_ms mean=.. sd=.. min=.. max=.. gaps>25ms=<n> tick_skips=<n>
-  (tick_skips: snapshots whose tick is not the previous one + 1, i.e. a
-  snapshot the server never sent; at --snapshot-hz below 60 every one counts)
-
-Run with no other server on domain 0. Select a client DDS identity and
-provision the client-1/client-2 application accounts for its two players:
-  bash security/scripts/run_secure.sh server build/server
-  bash security/scripts/run_secure.sh client-1 build/dds_players 20 10 10 */
+/** @file bench/dds_players.c
+ * @brief Headless two-player test client for game rules and snapshot pacing (#2).
+ * @details Joins 2 players from one process
+ * (two nonces), player 1 holds <keys1> and player 2 holds <keys2> (KEY_* bitmask
+ * from common/types.h, sent as an Input every 100 ms), then prints every phase,
+ * bomb holder, lives and explosion change seen in the snapshots and, at the end,
+ * statistics of the gaps between snapshots. The gaps use each snapshot's source
+ * timestamp (when the server called dds_write), so they show how evenly the
+ * server publishes, independent of this program's own scheduling.
+ *
+ * @verbatim
+ * Usage: dds_players <seconds> [keys1] [keys2]   (default 8 = right, 4 = left)
+ *   e.g. dds_players 90 10 10: both hold right+down, meet in the corner and pass
+ *   the bomb back and forth for a whole game.
+ * Last line:
+ *   snapshots=<n> gap_ms mean=.. sd=.. min=.. max=.. gaps>25ms=<n> tick_skips=<n>
+ *   (tick_skips: snapshots whose tick is not the previous one + 1, i.e. a
+ *   snapshot the server never sent; at --snapshot-hz below 60 every one counts)
+ *
+ * Run with no other server on domain 0. Select a client DDS identity and
+ * provision the client-1/client-2 application accounts for its two players:
+ *   bash security/scripts/run_secure.sh server build/server
+ *   bash security/scripts/run_secure.sh client-1 build/dds_players 20 10 10
+ * @endverbatim
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -29,6 +33,11 @@ provision the client-1/client-2 application accounts for its two players:
 #include "config.h"
 #include "app_client.h"
 
+/** @brief Join two players, drive their keys and report game events and snapshot gaps.
+ * @param argc Number of arguments.
+ * @param argv Seconds to run, then optional key bitmasks for players 1 and 2.
+ * @return 0 on success, 2 if login set-up or input signing fails.
+ */
 int main(int argc, char **argv)
 {
     double d_seconds = argc > 1 ? atof(argv[1]) : 10.0;

@@ -1,40 +1,42 @@
-/* client/net_client.c
-Client DDS worker thread: sends input, receives snapshots.
-
-Since #12 the client receives one GameSnapshot per published server tick
-(every player at once) instead of one Position message per player, and sends
-the keys it holds instead of single steps: every 10 ms while any key is held
-(the baseline's rate), plus once when the last key is released so the server
-stops the player.
-
-#13 (input on change, the default): an Input is sent only when the held keys
-change, and repeated every INPUT_REPEAT_MS in case one was lost (Input will be
-best-effort, #14 in common/net.h). A held arrow key then costs ~10 messages per second instead
-of ~100. --input-send every-10ms keeps the old behaviour for measurements.
-
-Join nonce (common/net.h): the client sends the same random nonce in every
-JoinRequest and accepts only the JoinResponse carrying it; responses to other
-clients are taken and dropped. Authenticated joins always use nonces and a
-password proof. FUSE_JOIN_NONCE=off only applies in unauthenticated comparison
-mode: nonce 0 and the first response is taken, as in the baseline.
-
-Leave (common/net.h): when the window closes, the worker sends a Leave so the
-server frees the slot at once. If the server dropped this client (no Input
-for its timeout, e.g. the network was cut), the client sees its own slot
-missing from the snapshots and joins again with a new nonce.
-
-#2 on the client (wait instead of polling, the default): the worker blocks in
-a DDS waitset on the join-response and snapshot readers and on a guard
-condition that the main thread sets when the held keys change
-(net_client_wake()) or the window closes. The wait ends at the latest when
-the next timed message is due (join request every 1 s, Input repeat every
-INPUT_REPEAT_MS). The baseline loop busy-polled while no key was held (one
-core per idle client) and slept 10 ms per pass while one was, so a key press
-could wait up to 10 ms before it was sent. FUSE_CLIENT_WAIT=spin keeps that
-loop for measurements.
-
-#15: snapshots carry their arrival time through ClientFrame. The render
-thread owns interpolation history and draws interpolated positions. */
+/** @file client/net_client.c
+ * @brief Client DDS worker thread: joins, sends input, receives snapshots and
+ * publishes them to the main thread.
+ * @details
+ * Since #12 the client receives one GameSnapshot per published server tick
+ * (every player at once) instead of one Position message per player, and sends
+ * the keys it holds instead of single steps: every 10 ms while any key is held
+ * (the baseline's rate), plus once when the last key is released so the server
+ * stops the player.
+ *
+ * #13 (input on change, the default): an Input is sent only when the held keys
+ * change, and repeated every INPUT_REPEAT_MS in case one was lost (Input will be
+ * best-effort, #14 in common/net.h). A held arrow key then costs ~10 messages per second instead
+ * of ~100. --input-send every-10ms keeps the old behaviour for measurements.
+ *
+ * Join nonce (common/net.h): the client sends the same random nonce in every
+ * JoinRequest and accepts only the JoinResponse carrying it; responses to other
+ * clients are taken and dropped. Authenticated joins always use nonces and a
+ * password proof. FUSE_JOIN_NONCE=off only applies in unauthenticated comparison
+ * mode: nonce 0 and the first response is taken, as in the baseline.
+ *
+ * Leave (common/net.h): when the window closes, the worker sends a Leave so the
+ * server frees the slot at once. If the server dropped this client (no Input
+ * for its timeout, e.g. the network was cut), the client sees its own slot
+ * missing from the snapshots and joins again with a new nonce.
+ *
+ * #2 on the client (wait instead of polling, the default): the worker blocks in
+ * a DDS waitset on the join-response and snapshot readers and on a guard
+ * condition that the main thread sets when the held keys change
+ * (net_client_wake()) or the window closes. The wait ends at the latest when
+ * the next timed message is due (join request every 1 s, Input repeat every
+ * INPUT_REPEAT_MS). The baseline loop busy-polled while no key was held (one
+ * core per idle client) and slept 10 ms per pass while one was, so a key press
+ * could wait up to 10 ms before it was sent. FUSE_CLIENT_WAIT=spin keeps that
+ * loop for measurements.
+ *
+ * #15: snapshots carry their arrival time through ClientFrame. The render
+ * thread owns interpolation history and draws interpolated positions.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,19 +54,26 @@ thread owns interpolation history and draws interpolated positions. */
 #include "double_buffer.h"
 
 DOUBLE_BUFFER_DEFINE(ClientFrameBuffer, ClientFrame)
+/** @brief Worker -> main frame handoff in SPSC mode (pinned two-buffer, #4). */
 static ClientFrameBuffer frame_buffer;
+/** @brief Worker -> main frame in mutex mode (FUSE_HANDOFF=mutex), guarded by #mutex. */
 static ClientFrame frame_mutex = { .int_player_id = -1 };
+/** @brief Guards frame_mutex in mutex handoff mode only. */
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+/** @brief Held-key bitmask, written by main, read by the worker (latest wins). */
 static atomic_uchar u8_keys;
 
 bool b_input_on_change = true;
 
-// #13: repeat the current keys this often even if they did not change, so a
-// lost Input is corrected within this time
+/** @brief Input repeat period (#13), ms: the current keys are resent this
+ * often even if they did not change, so a lost Input is corrected within this
+ * time (it is also the server's liveness heartbeat). */
 #define INPUT_REPEAT_MS 100
 
-// Independent scalar handoffs need no player-table mutex.
+/** @brief Shutdown request from main (net_client_stop()); an independent
+ * scalar handoff, so no player-table mutex is needed. */
 static atomic_bool b_quit;
+/** @brief Login credentials, session key and input sequence for this session. */
 static AppClient client_auth;
 
 bool net_client_prepare(void)
@@ -99,8 +108,13 @@ bool net_client_read_frame(ClientFrame *a_frame)
 	return true;
 }
 
-// Called only by the worker. A slow reader may hold the other slot; skip
-// that publication and let the next snapshot replace it, without waiting.
+/** @brief Publish a copy of the worker's frame to the main thread.
+ * @details Called only by the worker. In SPSC mode a slow reader may hold the
+ * other slot; the publication is then skipped and the next snapshot replaces
+ * it, without waiting.
+ * @param a_frame Frame to copy.
+ * @return False if the SPSC publication was skipped; true otherwise.
+ */
 static bool publish_frame(const ClientFrame *a_frame)
 {
 	if (handoff_spsc())
@@ -116,9 +130,11 @@ static bool publish_frame(const ClientFrame *a_frame)
 
 bool b_client_wait = true;
 
-// Set by net_client_wake() (main thread), waited on by the worker. Created
-// before the worker starts and never changed, and a guard condition is
-// thread-safe, so no mutex is needed around it.
+/** @brief Wake guard condition (#2).
+ * @details Set by net_client_wake() (main thread), waited on by the worker.
+ * Created before the worker starts and never changed, and a guard condition
+ * is thread-safe, so no mutex is needed around it. 0 in spin mode.
+ */
 static dds_entity_t guard_wake = 0;
 
 void net_client_finish(void)

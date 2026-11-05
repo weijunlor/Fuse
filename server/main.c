@@ -2,36 +2,38 @@
  * @brief Server startup, comparison options and fixed 60 Hz scheduling.
  * @details Initialises authentication, bot slots and the DDS worker; the
  * main loop handles lobby work, timeouts, simulation ticks and worker wakes.
+ *
+ * FUSE server entry point. Based on baseline/server.c (Dr Khoo Teck Ping,
+ * 27 Aug 2026), extended with a fixed tick, game rules and optional AI bots:
+ *
+ * 1. DDS server (net_server.c)
+ * 2. Supports max 5 clients
+ * 3. Start this server, then start client one by one
+ * 4. Each client can see itself and all other clients
+ * 5. Each client can move itself using the arrow keys (game.c)
+ * 6. Collision detection among all players and the window is supported (collision.c)
+ *
+ * Threads: the main thread admits joining players (lobby.c) and runs the game
+ * at a fixed TICK_HZ ticks per second (game.c); a DDS worker thread does all
+ * network I/O (net_server.c).
+ *
+ * Options:
+ * @verbatim
+ *   --snapshot-hz H   publish a GameSnapshot H times per second (default
+ *                     SNAPSHOT_HZ; H must divide TICK_HZ: 60, 30, 20, 15, 12,
+ *                     10, ...). Lower rates need client interpolation (#15).
+ *   --player-timeout S  remove a player whose client sent no Input for S seconds
+ *                     (default PLAYER_TIMEOUT_S = 5; 0 = never). FUSE_LEAVE=off
+ *                     in the environment turns Leave and the timeout off.
+ *   --bots N         reserve N slots for chase/flee bots (0..4, default 0).
+ *   --wait, --publish, --collision, --embers, --branches, --reduction retain
+ *                     before paths for isolated profiling; see README.md.
+ * @endverbatim
+ *
+ * Environment (to measure optimisations against the old behaviour):
+ * - FUSE_SERVER_WAIT=spin: busy-poll in both threads as before #2
+ * - FUSE_WRITE_UNDER_LOCK=on: publish snapshots while holding the mutex (#1)
  */
-/* server/main.c
-FUSE server entry point. Based on baseline/server.c (Dr Khoo Teck Ping,
-27 Aug 2026), extended with a fixed tick, game rules and optional AI bots:
-
-1. DDS server (net_server.c)
-2. Supports max 5 clients
-3. Start this server, then start client one by one
-4. Each client can see itself and all other clients
-5. Each client can move itself using the arrow keys (game.c)
-6. Collision detection among all players and the window is supported (collision.c)
-
-Threads: the main thread admits joining players (lobby.c) and runs the game
-at a fixed TICK_HZ ticks per second (game.c); a DDS worker thread does all
-network I/O (net_server.c).
-
-Options:
-  --snapshot-hz H   publish a GameSnapshot H times per second (default
-                    SNAPSHOT_HZ; H must divide TICK_HZ: 60, 30, 20, 15, 12,
-                    10, ...). Lower rates need client interpolation (#15).
-  --player-timeout S  remove a player whose client sent no Input for S seconds
-                    (default PLAYER_TIMEOUT_S = 5; 0 = never). FUSE_LEAVE=off
-                    in the environment turns Leave and the timeout off.
-  --bots N         reserve N slots for chase/flee bots (0..4, default 0).
-  --wait, --publish, --collision, --embers, --branches, --reduction retain
-                    before paths for isolated profiling; see README.md.
-
-Environment (to measure optimisations against the old behaviour):
-  FUSE_SERVER_WAIT=spin      busy-poll in both threads as before #2
-  FUSE_WRITE_UNDER_LOCK=on   publish snapshots while holding the mutex (#1) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +53,7 @@ Environment (to measure optimisations against the old behaviour):
 #include "auth.h"
 #include "handoff.h"
 
-// Nanoseconds per tick
+/** @brief Nanoseconds per simulation tick. */
 #define TICK_NS (1000000000ull / TICK_HZ)
 
 /** @brief Parse a complete nonnegative decimal value bounded by INT_MAX.

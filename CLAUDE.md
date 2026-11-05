@@ -39,9 +39,10 @@ CSD3116 team assignment: real-time multiplayer game in C on Cyclone DDS, OpenGL 
 
 ## Status (update this section as work progresses)
 
-Last updated: 2026-11-04 (Zhikai's Doxygen documentation; PRs #3/#4 merged 2026-11-03)
+Last updated: 2026-11-05 (weijun's Doxygen comments; zhikai's 2026-11-04; PRs #3/#4 merged 2026-11-03)
 
 Done:
+- weijun's Doxygen comments (2026-11-05): `@file`/`@brief`/`@param` blocks for weijun's client, common, server-network, IDL, benchmark and #8b ember files (gaps only in shared lobby/collision/game files). Comments only: comment-stripped token comparison with HEAD identical; `make`, `make test`, benches build. `Doxyfile` and `docs/zhikai.md` mentioned below are not in the repo (not committed?); HTML still needs doxygen.
 - Zhikai's file/function documentation: Doxygen comments for server/game, lobby, bots, collision/movement, benchmarks, IDL and client menu/art integration; `docs/zhikai.md` maps contributions and credits shared work. Generate with `doxygen Doxyfile` into ignored `build/doxygen/html/`. Documentation-only change; no game builds/tests or Makefile edits. HTML generation pending a Doxygen installation.
 - PRs #3/#4 merged 2026-11-03: sheeyang's `run-server/client.sh|.bat`, LAN multiplayer (`security/scripts/lan*.py`, `setup_lan.ps1`) and device pairing (`build/pairing`, `client/pairing_ui.c`, `make test-pairing`); zhikai's lobby menu, Ninja Adventure atlas (`assets/pack_ninja_atlas.py`; source art and its CC0 LICENSE were removed in c7cd424, `assets/README.md` explains how to restore them before rerunning the packer), random bomb holder, DDS-SDK stamp in the Makefile. Benchmarks skip the menu (`FUSE_AUTO_JOIN=1` in `bench/security_env.sh`, also implied by `FUSE_AUTO_MOVE=1`/`--frames`/`--stress`). Checked: build, `make test`, `make test-pairing` (18/18 after a Makefile mkdir fix), secure server + bot + client smoke. Not re-profiled: the client now calls `net_client_read_frame` from main and has a menu path, so profile before measuring the client again.
 - Client lobby menu restored (2026-11-02): Join/Cancel/Leave/Exit, five-slot waiting room and server countdown; leaving returns to the menu and rejoining creates a fresh authenticated session. Network frames have one main-thread consumer shared by UI/rendering. Benchmarks retain automatic joins.

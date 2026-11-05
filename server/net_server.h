@@ -9,16 +9,22 @@
 
 #include <stdbool.h>
 
-/* #2: true (default) = the main thread sleeps until the next tick and the
-worker blocks in a DDS waitset until data arrives or net_server_wake() is
-called. false (FUSE_SERVER_WAIT=spin) = both threads busy-poll, as before #2
-(the baseline's loop), kept so the change can be measured. */
+/** @brief Server wait mode (#2).
+ * @details True (default) = the main thread sleeps until the next tick and
+ * the worker blocks in a DDS waitset until data arrives or net_server_wake()
+ * is called. False (FUSE_SERVER_WAIT=spin or --wait busy) = both threads
+ * busy-poll, as before #2 (the baseline's loop), kept so the change can be
+ * measured.
+ */
 extern bool b_server_wait;
 
-/* #1: false (default) = the worker copies the snapshot under the mutex and
-publishes it after unlocking. true (FUSE_WRITE_UNDER_LOCK=on) = dds_write()
-runs while the mutex is held, as the baseline's Position writes did, so the
-main thread waits for the network write. */
+/** @brief Snapshot write mode (#1).
+ * @details False (default) = the worker copies the snapshot (under the mutex
+ * in mutex handoff mode) and publishes it after unlocking. True
+ * (FUSE_WRITE_UNDER_LOCK=on or --publish locked) = dds_write() runs while the
+ * mutex is held, as the baseline's Position writes did, so the main thread
+ * waits for the network write.
+ */
 extern bool b_write_under_lock;
 
 /** @brief Create the guard condition used to wake the DDS worker.

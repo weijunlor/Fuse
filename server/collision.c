@@ -2,20 +2,20 @@
  * @brief Ember lifetime, spatial-grid queries and player collision tests.
  * @details Zhikai's grid/array and branch-reduced collision work is retained
  * alongside Weijun's later FIFO ring/SoA optimisation (#8b).
+ *
+ * AABB tests and spatial grid for embers.
+ *
+ * Embers are stored in one of two layouts (b_ember_ring, #8b):
+ * - array: arr_embers[MAX_EMBERS] of Ember structs with an active flag. Every
+ *   tick, spawn and grid rebuild walks all 4096 slots (48 KB, a whole P-core
+ *   L1 data cache) although an explosion makes only 32 embers.
+ * - ring: every ember lives exactly EMBER_LIFETIME_TICKS, so embers expire in
+ *   the order they were spawned. The live embers are therefore always one
+ *   contiguous run of a FIFO ring: spawn appends at the tail, expiry pops the
+ *   head. Each field has its own array (SoA): the tick reads only spawn ticks,
+ *   the grid rebuild and queries read only 2-byte coordinates, and the query
+ *   loops have no early exit inside a run, so GCC vectorises them.
  */
-/*
-AABB tests and spatial grid for embers.
-
-Embers are stored in one of two layouts (b_ember_ring, #8b):
-- array: arr_embers[MAX_EMBERS] of Ember structs with an active flag. Every
-  tick, spawn and grid rebuild walks all 4096 slots (48 KB, a whole P-core
-  L1 data cache) although an explosion makes only 32 embers.
-- ring: every ember lives exactly EMBER_LIFETIME_TICKS, so embers expire in
-  the order they were spawned. The live embers are therefore always one
-  contiguous run of a FIFO ring: spawn appends at the tail, expiry pops the
-  head. Each field has its own array (SoA): the tick reads only spawn ticks,
-  the grid rebuild and queries read only 2-byte coordinates, and the query
-  loops have no early exit inside a run, so GCC vectorises them. */
 
 #include "collision.h"
 #include "config.h"
@@ -25,42 +25,48 @@ Embers are stored in one of two layouts (b_ember_ring, #8b):
 #define EMBER_GRID_WIDTH ((WIDTH + EMBER_CELL_SIZE - 1) / EMBER_CELL_SIZE)
 #define EMBER_GRID_HEIGHT ((HEIGHT + EMBER_CELL_SIZE - 1) / EMBER_CELL_SIZE)
 #define EMBER_GRID_CELLS (EMBER_GRID_WIDTH * EMBER_GRID_HEIGHT)
+/** @brief Embers created by one explosion. */
 #define EMBERS_PER_SPAWN 32
+/** @brief Ember square side, pixels. */
 #define EMBER_SIZE 6
-// Brute-force ring queries test this many embers between early-exit checks
+/** @brief Brute-force ring queries test this many embers between early-exit checks. */
 #define EMBER_QUERY_BLOCK 64
 
 bool b_collision_branchless = true;
 bool b_ember_ring = true;
 
-// Set by spawn/expiry; the next query rebuilds the grid of the active layout
+/** @brief Set by spawn/expiry; the next query rebuilds the grid of the active layout. */
 static bool b_grid_dirty = false;
-// Counting-sort active embers into contiguous cell ranges (#8). Queries
-// read coordinates sequentially instead of following per-ember next indices.
-// Shared by both layouts (only one is in use).
+/** @brief Start of each grid cell's run in the sorted ember arrays (+1 end entry).
+ * @details Counting-sort active embers into contiguous cell ranges (#8).
+ * Queries read coordinates sequentially instead of following per-ember next
+ * indices. Shared by both layouts (only one is in use). */
 static int arr_int_cell_offsets[EMBER_GRID_CELLS + 1];
 
 /* ---- array layout (before #8b) ---- */
 
-static Ember arr_embers[MAX_EMBERS];
-static Ember arr_sorted_embers[MAX_EMBERS];
+static Ember arr_embers[MAX_EMBERS];         ///< Array layout: every slot
+static Ember arr_sorted_embers[MAX_EMBERS];  ///< Array layout: active embers sorted by cell
 
 /* ---- ring layout (#8b) ---- */
 
+/** @brief Ring index mask (MAX_EMBERS is a power of two). */
 #define EMBER_RING_MASK (MAX_EMBERS - 1)
 _Static_assert((MAX_EMBERS & EMBER_RING_MASK) == 0,
                "MAX_EMBERS must be a power of two (ring index mask)");
-// Ember positions are explosion centres (0..WIDTH/HEIGHT) +-60, so they fit
-// in 16 bits: 8 coordinates per 16-byte SSE register instead of 4.
+/** @brief Ring layout ember coordinates (SoA).
+ * @details Ember positions are explosion centres (0..WIDTH/HEIGHT) +-60, so
+ * they fit in 16 bits: 8 coordinates per 16-byte SSE register instead of 4. */
 static int16_t arr_i16_ring_x[MAX_EMBERS];
 static int16_t arr_i16_ring_y[MAX_EMBERS];
-static uint32_t arr_u32_ring_spawn[MAX_EMBERS];  // u32_ember_tick at spawn
-static int int_ring_head = 0;   // index of the oldest live ember
-static int int_ring_count = 0;  // live embers: head .. head + count - 1
-// Calls of collision_embers_tick(); ages are differences, so wrap-around
-// of the 32-bit counter is harmless.
+static uint32_t arr_u32_ring_spawn[MAX_EMBERS];  ///< u32_ember_tick at spawn
+static int int_ring_head = 0;   ///< Index of the oldest live ember
+static int int_ring_count = 0;  ///< Live embers: head .. head + count - 1
+/** @brief Calls of collision_embers_tick().
+ * @details Ages are differences, so wrap-around of the 32-bit counter is
+ * harmless. */
 static uint32_t u32_ember_tick = 0;
-// The ring's grid: cell-sorted coordinates, also SoA
+/** @brief The ring's grid: cell-sorted coordinates, also SoA. */
 static int16_t arr_i16_sorted_x[MAX_EMBERS];
 static int16_t arr_i16_sorted_y[MAX_EMBERS];
 
@@ -197,11 +203,15 @@ static bool hits_ember_bruteforce_array(int a_int_x, int a_int_y)
 	return false;
 }
 
-// noinline: compiled on its own, as the whole of the original
-// collision_player_hits_ember() was. Inlined into the layout dispatcher,
-// GCC laid out the #9 branchless test with an extra data-dependent branch
-// (2.4x the branch misses, 35% slower), which would flatter the ring.
-/** @brief Search only nearby cell ranges in the array-layout spatial grid. */
+/** @brief Search only nearby cell ranges in the array-layout spatial grid.
+ * @details noinline: compiled on its own, as the whole of the original
+ * collision_player_hits_ember() was. Inlined into the layout dispatcher, GCC
+ * laid out the #9 branchless test with an extra data-dependent branch (2.4x
+ * the branch misses, 35% slower), which would flatter the ring.
+ * @param a_int_x Player's left coordinate in pixels.
+ * @param a_int_y Player's top coordinate in pixels.
+ * @return True if an ember overlaps the player.
+ */
 __attribute__((noinline))
 static bool hits_ember_grid_array(int a_int_x, int a_int_y)
 {
@@ -237,8 +247,12 @@ static bool hits_ember_grid_array(int a_int_x, int a_int_y)
 
 /* ================= ring layout (#8b) ================= */
 
-// The live run of the ring as at most two contiguous index ranges
-// [start, end): it wraps past the last slot when head + count > MAX_EMBERS.
+/** @brief The live run of the ring as at most two contiguous index ranges.
+ * @details It wraps past the last slot when head + count > MAX_EMBERS.
+ * @param[out] a_arr_int_start Start of each range.
+ * @param[out] a_arr_int_end End (exclusive) of each range.
+ * @return Number of ranges, 1 or 2.
+ */
 static int ring_segments(int a_arr_int_start[2], int a_arr_int_end[2])
 {
 	int int_end = int_ring_head + int_ring_count;
@@ -251,14 +265,21 @@ static int ring_segments(int a_arr_int_start[2], int a_arr_int_end[2])
 	return 2;
 }
 
-/* Does any of n embers (coordinate arrays x, y) overlap the player square
- * at (px, py)? Same test as ember_overlaps_player() (strict edges), written
+/** @brief Does any of n embers overlap the player square? (vectorised, #8b)
+ * @details Same test as ember_overlaps_player() (strict edges), written
  * as an ember-inside-a-box check: the ember's corner must lie in
  * [px - 5, px + SQ_WIDTH - 1] x [py - 5, py + SQ_WIDTH - 1].
  * The four comparisons are combined with & and OR-ed into one flag with no
  * early exit, so the loop has a single exit and GCC vectorises it: 8 embers
  * per 16-byte SSE2 compare with 16-bit coordinates (16 with AVX2). Callers
- * keep runs short (one grid row, or EMBER_QUERY_BLOCK embers). */
+ * keep runs short (one grid row, or EMBER_QUERY_BLOCK embers).
+ * @param a_p_x Ember x coordinates.
+ * @param a_p_y Ember y coordinates.
+ * @param a_int_n Number of embers.
+ * @param a_int_px Player's left coordinate in pixels.
+ * @param a_int_py Player's top coordinate in pixels.
+ * @return True if at least one ember overlaps.
+ */
 static bool any_ember_overlaps(const int16_t *restrict a_p_x,
                                const int16_t *restrict a_p_y, int a_int_n,
                                int a_int_px, int a_int_py)
@@ -276,6 +297,8 @@ static bool any_ember_overlaps(const int16_t *restrict a_p_x,
 	return i16_hit != 0;
 }
 
+/** @brief Count-sort the live ring embers into contiguous grid-cell ranges
+ * (reads only the coordinate arrays). */
 static void rebuild_ember_grid_ring(void)
 {
 	int arr_int_start[2], arr_int_end[2];
@@ -303,6 +326,12 @@ static void rebuild_ember_grid_ring(void)
 	b_grid_dirty = false;
 }
 
+/** @brief Append one explosion's embers at the ring's tail (no free-slot search).
+ * @details Same random offsets and "drop when full" rule as the array layout.
+ * @param a_int_x Explosion centre x, pixels.
+ * @param a_int_y Explosion centre y, pixels.
+ * @param a_u16_seed Seed for the deterministic offsets.
+ */
 static void embers_spawn_ring(int a_int_x, int a_int_y, uint16_t a_u16_seed)
 {
 	// Same random offsets and the same "drop when full" rule as the array
@@ -324,6 +353,8 @@ static void embers_spawn_ring(int a_int_x, int a_int_y, uint16_t a_u16_seed)
 	b_grid_dirty = true;
 }
 
+/** @brief Age the ring by one tick: pop expired embers from the head
+ * (usually one comparison). */
 static void embers_tick_ring(void)
 {
 	// The oldest ember is at the head: pop while it has lived its lifetime.
@@ -339,6 +370,12 @@ static void embers_tick_ring(void)
 	}
 }
 
+/** @brief Test every live ring ember (no grid), in EMBER_QUERY_BLOCK blocks
+ * with an early exit between them.
+ * @param a_int_x Player's left coordinate in pixels.
+ * @param a_int_y Player's top coordinate in pixels.
+ * @return True if an ember overlaps the player.
+ */
 static bool hits_ember_bruteforce_ring(int a_int_x, int a_int_y)
 {
 	// Every live ember (no grid), in blocks with an early exit between them
@@ -359,6 +396,11 @@ static bool hits_ember_bruteforce_ring(int a_int_x, int a_int_y)
 	return false;
 }
 
+/** @brief Ring-layout grid query: one vectorised run per grid row the player touches.
+ * @param a_int_x Player's left coordinate in pixels.
+ * @param a_int_y Player's top coordinate in pixels.
+ * @return True if an ember overlaps the player.
+ */
 static bool hits_ember_grid_ring(int a_int_x, int a_int_y)
 {
 	if (b_grid_dirty)

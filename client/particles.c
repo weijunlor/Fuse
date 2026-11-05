@@ -1,11 +1,11 @@
-/* client/particles.c
-Particle system in two layouts, "aos" (before) and "soa" (after #5, #6, #7);
-see particles.h for what each one does and why.
-
-Both layouts run exactly the same arithmetic on each particle in the same
-order of operations, and draw the same random numbers in the same order, so
-after the same ticks they hold the same particles (only their order in
-memory differs). particles_checksum() checks this. */
+/** @file client/particles.c
+ * @brief Particle system in the "aos" (before) and "soa" (after #5, #6, #7)
+ * layouts; see particles.h for what each one does and why.
+ * @details Both layouts run exactly the same arithmetic on each particle in
+ * the same order of operations, and draw the same random numbers in the same
+ * order, so after the same ticks they hold the same particles (only their
+ * order in memory differs). particles_checksum() checks this.
+ */
 
 #include <math.h>
 #include <stdbool.h>
@@ -25,82 +25,97 @@ memory differs). particles_checksum() checks this. */
 /* Tuning (same for both layouts)                        */
 /* ----------------------------------------------------- */
 
-// Velocity is multiplied by this every second (strong drag: sparks shoot out
-// and stop, as seen from above)
+/** @brief Velocity is multiplied by this every second (strong drag: sparks
+ * shoot out and stop, as seen from above). */
 #define DRAG_PER_S 0.2f
-// Spawn speed (pixels/s) and lifetime (s) ranges
+/** @brief Slowest spawn speed, pixels/s. */
 #define SPEED_MIN 60.0f
+/** @brief Fastest spawn speed, pixels/s. */
 #define SPEED_MAX 300.0f
+/** @brief Shortest particle lifetime, seconds. */
 #define LIFE_MIN 0.5f
+/** @brief Longest particle lifetime, seconds. */
 #define LIFE_MAX 2.0f
-// Particles per burst in particles_fill()
+/** @brief Particles per burst in particles_fill(). */
 #define FILL_BURST 64
-// Directions are taken from a table instead of calling cosf/sinf per spawn
-// (spawning is serial, so it must stay cheap for the threaded update to scale)
+/** @brief Entries in the direction table.
+ * @details Directions are taken from a table instead of calling cosf/sinf per
+ * spawn (spawning is serial, so it must stay cheap for the threaded update to
+ * scale). */
 #define DIRECTIONS 64
-// Particles are drawn as atlas tiles; keep the whole tile inside the window
+/** @brief Largest x a particle may have: particles are drawn as atlas tiles,
+ * so the whole tile stays inside the window. */
 #define MAX_X ((float)(WIDTH - ATLAS_TILE))
+/** @brief Largest y a particle may have (see MAX_X). */
 #define MAX_Y ((float)(HEIGHT - ATLAS_TILE))
-// Floats per 64-byte cache line: SoA arrays and thread chunks start on a
-// cache line, so two threads never write the same line (no false sharing)
+/** @brief Floats per 64-byte cache line.
+ * @details SoA arrays and thread chunks start on a cache line, so two threads
+ * never write the same line (no false sharing). */
 #define LINE_FLOATS 16
 
 /* ----------------------------------------------------- */
 /* Shared state                                          */
 /* ----------------------------------------------------- */
 
-static ParticleLayout layout;
-static int int_capacity;
-static int int_count;                   // live particles
-static unsigned int u_rng;              // xorshift32 state
+static ParticleLayout layout;           ///< Layout chosen in particles_init()
+static int int_capacity;                ///< Maximum live particles
+static int int_count;                   ///< Live particles
+static unsigned int u_rng;              ///< xorshift32 state
+/** @brief Unit direction vectors for spawning (cos/sin of DIRECTIONS angles). */
 static float arr_dir_x[DIRECTIONS], arr_dir_y[DIRECTIONS];
 
 /* ----------------------------------------------------- */
 /* "aos" layout: the first, simple version (before)      */
 /* ----------------------------------------------------- */
 
-// One particle, 32 bytes, so two per cache line. The update reads and writes
-// x..life and reads b_alive; life_max and sprite are only used when spawning
-// and drawing, but are loaded into cache with the rest anyway.
+/** @brief One "aos" particle, 32 bytes, so two per cache line.
+ * @details The update reads and writes x..life and reads b_alive; life_max
+ * and sprite are only used when spawning and drawing, but are loaded into
+ * cache with the rest anyway.
+ */
 typedef struct
 {
-    float x, y;         // top-left corner, pixels
-    float vx, vy;       // pixels/s
-    float life;         // seconds left
-    float life_max;     // seconds at spawn (animation frame)
-    int int_sprite;     // first animation frame (SPR_SPARK or SPR_EMBER)
-    bool b_alive;
+    float x, y;         ///< Top-left corner, pixels
+    float vx, vy;       ///< Velocity, pixels/s
+    float life;         ///< Seconds left
+    float life_max;     ///< Seconds at spawn (animation frame)
+    int int_sprite;     ///< First animation frame (SPR_SPARK or SPR_EMBER)
+    bool b_alive;       ///< False for a hole
 } ParticleAoS;
 
-static ParticleAoS *arr_aos;
-static int int_aos_cursor;  // where the search for a free slot starts
+static ParticleAoS *arr_aos;    ///< "aos" pool, int_capacity slots
+static int int_aos_cursor;      ///< Where the search for a free slot starts
 
 /* ----------------------------------------------------- */
 /* "soa" layout (after)                                  */
 /* ----------------------------------------------------- */
 
-// Hot arrays: read and written by every update
+/** @brief Hot "soa" arrays: read and written by every update. */
 static float *arr_x, *arr_y, *arr_vx, *arr_vy, *arr_life;
-// Cold arrays: only touched when spawning, drawing and removing
+/** @brief Cold "soa" array: lifetime at spawn, used for the animation frame. */
 static float *arr_life_max;
+/** @brief Cold "soa" array: first animation frame of each particle. */
 static int *arr_sprite;
 
-// Live counts left at the start of each worker's chunk. The build-time #11
-// option controls result padding; SIMD array/chunk alignment stays unchanged.
+/** @brief Live counts left at the start of each worker's chunk.
+ * @details The build-time #11 option controls result padding; SIMD
+ * array/chunk alignment stays unchanged. */
 static PoolChunkResult arr_chunk[POOL_MAX_THREADS];
+/** @brief Worker pool that runs soa_update_job() on every chunk. */
 static WorkerPool pool;
 
-// Arguments of one update, shared by all workers (read only)
+/** @brief Arguments of one update, shared by all workers (read only). */
 typedef struct
 {
-    float dt;
-    float drag;
+    float dt;       ///< Time step, seconds
+    float drag;     ///< Velocity factor for this step (DRAG_PER_S ^ dt)
 } UpdateArgs;
 
 /* ----------------------------------------------------- */
 /* Helpers                                               */
 /* ----------------------------------------------------- */
 
+/** @brief Command-line names, indexed by ParticleLayout. */
 static const char *const arr_layout_names[] = { "aos", "soa", "soa-intrin", "soa-intrin-scan" };
 
 int particles_layout_from_name(const char *a_str_name)
@@ -118,7 +133,9 @@ const char *particles_layout_name(ParticleLayout a_layout)
     return arr_layout_names[a_layout];
 }
 
-// xorshift32: fast, and the same sequence on every machine
+/** @brief Next xorshift32 random number: fast, and the same sequence on every machine.
+ * @return 32 random bits (advances u_rng).
+ */
 static unsigned int rng_next(void)
 {
     u_rng ^= u_rng << 13;
@@ -127,13 +144,20 @@ static unsigned int rng_next(void)
     return u_rng;
 }
 
-// Random float in [a_lo, a_hi), from the top 24 bits
+/** @brief Random float in [a_lo, a_hi), from the top 24 bits of rng_next().
+ * @param a_lo Lower bound (inclusive).
+ * @param a_hi Upper bound (exclusive).
+ * @return The random value.
+ */
 static float rng_range(float a_lo, float a_hi)
 {
     return a_lo + (a_hi - a_lo) * (float)(rng_next() >> 8) * (1.0f / 16777216.0f);
 }
 
-// Cache-line-aligned array of a_int_n 4-byte items, size rounded up to whole lines
+/** @brief Allocate a cache-line-aligned array of 4-byte items.
+ * @param a_int_n Number of items; the size is rounded up to whole 64-byte lines.
+ * @return The array (free with free()). Exits the process if out of memory.
+ */
 static void *alloc_lines(int a_int_n)
 {
     size_t u_bytes = ((size_t)a_int_n + LINE_FLOATS - 1) / LINE_FLOATS * 64;
@@ -233,8 +257,9 @@ void particles_clear(void)
 /* Spawning                                              */
 /* ----------------------------------------------------- */
 
-// "aos": find a free slot by walking from the cursor (wrapping round).
-// Returns -1 if every slot is in use.
+/** @brief "aos": find a free slot by walking from the cursor (wrapping round).
+ * @return Slot index, or -1 if every slot is in use.
+ */
 static int aos_find_free(void)
 {
     for (int n = 0; n < int_capacity; n++)
@@ -300,9 +325,13 @@ void particles_fill(int a_int_target)
 /* Update: "aos"                                         */
 /* ----------------------------------------------------- */
 
-// Walk every slot, skip holes, move and age live particles, free dead ones.
-// The alive test is a branch that is hard to predict once the array is full
-// of holes, and each particle drags its cold fields into cache with it.
+/** @brief "aos" update: walk every slot, skip holes, move and age live
+ * particles, free dead ones.
+ * @details The alive test is a branch that is hard to predict once the array
+ * is full of holes, and each particle drags its cold fields into cache with it.
+ * @param a_dt Time step, seconds.
+ * @param a_drag Velocity factor for this step.
+ */
 static void aos_update(float a_dt, float a_drag)
 {
     for (int i = 0; i < int_capacity; i++)
@@ -336,15 +365,23 @@ static void aos_update(float a_dt, float a_drag)
 /* Update: "soa"                                         */
 /* ----------------------------------------------------- */
 
-/* The hot loop (#7). Separate float arrays, restrict (the arrays never
-overlap) and no branches (the clamps are selects) let the compiler process 4
-(SSE) or 8 (AVX2) particles per instruction. Same arithmetic as aos_update.
-Needs -fno-trapping-math (in SIMD_FLAGS): otherwise GCC keeps the clamps as
-branches, in case a comparison raises a floating-point exception flag, and
-the loop stays scalar. Check with -fopt-info-vec: "loop vectorized".
-noinline (also on soa_move_avx2): keeps each loop a separate function, so
-perf and the disassembly can compare the two versions instruction by
-instruction; one call per chunk costs nothing measurable. */
+/** @brief The hot "soa" loop (#7): move, drag, clamp and age a run of particles.
+ * @details Separate float arrays, restrict (the arrays never overlap) and no
+ * branches (the clamps are selects) let the compiler process 4 (SSE) or 8
+ * (AVX2) particles per instruction. Same arithmetic as aos_update().
+ * Needs -fno-trapping-math (in SIMD_FLAGS): otherwise GCC keeps the clamps as
+ * branches, in case a comparison raises a floating-point exception flag, and
+ * the loop stays scalar. Check with -fopt-info-vec: "loop vectorized".
+ * noinline (also on soa_move_avx2()): keeps each loop a separate function, so
+ * perf and the disassembly can compare the two versions instruction by
+ * instruction; one call per chunk costs nothing measurable.
+ * @param a_x, a_y Positions (updated).
+ * @param a_vx, a_vy Velocities (updated).
+ * @param a_life Lives left (updated; may go to 0 or below).
+ * @param a_int_n Number of particles in the run.
+ * @param a_dt Time step, seconds.
+ * @param a_drag Velocity factor for this step.
+ */
 __attribute__((noinline))
 static void soa_move(float *restrict a_x, float *restrict a_y,
                      float *restrict a_vx, float *restrict a_vy,
@@ -369,18 +406,22 @@ static void soa_move(float *restrict a_x, float *restrict a_y,
 }
 
 #if defined(__AVX2__) && defined(__FMA__)
-/* "soa-intrin": the same loop written by hand with AVX2 intrinsics, to
-compare with what the compiler generates from soa_move. Every _mm256_*
-call is one instruction working on 8 floats (one 32-byte ymm register).
-Gives exactly the same results as soa_move built with -march=native:
-- x + vx * dt: GCC contracts this to a fused multiply-add there, so FMA is
-  used here too (_mm256_fmadd_ps)
-- clamps: vmaxps/vminps return their second operand when the first is not
-  larger/smaller, so max(0, x) = (0 > x ? 0 : x), the same as soa_move's
-  select, including for -0.0
-- aligned loads/stores (_mm256_load_ps): every chunk starts on a 64-byte
-  cache line (pool_chunk, alloc_lines), so a_x etc. are 32-byte aligned
-Only built when the compiler targets AVX2 and FMA (SIMD_FLAGS). */
+/** @brief "soa-intrin": soa_move() written by hand with AVX2 intrinsics.
+ * @details Written to compare with what the compiler generates from
+ * soa_move(). Every _mm256_* call is one instruction working on 8 floats (one
+ * 32-byte ymm register). Gives exactly the same results as soa_move() built
+ * with -march=native:
+ * - x + vx * dt: GCC contracts this to a fused multiply-add there, so FMA is
+ *   used here too (_mm256_fmadd_ps)
+ * - clamps: vmaxps/vminps return their second operand when the first is not
+ *   larger/smaller, so max(0, x) = (0 > x ? 0 : x), the same as soa_move's
+ *   select, including for -0.0
+ * - aligned loads/stores (_mm256_load_ps): every chunk starts on a 64-byte
+ *   cache line (pool_chunk(), alloc_lines()), so a_x etc. are 32-byte aligned
+ *
+ * Only built when the compiler targets AVX2 and FMA (SIMD_FLAGS).
+ * Parameters are the same as soa_move(); a_x etc. must be 32-byte aligned.
+ */
 __attribute__((noinline))
 static void soa_move_avx2(float *restrict a_x, float *restrict a_y,
                           float *restrict a_vx, float *restrict a_vy,
@@ -416,7 +457,10 @@ static void soa_move_avx2(float *restrict a_x, float *restrict a_y,
 }
 #endif
 
-// Copy particle a_int_src over particle a_int_dst (every array)
+/** @brief Copy one "soa" particle over another (every array).
+ * @param a_int_dst Index to overwrite.
+ * @param a_int_src Index to copy from.
+ */
 static void soa_copy(int a_int_dst, int a_int_src)
 {
     arr_x[a_int_dst] = arr_x[a_int_src];
@@ -428,12 +472,16 @@ static void soa_copy(int a_int_dst, int a_int_src)
     arr_sprite[a_int_dst] = arr_sprite[a_int_src];
 }
 
-/* Remove the dead particles of chunk [a_int_begin, a_int_end) inside the
-chunk, by moving the chunk's last live particle into each hole. About 1 in
-75 particles dies per tick, so the "if" is almost always false and well
-predicted. Returns the end of the live particles. GCC cannot vectorise this
-loop (its length changes as particles are removed), so after #7 it is the
-slowest part of the update. noinline: shows up separately in perf. */
+/** @brief Remove the dead particles of one chunk, inside the chunk (swap-remove).
+ * @details Moves the chunk's last live particle into each hole. About 1 in 75
+ * particles dies per tick, so the "if" is almost always false and well
+ * predicted. GCC cannot vectorise this loop (its length changes as particles
+ * are removed), so after #7 it is the slowest part of the update.
+ * noinline: shows up separately in perf.
+ * @param a_int_begin First index of the chunk.
+ * @param a_int_end One past the last index of the chunk.
+ * @return End of the live particles: they are in [a_int_begin, return value).
+ */
 __attribute__((noinline))
 static int soa_remove_chunk(int a_int_begin, int a_int_end)
 {
@@ -449,13 +497,17 @@ static int soa_remove_chunk(int a_int_begin, int a_int_end)
 }
 
 #if defined(__AVX2__) && defined(__FMA__)
-/* "soa-intrin-scan": soa_remove_chunk with a hand-written AVX2 test that
-the compiler cannot produce. One compare (vcmpps) checks 8 lives against 0
-and movemask (vmovmskps) packs the 8 results into the low bits of an int.
-If none is dead (about 90% of blocks: (74/75)^8), all 8 are skipped at once
-instead of with 8 loads, compares and branches. A block with a dead particle
-falls back to the scalar step for one particle, so the particles are
-removed in exactly the same order as soa_remove_chunk. */
+/** @brief "soa-intrin-scan": soa_remove_chunk() with a hand-written AVX2 scan.
+ * @details A test the compiler cannot produce: one compare (vcmpps) checks 8
+ * lives against 0 and movemask (vmovmskps) packs the 8 results into the low
+ * bits of an int. If none is dead (about 90% of blocks: (74/75)^8), all 8 are
+ * skipped at once instead of with 8 loads, compares and branches. A block with
+ * a dead particle falls back to the scalar step for one particle, so the
+ * particles are removed in exactly the same order as soa_remove_chunk().
+ * @param a_int_begin First index of the chunk.
+ * @param a_int_end One past the last index of the chunk.
+ * @return End of the live particles in the chunk.
+ */
 __attribute__((noinline))
 static int soa_remove_chunk_avx2(int a_int_begin, int a_int_end)
 {
@@ -485,9 +537,15 @@ static int soa_remove_chunk_avx2(int a_int_begin, int a_int_end)
 }
 #endif
 
-// One worker's share of an update: move its chunk (SIMD), then remove its
-// dead particles inside the chunk. The chunk was just updated by this core,
-// so the removal works on data already in this core's cache.
+/** @brief One worker's share of an update (PoolJob for pool_run()).
+ * @details Move its chunk (SIMD), then remove its dead particles inside the
+ * chunk. The chunk was just updated by this core, so the removal works on
+ * data already in this core's cache. Writes the chunk's live count to
+ * arr_chunk[a_int_worker].
+ * @param a_arg Pointer to the shared UpdateArgs.
+ * @param a_int_worker This worker's index (0 = calling thread).
+ * @param a_int_workers Number of workers in the run.
+ */
 static void soa_update_job(void *a_arg, int a_int_worker, int a_int_workers)
 {
     const UpdateArgs *p_args = a_arg;
@@ -514,11 +572,16 @@ static void soa_update_job(void *a_arg, int a_int_worker, int a_int_workers)
     arr_chunk[a_int_worker].int_live = int_last - int_begin;
 }
 
-/* Serial step after the workers. Each chunk now has its live particles at its
-start and a hole at its end. Fill the holes below the new count with the live
-particles above it, taken from the top end of the array. Every move is a
-contiguous run (one memcpy per array) and only about as many particles move
-as died this tick, so this stays small next to the parallel part. */
+/** @brief Serial step after the workers: pack the live particles into [0, count).
+ * @details Each chunk now has its live particles at its start and a hole at
+ * its end. Fill the holes below the new count with the live particles above
+ * it, taken from the top end of the array. Every move is a contiguous run (one
+ * memcpy per array) and only about as many particles move as died this tick,
+ * so this stays small next to the parallel part. Sets int_count.
+ * @param a_int_workers Number of workers used for the update.
+ * @param a_int_count_before Live count before the update (the chunks were
+ *        split from it).
+ */
 static void soa_close_gaps(int a_int_workers, int a_int_count_before)
 {
     int arr_begin[POOL_MAX_THREADS];
@@ -598,7 +661,13 @@ void particles_update(float a_dt)
 /* Queries                                               */
 /* ----------------------------------------------------- */
 
-// Animation: 2 frames, the second one for the last half of the life
+/** @brief Animation frame of a particle: 2 frames, the second one for the
+ * last half of the life.
+ * @param a_int_sprite First frame.
+ * @param a_life Seconds left.
+ * @param a_life_max Seconds at spawn.
+ * @return Atlas sprite index to draw.
+ */
 static int frame_sprite(int a_int_sprite, float a_life, float a_life_max)
 {
     return a_int_sprite + (a_life * 2.0f < a_life_max ? 1 : 0);

@@ -17,22 +17,26 @@
 #include "types.h"
 #include "fuse.h"
 
-// Table to track clients. Player ID is the array index plus 1.
+/** @brief Table to track clients. Player ID is the array index plus 1. */
 extern Player arr_Players[MAX_PLAYERS];
 
-// State mutex: shared with DDS for mutex handoff, or the optional locked-write
-// comparison. Default SPSC publication does not acquire it.
-// In SPSC mode the main thread owns players/keys/auth/lobby state, and the
-// worker sees copies through rings and a pinned snapshot buffer.
+/** @brief Game state mutex.
+ * @details Shared with DDS for mutex handoff, or the optional locked-write
+ * comparison. Default SPSC publication does not acquire it. In SPSC mode the
+ * main thread owns players/keys/auth/lobby state, and the worker sees copies
+ * through rings and a pinned snapshot buffer.
+ */
 extern pthread_mutex_t mutex;
 
-// Snapshots are published every this many ticks (TICK_HZ / --snapshot-hz)
+/** @brief Snapshots are published every this many ticks (TICK_HZ / --snapshot-hz). */
 extern int int_snapshot_every;
 
-// Before/after paths, selected by main before the worker starts.
-extern bool b_game_branchless;
-extern bool b_ember_grid;
-extern bool b_reduce_accum;
+/** @name Before/after paths, selected by main before the worker starts
+ * @{ */
+extern bool b_game_branchless;  ///< #9 branchless movement/collision (--branches)
+extern bool b_ember_grid;       ///< #8 spatial grid for ember queries (--collision)
+extern bool b_reduce_accum;     ///< #10 multiple accumulators in reductions (--reduction)
+/** @} */
 
 /** @brief Check whether the current phase permits new players.
  * @pre The caller holds mutex.
